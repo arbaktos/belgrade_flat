@@ -41,6 +41,13 @@ def render(
 
     lines.append("---\n")
 
+    if result.near_misses:
+        lines.append(f"## Near-misses ({len(result.near_misses)})\n")
+        lines.append("Cleared structural filters but the LLM couldn't confirm one or more soft requirements. Vet these manually.\n")
+        for l, reasons in result.near_misses:
+            lines.append(_listing_block(l, near_miss_reasons=reasons))
+        lines.append("\n---\n")
+
     if not result.passed:
         lines.append("_No matches today._\n")
     else:
@@ -61,7 +68,7 @@ def render(
     return "\n".join(lines) + "\n"
 
 
-def _listing_block(l: Listing) -> str:
+def _listing_block(l: Listing, near_miss_reasons: list[str] | None = None) -> str:
     floor_str = f"floor {l.floor}" if l.floor is not None else "floor ?"
     if l.total_floors:
         floor_str += f"/{l.total_floors}"
@@ -71,27 +78,54 @@ def _listing_block(l: Listing) -> str:
         lift = "no lift"
     else:
         lift = "🛗?"           # data not exposed by this source — verify on the listing
-    heat = f"🔥 {l.heating_type}" if l.heating_type else "🔥?"
-    if l.pets_allowed is True:
+    # Prefer LLM-confirmed heating if it differs from the raw source value.
+    heating_label = (l.extraction.heating_type_confirmed if l.extraction else None) or l.heating_type
+    heat = f"🔥 {heating_label}" if heating_label else "🔥?"
+    pets_state = (l.extraction.pets_allowed if l.extraction else None) or _pets_string(l.pets_allowed)
+    if pets_state == "yes":
         pets = "🐾 pets OK"
-    elif l.pets_allowed is False:
+    elif pets_state == "no":
         pets = "🚫🐾"
     else:
         pets = ""
     agency = "🏢 agency" if l.is_agency else "👤 owner/unknown"
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
+    head_emoji = "⚠️" if near_miss_reasons else "✅"
     block = [
-        f"### ✅ €{l.price_eur:.0f} · {l.rooms} rooms · {l.m2:.0f} m² · {place}",
+        f"### {head_emoji} €{l.price_eur:.0f} · {l.rooms} rooms · {l.m2:.0f} m² · {place}",
         f"- 📍 {l.address or '?'} · {floor_str} · {lift}",
         f"- {heat} · {pets} · {agency} · 📅 {l.created_at.strftime('%Y-%m-%d %H:%M UTC')}",
         f"- 🔗 [{l.title}]({l.url})",
     ]
+    if near_miss_reasons:
+        block.append("- ⚠️ Unconfirmed: " + "; ".join(near_miss_reasons))
+    if l.extraction:
+        e = l.extraction
+        extras: list[str] = []
+        if e.dishwasher is True:
+            extras.append("🍽 dishwasher")
+        elif e.dishwasher is False:
+            extras.append("no dishwasher")
+        if e.bills_estimate_eur and e.bills_estimate_eur > 200:
+            extras.append(f"💸 bills ≈ €{e.bills_estimate_eur}")
+        if e.max_lease_months:
+            extras.append(f"📝 min lease {e.max_lease_months}mo")
+        if extras:
+            block.append("- " + " · ".join(extras))
+        if e.red_flags:
+            block.append("- 🚩 " + "; ".join(e.red_flags))
+        if e.summary_en:
+            block.append(f"\n  _{e.summary_en}_")
     if l.image_url:
         block.append(f"- ![photo]({l.image_url})")
-    if l.description:
+    if l.description and not (l.extraction and l.extraction.summary_en):
         block.append(f"\n  > {l.description}")
     return "\n".join(block) + "\n"
+
+
+def _pets_string(b: bool | None) -> str:
+    return "yes" if b is True else "no" if b is False else "unknown"
 
 
 def write(content: str, today: datetime) -> Path:

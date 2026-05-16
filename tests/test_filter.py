@@ -38,6 +38,10 @@ CFG = filt.FilterConfig(
     surface_m2_min=55,
     elevator_required=True,
     freshness_days=7,
+    heating_allowed=("centralno", "etazno", "podno"),
+    dishwasher_required=True,
+    pets_required=True,
+    max_lease_months=12,
 )
 
 

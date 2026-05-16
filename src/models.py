@@ -1,8 +1,22 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from typing import Any
+
+
+@dataclass
+class Extraction:
+    """LLM-derived fields per spec §5. None = LLM hasn't seen this listing yet."""
+    pets_allowed: str | None = None              # "yes" | "no" | "unknown"
+    dishwasher: bool | None = None
+    elevator_confirmed: bool | None = None
+    heating_type_confirmed: str | None = None    # "centralno" | "etazno" | "podno" | "TA" | "klima" | "..."
+    max_lease_months: int | None = None
+    bills_estimate_eur: int | None = None
+    agency_or_owner: str | None = None           # "agency" | "owner" | "unknown"
+    red_flags: list[str] = field(default_factory=list)
+    summary_en: str | None = None
 
 
 @dataclass
@@ -16,7 +30,7 @@ class Listing:
     floor: int | None
     total_floors: int | None
     last_floor: bool
-    elevator: bool
+    elevator: bool | None
     furnished: str | None        # raw value from source: "yes"/"no"/"semi"/etc.
     heating_type: str | None     # raw value from source
     pets_allowed: bool | None
@@ -27,6 +41,7 @@ class Listing:
     image_url: str | None
     is_agency: bool
     created_at: datetime
+    extraction: Extraction | None = None
 
     @property
     def fingerprint_key(self) -> str:
@@ -38,4 +53,6 @@ class Listing:
         d["created_at"] = self.created_at.isoformat()
         d["place_names"] = ",".join(self.place_names)
         d["fingerprint_key"] = self.fingerprint_key
+        # extraction is stored separately; strip from the listings row
+        d.pop("extraction", None)
         return d
