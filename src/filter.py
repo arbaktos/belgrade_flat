@@ -57,7 +57,9 @@ def _check(l: Listing, cfg: FilterConfig, cutoff: datetime) -> str | None:
         return f"surface {l.m2}m² < {cfg.surface_m2_min}m²"
     if l.floor is None or l.floor <= 0:
         return f"ground/basement floor ({l.floor})"
-    if cfg.elevator_required and not l.elevator:
+    # elevator=None means "data unavailable for this source" — treat as near-miss
+    # rather than a hard rejection (spec §3 pattern for ambiguous fields).
+    if cfg.elevator_required and l.elevator is False:
         return "no elevator"
     if l.created_at < cutoff:
         return f"older than {cfg.freshness_days}d"

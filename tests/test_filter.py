@@ -68,6 +68,12 @@ def test_no_elevator_rejected():
     assert "elevator" in result.rejected[0][1]
 
 
+def test_unknown_elevator_passes_as_near_miss():
+    """elevator=None means the source did not expose this field — don't hard-reject."""
+    result = filt.apply([_listing(elevator=None)], CFG)
+    assert result.passed and not result.rejected
+
+
 def test_rooms_out_of_range_rejected():
     result = filt.apply([_listing(rooms=4.0)], CFG)
     assert "rooms" in result.rejected[0][1]
