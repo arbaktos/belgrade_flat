@@ -9,15 +9,36 @@ from src.models import Listing
 DIGESTS_DIR = Path("digests")
 
 
-def render(result: FilterResult, *, source_stats: dict[str, int], today: datetime) -> str:
+def render(
+    result: FilterResult,
+    *,
+    source_stats: dict[str, tuple[int, str | None]],
+    today: datetime,
+) -> str:
+    """Render the digest.
+
+    `source_stats` maps source name → (listing_count, error_msg_or_None). A
+    non-None error renders as `⚠️` on the health line per spec §9.
+    """
     lines: list[str] = []
-    lines.append(f"# Belgrade rentals — {today.strftime('%Y-%m-%d')} (M2 TEST)\n")
+    lines.append(f"# Belgrade rentals — {today.strftime('%Y-%m-%d')} (test run)\n")
     lines.append(
         f"**{len(result.passed)} matches · {len(result.rejected)} rejected** "
-        f"(scope: 4zida, structural filters only — no LLM / commute / dedup yet)\n"
+        f"(structural filters only — no LLM / commute / dedup yet)\n"
     )
-    src_line = " · ".join(f"{k} {v}" for k, v in source_stats.items())
+    src_line = " · ".join(
+        f"{name} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
+    )
     lines.append(f"🩺 Sources: {src_line}\n")
+
+    error_lines = [
+        f"- ⚠️ {name}: {err}" for name, (_c, err) in source_stats.items() if err
+    ]
+    if error_lines:
+        lines.append("**Source errors:**")
+        lines.extend(error_lines)
+        lines.append("")
+
     lines.append("---\n")
 
     if not result.passed:

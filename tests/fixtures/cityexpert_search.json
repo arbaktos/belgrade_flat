@@ -1,0 +1,8788 @@
+{
+  "result": [
+    {
+      "uniqueID": "77501-BR",
+      "propId": 77501,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.72958, 20.48223",
+      "street": "Atika",
+      "floor": "2_4",
+      "size": 55,
+      "structure": "3.0",
+      "municipality": "Voždovac",
+      "polygons": [
+        "Voždovac",
+        "Jajinci"
+      ],
+      "ptId": 1,
+      "price": 500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_77501-01611-20260406.avif",
+      "rentOrSale": "r",
+      "caseId": 118521,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furBed",
+        "furDishWasher",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        99
+      ],
+      "parkingArray": [
+        3,
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-15T16:01:21Z",
+      "firstPublished": "2026-05-15T16:05:33Z",
+      "pricePerSize": 9.090909,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": false,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "10+"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78103-BR",
+      "propId": 78103,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.79043, 20.48145",
+      "street": "Miklošićeva",
+      "floor": "2_4",
+      "size": 40,
+      "structure": "2.0",
+      "municipality": "Voždovac",
+      "polygons": [
+        "Voždovac",
+        "Dušanovac",
+        "Lekino brdo",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 650.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78103-03151-20260425.avif",
+      "rentOrSale": "r",
+      "caseId": 117636,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-04-21T08:10:36Z",
+      "firstPublished": "2026-05-15T15:52:26Z",
+      "pricePerSize": 16.25,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "74479-BR",
+      "propId": 74479,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.79579, 20.53254",
+      "street": "Zagrađe",
+      "floor": "SU",
+      "size": 26,
+      "structure": "1.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Mirijevo",
+        "Mirijevo I"
+      ],
+      "ptId": 1,
+      "price": 350.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_74479_-_0149_-_20250916.jpg",
+      "rentOrSale": "r",
+      "caseId": 118519,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furCornerSofa",
+        "furFridge",
+        "furInverter",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        99
+      ],
+      "parkingArray": [
+        3
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-06-04T22:00:00Z",
+      "firstPublished": "2026-05-15T15:49:29Z",
+      "pricePerSize": 13.461538,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [],
+      "renovationArray": [],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "67250-BR",
+      "propId": 67250,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.82789, 20.40395",
+      "street": "Pariske komune",
+      "floor": "5_10",
+      "size": 35,
+      "structure": "1.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 4",
+        "Paviljoni",
+        "Centralni NBG"
+      ],
+      "ptId": 1,
+      "price": 450.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_67250_-_0297_-_20241023.jpg",
+      "rentOrSale": "r",
+      "caseId": 117131,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        3
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-04-30T22:00:00Z",
+      "firstPublished": "2026-05-15T14:13:25Z",
+      "pricePerSize": 12.857142,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "73024-BR",
+      "propId": 73024,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.78363, 20.48482",
+      "street": "Ozrenska",
+      "floor": "PR",
+      "size": 70,
+      "structure": "2.0",
+      "municipality": "Voždovac",
+      "polygons": [
+        "Voždovac",
+        "Šumice",
+        "Dušanovac",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 600.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_73024_-_00773_-_20260219.avif",
+      "rentOrSale": "r",
+      "caseId": 115338,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 3,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furCable",
+        "furInternet",
+        "furShower"
+      ],
+      "bldgOptsArray": [],
+      "heatingArray": [
+        4,
+        99
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 3,
+      "joineryArray": [
+        2,
+        3
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "basInfDuplex",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-02-17T23:00:00Z",
+      "firstPublished": "2026-05-15T13:34:34Z",
+      "pricePerSize": 8.571428,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": false,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "73813-BR",
+      "propId": 73813,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80431, 20.45595",
+      "street": "Sarajevska",
+      "floor": "2_4",
+      "size": 40,
+      "structure": "1.5",
+      "municipality": "Savski venac",
+      "polygons": [
+        "Savski venac",
+        "Savski amfiteatar",
+        "Centar",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 650.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_73813_-_0492_-_20250806.jpg",
+      "rentOrSale": "r",
+      "caseId": 117568,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-04-30T22:00:00Z",
+      "firstPublished": "2026-05-15T13:28:03Z",
+      "pricePerSize": 16.25,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "76876-BR",
+      "propId": 76876,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.76694, 20.41766",
+      "street": "Trebevićka",
+      "floor": "1",
+      "size": 58,
+      "structure": "2.0",
+      "municipality": "Čukarica",
+      "polygons": [
+        "Čukarica",
+        "Banovo brdo"
+      ],
+      "ptId": 1,
+      "price": 550.0,
+      "coverPhoto": "cx76876_13.jpg",
+      "rentOrSale": "r",
+      "caseId": 115048,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCornerSofa",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 3,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-02-08T23:00:00Z",
+      "firstPublished": "2026-05-15T13:22:56Z",
+      "pricePerSize": 9.4827585,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "56618-BR",
+      "propId": 56618,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.7945, 20.49447",
+      "street": "Kulina Bana",
+      "floor": "2_4",
+      "size": 40,
+      "structure": "1.5",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Lion",
+        "Širi centar",
+        "Zvezdara bez Mirijeva"
+      ],
+      "ptId": 1,
+      "price": 550.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_56618_-_0278_-_20230509.jpg",
+      "rentOrSale": "r",
+      "caseId": 117754,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-04-30T22:00:00Z",
+      "firstPublished": "2026-05-15T13:18:32Z",
+      "pricePerSize": 13.75,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "44049-BR",
+      "propId": 44049,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81194, 20.47657",
+      "street": "Stanoja Glavaša",
+      "floor": "1",
+      "size": 50,
+      "structure": "2.0",
+      "municipality": "Palilula",
+      "polygons": [
+        "Palilula",
+        "Stara Palilula",
+        "Centar",
+        "Širi centar",
+        "Palilula - uži deo",
+        "Palilula 2"
+      ],
+      "ptId": 1,
+      "price": 500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_44049_-_0206_-_20210607.jpg",
+      "rentOrSale": "r",
+      "caseId": 117297,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 2,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-04-14T22:00:00Z",
+      "firstPublished": "2026-05-15T13:02:29Z",
+      "pricePerSize": 10.0,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "31763-BR",
+      "propId": 31763,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81111, 20.45822",
+      "street": "Lomina",
+      "floor": "2_4",
+      "size": 44,
+      "structure": "2.5",
+      "municipality": "Savski venac",
+      "polygons": [
+        "Savski venac",
+        "Savamala",
+        "Centar",
+        "Širi centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 900.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_31763_-_0732_-_20200714.jpg",
+      "rentOrSale": "r",
+      "caseId": 118516,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 3,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-31T22:00:00Z",
+      "firstPublished": "2026-05-15T13:00:20Z",
+      "pricePerSize": 20.454546,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "43654-BR",
+      "propId": 43654,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.77139, 20.5036",
+      "street": "Svetozara Radojčića",
+      "floor": "PTK",
+      "size": 78,
+      "structure": "3.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Padina",
+        "Zvezdara 4"
+      ],
+      "ptId": 1,
+      "price": 550.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_43654_-_0028_-_20210514.jpg",
+      "rentOrSale": "r",
+      "caseId": 117658,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        99
+      ],
+      "parkingArray": [
+        2,
+        4
+      ],
+      "yearOfConstruction": 4,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "adpTerrace",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-04-22T22:00:00Z",
+      "firstPublished": "2026-05-15T12:58:38Z",
+      "pricePerSize": 7.051282,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": false,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "76611-BR",
+      "propId": 76611,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80458, 20.48234",
+      "street": "Vojvode Bogdana",
+      "floor": "2_4",
+      "size": 46,
+      "structure": "2.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Vukov spomenik",
+        "Centar",
+        "Širi centar",
+        "Zvezdara bez Mirijeva"
+      ],
+      "ptId": 1,
+      "price": 700.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_76611_-_0060_-_20260126.jpg",
+      "rentOrSale": "r",
+      "caseId": 113519,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCornerSofa",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-01-25T23:00:00Z",
+      "firstPublished": "2026-05-15T12:56:54Z",
+      "pricePerSize": 15.217391,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "74596-BR",
+      "propId": 74596,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.75515, 20.41079",
+      "street": "Prote Milorada Pavlovića",
+      "floor": "2_4",
+      "size": 37,
+      "structure": "2.0",
+      "municipality": "Čukarica",
+      "polygons": [
+        "Čukarica",
+        "Bele Vode"
+      ],
+      "ptId": 1,
+      "price": 400.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_74596_-_0009_-_20250922.jpg",
+      "rentOrSale": "r",
+      "caseId": 118379,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furCornerSofa",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        10
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-12T11:17:18Z",
+      "firstPublished": "2026-05-15T12:52:04Z",
+      "pricePerSize": 10.810811,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "77468-BR",
+      "propId": 77468,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81754, 20.47023",
+      "street": "Drinčićeva",
+      "floor": "2_4",
+      "size": 63,
+      "structure": "2.5",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Gundulićev venac",
+        "Centar",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 1100.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_77468-4525-20260313-5.jpg",
+      "rentOrSale": "r",
+      "caseId": 116289,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        4
+      ],
+      "parkingArray": [
+        2
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1,
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-03-12T23:00:00Z",
+      "firstPublished": "2026-05-15T12:35:56Z",
+      "pricePerSize": 17.460318,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78438-BR",
+      "propId": 78438,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.8194, 20.46966",
+      "street": "Jelisavete Načić",
+      "floor": "VPR",
+      "size": 58,
+      "structure": "2.5",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Gundulićev venac",
+        "Centar",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 750.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78438--20260515-8.avif",
+      "rentOrSale": "r",
+      "caseId": 118414,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        99
+      ],
+      "parkingArray": [],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [],
+      "availableFrom": "2026-05-12T22:00:00Z",
+      "firstPublished": "2026-05-15T12:31:31Z",
+      "pricePerSize": 12.931034,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78462-BR",
+      "propId": 78462,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81863, 20.46318",
+      "street": "Gospodar Jevremova",
+      "floor": "2_4",
+      "size": 100,
+      "structure": "4.5",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Centar",
+        "Širi centar",
+        "Uži centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 1150.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78462-02661-20250515.avif",
+      "rentOrSale": "r",
+      "caseId": 118469,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furInverter",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        10
+      ],
+      "parkingArray": [],
+      "yearOfConstruction": 1,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "basInfDuplex",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-05-13T22:00:00Z",
+      "firstPublished": "2026-05-15T12:24:18Z",
+      "pricePerSize": 11.5,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": false,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r4"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "55047-BR",
+      "propId": 55047,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.82154, 20.45459",
+      "street": "Pjarona de Mondezira",
+      "floor": "2_4",
+      "size": 83,
+      "structure": "3.0",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Centar",
+        "Širi centar",
+        "Uži centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 1450.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_55047_-_0763_-_20230221.jpg",
+      "rentOrSale": "r",
+      "caseId": 118060,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        99
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 1,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [
+        1,
+        2
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-09T22:00:00Z",
+      "firstPublished": "2026-05-15T12:15:52Z",
+      "pricePerSize": 17.46988,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78478-BR",
+      "propId": 78478,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.74584, 20.44911",
+      "street": "Dimitrija Koturovića",
+      "floor": "VPR",
+      "size": 48,
+      "structure": "2.0",
+      "municipality": "Rakovica",
+      "polygons": [
+        "Rakovica",
+        "Miljakovac 1"
+      ],
+      "ptId": 1,
+      "price": 500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78478-04266-20260515.avif",
+      "rentOrSale": "r",
+      "caseId": 118490,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furFridge",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        99
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-14T22:00:00Z",
+      "firstPublished": "2026-05-15T12:11:05Z",
+      "pricePerSize": 10.416667,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78457-BR",
+      "propId": 78457,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.82828, 20.46438",
+      "street": "Dunavski kej",
+      "floor": "2_4",
+      "size": 43,
+      "structure": "1.5",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Dorćol"
+      ],
+      "ptId": 1,
+      "price": 700.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78457-02626-20250515.avif",
+      "rentOrSale": "r",
+      "caseId": 118449,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        3,
+        4
+      ],
+      "yearOfConstruction": 3,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-14T06:35:37Z",
+      "firstPublished": "2026-05-15T11:29:07Z",
+      "pricePerSize": 16.27907,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        3
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78468-BR",
+      "propId": 78468,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.79941, 20.48575",
+      "street": "Starca Vujadina",
+      "floor": "1",
+      "size": 90,
+      "structure": "3.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Crveni krst (Vozarev krst)",
+        "Centar",
+        "Širi centar",
+        "Zvezdara bez Mirijeva"
+      ],
+      "ptId": 1,
+      "price": 850.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78468-03776-20260515.avif",
+      "rentOrSale": "r",
+      "caseId": 118477,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furBed",
+        "furDishWasher",
+        "furFridge",
+        "furPullOutBed",
+        "furStove",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-14T14:39:37Z",
+      "firstPublished": "2026-05-15T11:20:27Z",
+      "pricePerSize": 9.444445,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "47422-BR",
+      "propId": 47422,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81886, 20.45736",
+      "street": "Vuka Karadžića",
+      "floor": "2_4",
+      "size": 54,
+      "structure": "2.0",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Trg Republike",
+        "Centar",
+        "Širi centar",
+        "Uži centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 850.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_47422_-_0989_-_20230725.jpg",
+      "rentOrSale": "r",
+      "caseId": 118491,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furDishWasher",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        3,
+        4
+      ],
+      "otherArray": [],
+      "availableFrom": "2026-06-07T22:00:00Z",
+      "firstPublished": "2026-05-15T11:11:17Z",
+      "pricePerSize": 15.740741,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78377-BR",
+      "propId": 78377,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80619, 20.44963",
+      "street": "Hercegovačka",
+      "floor": "11+",
+      "size": 70,
+      "structure": "2.0",
+      "municipality": "Savski venac",
+      "polygons": [
+        "Savski venac",
+        "Savski amfiteatar",
+        "Beograd na vodi"
+      ],
+      "ptId": 1,
+      "price": 2500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78377-03748-20260515.avif",
+      "rentOrSale": "r",
+      "caseId": 118301,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSecurity",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        1
+      ],
+      "parkingArray": [
+        1
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-10T22:00:00Z",
+      "firstPublished": "2026-05-15T11:05:41Z",
+      "pricePerSize": 35.714287,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "68315-BR",
+      "propId": 68315,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.82822, 20.45659",
+      "street": "Tadeuša Košćuška",
+      "floor": "2_4",
+      "size": 50,
+      "structure": "1.0",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Dorćol"
+      ],
+      "ptId": 1,
+      "price": 900.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_68315_-_0031_-_20241214.jpg",
+      "rentOrSale": "r",
+      "caseId": 116926,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        3
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        3
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-03-30T22:00:00Z",
+      "firstPublished": "2026-05-15T11:00:55Z",
+      "pricePerSize": 18.0,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "77187-BR",
+      "propId": 77187,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80098, 20.45486",
+      "street": "Višegradska",
+      "floor": "2_4",
+      "size": 77,
+      "structure": "3.0",
+      "municipality": "Savski venac",
+      "polygons": [
+        "Savski venac",
+        "Klinički centar"
+      ],
+      "ptId": 1,
+      "price": 900.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_77187-00903-20250301.avif",
+      "rentOrSale": "r",
+      "caseId": 115718,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 2,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furInverter",
+        "furShower",
+        "furStove"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        4,
+        10
+      ],
+      "parkingArray": [
+        3
+      ],
+      "yearOfConstruction": 1,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-02-27T14:34:31Z",
+      "firstPublished": "2026-05-15T10:55:41Z",
+      "pricePerSize": 11.688312,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78474-BR",
+      "propId": 78474,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.78465, 20.47689",
+      "street": "Danijelova",
+      "floor": "5_10",
+      "size": 70,
+      "structure": "3.0",
+      "municipality": "Voždovac",
+      "polygons": [
+        "Voždovac",
+        "Dušanovac"
+      ],
+      "ptId": 1,
+      "price": 900.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78474-205-20260515-7.avif",
+      "rentOrSale": "r",
+      "caseId": 118485,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furBed",
+        "furDishWasher",
+        "furFridge",
+        "furInverter",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        4
+      ],
+      "parkingArray": [
+        1
+      ],
+      "yearOfConstruction": 5,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [],
+      "availableFrom": "2026-05-14T22:00:00Z",
+      "firstPublished": "2026-05-15T09:04:48Z",
+      "pricePerSize": 12.857142,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": false,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "48641-BR",
+      "propId": 48641,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.85867, 20.37212",
+      "street": "Milice Šuvaković",
+      "floor": "2_4",
+      "size": 90,
+      "structure": "3.0",
+      "municipality": "Zemun",
+      "polygons": [
+        "Zemun",
+        "Nova Galenika"
+      ],
+      "ptId": 1,
+      "price": 450.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_48641-02668-20260328.avif",
+      "rentOrSale": "r",
+      "caseId": 116405,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furBed",
+        "furDishWasher",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 2,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpLoggia",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-03-17T07:31:50Z",
+      "firstPublished": "2026-05-15T08:59:24Z",
+      "pricePerSize": 5.0,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "41649-BR",
+      "propId": 41649,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81449, 20.46726",
+      "street": "Svetogorska",
+      "floor": "2_4",
+      "size": 25,
+      "structure": "1.0",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Centar",
+        "Širi centar",
+        "Uži centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 450.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_41649_-_0443_-_20250901.jpg",
+      "rentOrSale": "r",
+      "caseId": 118498,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        10
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 1,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-15T08:38:30Z",
+      "firstPublished": "2026-05-15T08:57:19Z",
+      "pricePerSize": 18.0,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "60550-BR",
+      "propId": 60550,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80729, 20.40527",
+      "street": "Đorđa Stanojevića",
+      "floor": "2_4",
+      "size": 31,
+      "structure": "1.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 67 (Belville)",
+        "Delta City"
+      ],
+      "ptId": 1,
+      "price": 580.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_60550_-_0206_-_20231214.jpg",
+      "rentOrSale": "r",
+      "caseId": 118027,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furFridge",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsRamp",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-03T22:00:00Z",
+      "firstPublished": "2026-05-15T08:49:36Z",
+      "pricePerSize": 18.709677,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78298-BR",
+      "propId": 78298,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.74959, 20.46006",
+      "street": "Vukasovićeva",
+      "floor": "2_4",
+      "size": 28,
+      "structure": "0.5",
+      "municipality": "Rakovica",
+      "polygons": [
+        "Rakovica",
+        "Miljakovac 2",
+        "Kanarevo brdo"
+      ],
+      "ptId": 1,
+      "price": 270.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78298-02816-20260505.avif",
+      "rentOrSale": "r",
+      "caseId": 118073,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furFridge",
+        "furPullOutBed",
+        "furStove",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        3
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [],
+      "availableFrom": "2026-05-05T07:43:18Z",
+      "firstPublished": "2026-05-15T08:37:14Z",
+      "pricePerSize": 9.642858,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": false,
+      "isNoElevatorButLow": false,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "69614-BR",
+      "propId": 69614,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.79216, 20.45351",
+      "street": "Stjepana Filipovića",
+      "floor": "11+",
+      "size": 59,
+      "structure": "2.5",
+      "municipality": "Savski venac",
+      "polygons": [
+        "Savski venac",
+        "Prokop"
+      ],
+      "ptId": 1,
+      "price": 700.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_69614_-_0199_-_20250121.jpg",
+      "rentOrSale": "r",
+      "caseId": 118492,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsRamp",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 2,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2
+      ],
+      "otherArray": [],
+      "availableFrom": "2026-05-14T22:00:00Z",
+      "firstPublished": "2026-05-15T08:01:29Z",
+      "pricePerSize": 11.864407,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "62278-BR",
+      "propId": 62278,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80142, 20.44739",
+      "street": "Beograd na vodi",
+      "floor": "11+",
+      "size": 80,
+      "structure": "3.0",
+      "municipality": "Savski venac",
+      "polygons": [
+        "Savski venac",
+        "Savski amfiteatar",
+        "Beograd na vodi"
+      ],
+      "ptId": 1,
+      "price": 1550.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_62278-03187-20260515.avif",
+      "rentOrSale": "r",
+      "caseId": 118458,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 3,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsRamp",
+        "bldgOptsSecurity",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        1,
+        4
+      ],
+      "parkingArray": [
+        1
+      ],
+      "yearOfConstruction": 5,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [
+        1,
+        2
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-14T09:15:24Z",
+      "firstPublished": "2026-05-15T07:48:19Z",
+      "pricePerSize": 19.375,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        2
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "39313-BR",
+      "propId": 39313,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.82313, 20.40438",
+      "street": "Bulevar Zorana Đinđića",
+      "floor": "2_4",
+      "size": 85,
+      "structure": "3.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 34 (Studentski grad)",
+        "Centralni NBG"
+      ],
+      "ptId": 1,
+      "price": 1200.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_39313_-_7910_-_20200617.jpg",
+      "rentOrSale": "r",
+      "caseId": 118484,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-21T22:00:00Z",
+      "firstPublished": "2026-05-15T07:47:45Z",
+      "pricePerSize": 14.117647,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": true
+    },
+    {
+      "uniqueID": "78390-BR",
+      "propId": 78390,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.8134, 20.46938",
+      "street": "Svetogorska",
+      "floor": "1",
+      "size": 21,
+      "structure": "0.5",
+      "municipality": "Stari grad",
+      "polygons": [
+        "Stari grad",
+        "Centar",
+        "Širi centar",
+        "Uži centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78390-03653-20260513.avif",
+      "rentOrSale": "r",
+      "caseId": 118331,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furCornerSofa",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-11T11:17:15Z",
+      "firstPublished": "2026-05-15T07:47:16Z",
+      "pricePerSize": 23.809525,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "15910-BR",
+      "propId": 15910,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80817, 20.48148",
+      "street": "Vladetina",
+      "floor": "2_4",
+      "size": 26,
+      "structure": "0.5",
+      "municipality": "Palilula",
+      "polygons": [
+        "Palilula",
+        "Stara Palilula",
+        "Centar",
+        "Širi centar",
+        "Palilula - uži deo",
+        "Palilula 2"
+      ],
+      "ptId": 1,
+      "price": 500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_15910_-_4542_-_20160627.jpg",
+      "rentOrSale": "r",
+      "caseId": 118488,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        3,
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-14T22:00:00Z",
+      "firstPublished": "2026-05-15T07:31:22Z",
+      "pricePerSize": 19.23077,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78434-BR",
+      "propId": 78434,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.78137, 20.50299",
+      "street": "Dr Zore Ilić Obradović",
+      "floor": "2_4",
+      "size": 67,
+      "structure": "2.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Konjarnik",
+        "Zvezdara bez Mirijeva"
+      ],
+      "ptId": 1,
+      "price": 550.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78434-02589-20260515.avif",
+      "rentOrSale": "r",
+      "caseId": 118408,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 0,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsRamp"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        3,
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-12T22:00:00Z",
+      "firstPublished": "2026-05-15T06:37:20Z",
+      "pricePerSize": 8.208955,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "71889-BR",
+      "propId": 71889,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.83694, 20.39162",
+      "street": "Marije Bursać",
+      "floor": "2_4",
+      "size": 49,
+      "structure": "1.5",
+      "municipality": "Zemun",
+      "polygons": [
+        "Zemun",
+        "Kalvarija",
+        "Marije Bursać"
+      ],
+      "ptId": 1,
+      "price": 750.0,
+      "coverPhoto": "71889_13.jpg",
+      "rentOrSale": "r",
+      "caseId": 118454,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        1,
+        4
+      ],
+      "parkingArray": [
+        1
+      ],
+      "yearOfConstruction": 5,
+      "joineryArray": [
+        1,
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-21T22:00:00Z",
+      "firstPublished": "2026-05-15T06:36:47Z",
+      "pricePerSize": 15.306123,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "76821-BR",
+      "propId": 76821,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.77213, 20.47779",
+      "street": "Nikšićka",
+      "floor": "1",
+      "size": 56,
+      "structure": "3.0",
+      "municipality": "Voždovac",
+      "polygons": [
+        "Voždovac",
+        "Gornji Voždovac"
+      ],
+      "ptId": 1,
+      "price": 450.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_76821-01606-20260313.avif",
+      "rentOrSale": "r",
+      "caseId": 113927,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 2,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furShower",
+        "furStove",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-02-28T23:00:00Z",
+      "firstPublished": "2026-05-15T06:09:56Z",
+      "pricePerSize": 8.035714,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "26147-BR",
+      "propId": 26147,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.76516, 20.47902",
+      "street": "Mosorska",
+      "floor": "1",
+      "size": 56,
+      "structure": "2.0",
+      "municipality": "Voždovac",
+      "polygons": [
+        "Voždovac",
+        "Gornji Voždovac"
+      ],
+      "ptId": 1,
+      "price": 750.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_26147_-_0044_-_20170530.jpg",
+      "rentOrSale": "r",
+      "caseId": 117171,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        99
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 4,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-04-30T22:00:00Z",
+      "firstPublished": "2026-05-15T06:09:51Z",
+      "pricePerSize": 13.392858,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "46743-BR",
+      "propId": 46743,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80049, 20.4876",
+      "street": "Bulevar kralja Aleksandra",
+      "floor": "1",
+      "size": 65,
+      "structure": "2.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Đeram",
+        "Širi centar",
+        "Zvezdara bez Mirijeva"
+      ],
+      "ptId": 1,
+      "price": 800.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_46743-03880-20260507.avif",
+      "rentOrSale": "r",
+      "caseId": 117978,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 3,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furInverter",
+        "furShower"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        99
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2
+      ],
+      "otherArray": [
+        "adpTerrace",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-05-02T15:38:05Z",
+      "firstPublished": "2026-05-15T06:09:47Z",
+      "pricePerSize": 12.307693,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "77364-BR",
+      "propId": 77364,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80426, 20.4742",
+      "street": "Patrijarha Gavrila",
+      "floor": "2_4",
+      "size": 155,
+      "structure": "4.0",
+      "municipality": "Vračar",
+      "polygons": [
+        "Vračar",
+        "Vukov spomenik",
+        "Centar",
+        "Širi centar",
+        "Palilula - uži deo",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 1800.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_77364-01532-20260311.avif",
+      "rentOrSale": "r",
+      "caseId": 116091,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furDishWasher",
+        "furFridge",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        1,
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [
+        1,
+        2,
+        3
+      ],
+      "otherArray": [],
+      "availableFrom": "2026-03-09T16:32:03Z",
+      "firstPublished": "2026-05-15T06:08:22Z",
+      "pricePerSize": 11.612904,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r3"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "76958-BR",
+      "propId": 76958,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.8115, 20.4182",
+      "street": "Španskih boraca",
+      "floor": "VPR",
+      "size": 44,
+      "structure": "1.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 24",
+        "Centralni NBG"
+      ],
+      "ptId": 1,
+      "price": 700.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_76958-03968-20260508.avif",
+      "rentOrSale": "r",
+      "caseId": 118014,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furFridge",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 3,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpLaundry",
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-03T22:00:00Z",
+      "firstPublished": "2026-05-15T05:21:36Z",
+      "pricePerSize": 15.909091,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "36463-BR",
+      "propId": 36463,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81628, 20.4772",
+      "street": "Bulevar despota Stefana",
+      "floor": "5_10",
+      "size": 86,
+      "structure": "3.0",
+      "municipality": "Palilula",
+      "polygons": [
+        "Palilula",
+        "Botanička bašta",
+        "Centar",
+        "Širi centar",
+        "Palilula - uži deo"
+      ],
+      "ptId": 1,
+      "price": 800.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_36463-03383-20260430.avif",
+      "rentOrSale": "r",
+      "caseId": 117826,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furInverter",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 3,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "otherArray": [
+        "adpTerrace",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-04-26T22:00:00Z",
+      "firstPublished": "2026-05-15T05:19:19Z",
+      "pricePerSize": 9.302325,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78440-BR",
+      "propId": 78440,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80405, 20.40288",
+      "street": "Jurija Gagarina",
+      "floor": "2_4",
+      "size": 57,
+      "structure": "2.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 70a",
+        "Savski blokovi"
+      ],
+      "ptId": 1,
+      "price": 700.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78440-04270-20260514.avif",
+      "rentOrSale": "r",
+      "caseId": 118419,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furStove",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        3,
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        3
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-12T22:00:00Z",
+      "firstPublished": "2026-05-14T16:35:04Z",
+      "pricePerSize": 12.280702,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "39978-BR",
+      "propId": 39978,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80535, 20.46998",
+      "street": "Krunska",
+      "floor": "5_10",
+      "size": 30,
+      "structure": "1.0",
+      "municipality": "Vračar",
+      "polygons": [
+        "Vračar",
+        "Centar",
+        "Širi centar",
+        "Krug dvojke"
+      ],
+      "ptId": 1,
+      "price": 670.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_39978-04229-20260514.avif",
+      "rentOrSale": "r",
+      "caseId": 118333,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-05-11T11:22:44Z",
+      "firstPublished": "2026-05-14T16:34:53Z",
+      "pricePerSize": 22.333334,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78432-BR",
+      "propId": 78432,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.79301, 20.46677",
+      "street": "Rudnička",
+      "floor": "2_4",
+      "size": 41,
+      "structure": "1.5",
+      "municipality": "Vračar",
+      "polygons": [
+        "Vračar",
+        "Neimar",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 700.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78432-03720-20260514.avif",
+      "rentOrSale": "r",
+      "caseId": 118405,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furFridge",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-05-12T22:00:00Z",
+      "firstPublished": "2026-05-14T16:34:36Z",
+      "pricePerSize": 17.073172,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": true
+    },
+    {
+      "uniqueID": "78445-BR",
+      "propId": 78445,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.81436, 20.41749",
+      "street": "Bulevar Arsenija Čarnojevića",
+      "floor": "1",
+      "size": 75,
+      "structure": "3.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 29",
+        "Centralni NBG"
+      ],
+      "ptId": 1,
+      "price": 800.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78445-04249-20260514.avif",
+      "rentOrSale": "r",
+      "caseId": 118427,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 2,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furFridge",
+        "furStove",
+        "furTub"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [
+        1
+      ],
+      "otherArray": [
+        "adpTerrace",
+        "tolBusiness"
+      ],
+      "availableFrom": "2026-05-12T22:00:00Z",
+      "firstPublished": "2026-05-14T16:23:28Z",
+      "pricePerSize": 10.666667,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r2"
+      ],
+      "bathroomArray": [
+        "b1+",
+        "b2+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "63606-BR",
+      "propId": 63606,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80445, 20.40849",
+      "street": "Jurija Gagarina",
+      "floor": "2_4",
+      "size": 68,
+      "structure": "2.0",
+      "municipality": "Novi Beograd",
+      "polygons": [
+        "Novi Beograd",
+        "Blok 67 (Belville)",
+        "Delta City"
+      ],
+      "ptId": 1,
+      "price": 900.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_63606_-_0489_-_20240423.jpg",
+      "rentOrSale": "r",
+      "caseId": 116761,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSecurity",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        4
+      ],
+      "parkingArray": [
+        1
+      ],
+      "yearOfConstruction": 4,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-03-24T23:00:00Z",
+      "firstPublished": "2026-05-14T15:46:25Z",
+      "pricePerSize": 13.235294,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "35877-BR",
+      "propId": 35877,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.79894, 20.48695",
+      "street": "Gajeva",
+      "floor": "2_4",
+      "size": 55,
+      "structure": "2.0",
+      "municipality": "Zvezdara",
+      "polygons": [
+        "Zvezdara",
+        "Crveni krst (Vozarev krst)",
+        "Centar",
+        "Širi centar",
+        "Zvezdara bez Mirijeva"
+      ],
+      "ptId": 1,
+      "price": 800.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_35877_-_6757_-_20190716.jpg",
+      "rentOrSale": "r",
+      "caseId": 115536,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furDishWasher",
+        "furFridge",
+        "furInternet",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom",
+        "bldgOptsSurveillance"
+      ],
+      "heatingArray": [
+        1,
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 5,
+      "joineryArray": [
+        1
+      ],
+      "petsArray": [
+        3,
+        4
+      ],
+      "otherArray": [
+        "adpTerrace"
+      ],
+      "availableFrom": "2026-02-22T23:00:00Z",
+      "firstPublished": "2026-05-14T15:40:12Z",
+      "pricePerSize": 14.545455,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": true,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "68162-BR",
+      "propId": 68162,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.77394, 20.4163",
+      "street": "Nedeljka Čabrinovića",
+      "floor": "VPR",
+      "size": 50,
+      "structure": "2.0",
+      "municipality": "Čukarica",
+      "polygons": [
+        "Čukarica",
+        "Banovo brdo"
+      ],
+      "ptId": 1,
+      "price": 500.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_68162_-_0894_-_20241203.jpg",
+      "rentOrSale": "r",
+      "caseId": 117854,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 2,
+      "furnishingArray": [
+        "furAircon",
+        "furBed",
+        "furCable",
+        "furCornerSofa",
+        "furFridge",
+        "furInternet",
+        "furStove",
+        "furTV",
+        "furTub",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        4,
+        4,
+        10
+      ],
+      "parkingArray": [
+        4
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-04-30T22:00:00Z",
+      "firstPublished": "2026-05-14T15:25:08Z",
+      "pricePerSize": 10.0,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": true,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [
+        "r1"
+      ],
+      "bathroomArray": [
+        "b1+"
+      ],
+      "renovationArray": [],
+      "minLeaseArray": [
+        6
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5_10"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    },
+    {
+      "uniqueID": "78148-BR",
+      "propId": 78148,
+      "statusId": 51,
+      "cityId": 1,
+      "location": "44.80124, 20.47985",
+      "street": "Tomaša Ježa",
+      "floor": "5_10",
+      "size": 45,
+      "structure": "2.0",
+      "municipality": "Vračar",
+      "polygons": [
+        "Vračar",
+        "Kalenić pijaca",
+        "Centar",
+        "Širi centar"
+      ],
+      "ptId": 1,
+      "price": 550.0,
+      "coverPhoto": "cityexpert.rs_-_nekretnina_id_-_78148-02313-20250426.avif",
+      "rentOrSale": "r",
+      "caseId": 117722,
+      "caseType": "BR",
+      "underConstruction": false,
+      "filed": 0,
+      "furnished": 1,
+      "ceiling": 1,
+      "furnishingArray": [
+        "furAircon",
+        "furCable",
+        "furFridge",
+        "furInternet",
+        "furPullOutBed",
+        "furShower",
+        "furStove",
+        "furTV",
+        "furWasher"
+      ],
+      "bldgOptsArray": [
+        "bldgOptsElevator",
+        "bldgOptsIntercom"
+      ],
+      "heatingArray": [
+        1
+      ],
+      "parkingArray": [
+        5
+      ],
+      "yearOfConstruction": 6,
+      "joineryArray": [
+        2
+      ],
+      "petsArray": [],
+      "otherArray": [],
+      "availableFrom": "2026-04-21T22:00:00Z",
+      "firstPublished": "2026-05-14T15:12:00Z",
+      "pricePerSize": 12.222222,
+      "showPdv": null,
+      "oldPrice": null,
+      "isSalonac": false,
+      "isNotLastFloor": false,
+      "isNoElevatorButLow": true,
+      "bedroomsArray": [],
+      "bathroomArray": [],
+      "renovationArray": [
+        1
+      ],
+      "minLeaseArray": [
+        12
+      ],
+      "newDevelopment": false,
+      "distanceCenterArray": [
+        "5"
+      ],
+      "isFeatured": false,
+      "isLux": false,
+      "newImagePipeline": true,
+      "isRecommended": false
+    }
+  ],
+  "facetItems": {
+    "bldgOptsArray": [
+      {
+        "key": "bldgOptsIntercom",
+        "value": 746
+      },
+      {
+        "key": "bldgOptsElevator",
+        "value": 527
+      },
+      {
+        "key": "bldgOptsSurveillance",
+        "value": 449
+      },
+      {
+        "key": "bldgOptsRamp",
+        "value": 80
+      },
+      {
+        "key": "bldgOptsSecurity",
+        "value": 78
+      },
+      {
+        "key": "furAlarm",
+        "value": 27
+      }
+    ],
+    "ceiling": [
+      {
+        "key": "1",
+        "value": 454
+      },
+      {
+        "key": "2",
+        "value": 363
+      },
+      {
+        "key": "0",
+        "value": 7
+      }
+    ],
+    "floor": [
+      {
+        "key": "2_4",
+        "value": 368
+      },
+      {
+        "key": "1",
+        "value": 151
+      },
+      {
+        "key": "5_10",
+        "value": 145
+      },
+      {
+        "key": "PR",
+        "value": 71
+      },
+      {
+        "key": "VPR",
+        "value": 51
+      },
+      {
+        "key": "11+",
+        "value": 20
+      },
+      {
+        "key": "SU",
+        "value": 8
+      },
+      {
+        "key": "PTK",
+        "value": 6
+      },
+      {
+        "key": "NPR",
+        "value": 4
+      }
+    ],
+    "furnished": [
+      {
+        "key": "1",
+        "value": 710
+      },
+      {
+        "key": "2",
+        "value": 71
+      },
+      {
+        "key": "3",
+        "value": 43
+      }
+    ],
+    "furnishingArray": [
+      {
+        "key": "furStove",
+        "value": 741
+      },
+      {
+        "key": "furFridge",
+        "value": 728
+      },
+      {
+        "key": "furWasher",
+        "value": 705
+      },
+      {
+        "key": "furAircon",
+        "value": 647
+      },
+      {
+        "key": "furTV",
+        "value": 609
+      },
+      {
+        "key": "furBed",
+        "value": 601
+      },
+      {
+        "key": "furShower",
+        "value": 588
+      },
+      {
+        "key": "furCable",
+        "value": 471
+      },
+      {
+        "key": "furInternet",
+        "value": 460
+      },
+      {
+        "key": "furDishWasher",
+        "value": 386
+      },
+      {
+        "key": "furTub",
+        "value": 263
+      },
+      {
+        "key": "furPullOutBed",
+        "value": 161
+      },
+      {
+        "key": "furCornerSofa",
+        "value": 132
+      },
+      {
+        "key": "furInverter",
+        "value": 67
+      }
+    ],
+    "heatingArray": [
+      {
+        "key": "1",
+        "value": 527
+      },
+      {
+        "key": "4",
+        "value": 378
+      },
+      {
+        "key": "99",
+        "value": 132
+      },
+      {
+        "key": "10",
+        "value": 39
+      },
+      {
+        "key": "21",
+        "value": 34
+      },
+      {
+        "key": "26",
+        "value": 18
+      }
+    ],
+    "joineryArray": [
+      {
+        "key": "2",
+        "value": 475
+      },
+      {
+        "key": "3",
+        "value": 224
+      },
+      {
+        "key": "1",
+        "value": 170
+      }
+    ],
+    "otherArray": [
+      {
+        "key": "adpTerrace",
+        "value": 429
+      },
+      {
+        "key": "tolBusiness",
+        "value": 123
+      },
+      {
+        "key": "adpGarden",
+        "value": 26
+      },
+      {
+        "key": "basInfDuplex",
+        "value": 24
+      },
+      {
+        "key": "adpLoggia",
+        "value": 21
+      },
+      {
+        "key": "furJacuzzi",
+        "value": 21
+      },
+      {
+        "key": "adpLaundry",
+        "value": 7
+      },
+      {
+        "key": "basInfPenthouse",
+        "value": 5
+      },
+      {
+        "key": "adpGym",
+        "value": 3
+      },
+      {
+        "key": "adpSwimmingPool",
+        "value": 3
+      },
+      {
+        "key": "noDeposit",
+        "value": 1
+      }
+    ],
+    "parkingArray": [
+      {
+        "key": "5",
+        "value": 289
+      },
+      {
+        "key": "4",
+        "value": 260
+      },
+      {
+        "key": "3",
+        "value": 173
+      },
+      {
+        "key": "1",
+        "value": 168
+      },
+      {
+        "key": "2",
+        "value": 85
+      }
+    ],
+    "petsArray": [
+      {
+        "key": "1",
+        "value": 253
+      },
+      {
+        "key": "3",
+        "value": 229
+      },
+      {
+        "key": "2",
+        "value": 227
+      },
+      {
+        "key": "4",
+        "value": 210
+      },
+      {
+        "key": "5",
+        "value": 169
+      }
+    ],
+    "polygons": [
+      {
+        "key": "Širi centar",
+        "value": 425
+      },
+      {
+        "key": "Centar",
+        "value": 288
+      },
+      {
+        "key": "Vračar",
+        "value": 138
+      },
+      {
+        "key": "Stari grad",
+        "value": 128
+      },
+      {
+        "key": "Krug dvojke",
+        "value": 127
+      },
+      {
+        "key": "Zvezdara",
+        "value": 118
+      },
+      {
+        "key": "Savski venac",
+        "value": 102
+      },
+      {
+        "key": "Novi Beograd",
+        "value": 93
+      },
+      {
+        "key": "Uži centar",
+        "value": 88
+      },
+      {
+        "key": "Voždovac",
+        "value": 82
+      },
+      {
+        "key": "Zvezdara bez Mirijeva",
+        "value": 81
+      },
+      {
+        "key": "Palilula",
+        "value": 75
+      },
+      {
+        "key": "Dorćol",
+        "value": 50
+      },
+      {
+        "key": "Palilula - uži deo",
+        "value": 47
+      },
+      {
+        "key": "Čukarica",
+        "value": 44
+      },
+      {
+        "key": "Savski amfiteatar",
+        "value": 42
+      },
+      {
+        "key": "Centralni NBG",
+        "value": 34
+      },
+      {
+        "key": "Kalenić pijaca",
+        "value": 34
+      },
+      {
+        "key": "Palilula 2",
+        "value": 32
+      },
+      {
+        "key": "Stara Palilula",
+        "value": 32
+      },
+      {
+        "key": "Neimar",
+        "value": 31
+      },
+      {
+        "key": "Beograd na vodi",
+        "value": 25
+      },
+      {
+        "key": "Banovo brdo",
+        "value": 23
+      },
+      {
+        "key": "Dedinje",
+        "value": 23
+      },
+      {
+        "key": "Mirijevo",
+        "value": 23
+      },
+      {
+        "key": "Zemun",
+        "value": 22
+      },
+      {
+        "key": "Zemunski kej - NBG",
+        "value": 21
+      },
+      {
+        "key": "Dušanovac",
+        "value": 20
+      },
+      {
+        "key": "Južni bulevar",
+        "value": 19
+      },
+      {
+        "key": "Lekino brdo",
+        "value": 19
+      },
+      {
+        "key": "Rakovica",
+        "value": 17
+      },
+      {
+        "key": "Crveni krst (Vozarev krst)",
+        "value": 16
+      },
+      {
+        "key": "Gornji Voždovac",
+        "value": 16
+      },
+      {
+        "key": "Donji Voždovac",
+        "value": 15
+      },
+      {
+        "key": "Slavija",
+        "value": 15
+      },
+      {
+        "key": "Terazije",
+        "value": 14
+      },
+      {
+        "key": "Višnjička banja",
+        "value": 14
+      },
+      {
+        "key": "Hram Svetog Save",
+        "value": 13
+      },
+      {
+        "key": "Čubura",
+        "value": 13
+      },
+      {
+        "key": "Cvetni trg / park Manjež",
+        "value": 12
+      },
+      {
+        "key": "Vukov spomenik",
+        "value": 12
+      },
+      {
+        "key": "Zemunski kej",
+        "value": 12
+      },
+      {
+        "key": "Blokovi (61-64 i 72)",
+        "value": 11
+      },
+      {
+        "key": "Delta City",
+        "value": 11
+      },
+      {
+        "key": "Karaburma",
+        "value": 11
+      },
+      {
+        "key": "Konjarnik",
+        "value": 11
+      },
+      {
+        "key": "Savamala",
+        "value": 11
+      },
+      {
+        "key": "Mirijevo I",
+        "value": 10
+      },
+      {
+        "key": "Sunnyville",
+        "value": 10
+      },
+      {
+        "key": "Zvezdara 4",
+        "value": 10
+      },
+      {
+        "key": "Autokomanda",
+        "value": 9
+      },
+      {
+        "key": "Bulbulder",
+        "value": 9
+      },
+      {
+        "key": "Lion",
+        "value": 9
+      },
+      {
+        "key": "Blok 65",
+        "value": 8
+      },
+      {
+        "key": "Botanička bašta",
+        "value": 8
+      },
+      {
+        "key": "Učiteljsko naselje",
+        "value": 8
+      },
+      {
+        "key": "Braće Jerković",
+        "value": 7
+      },
+      {
+        "key": "Hadžipopovac",
+        "value": 7
+      },
+      {
+        "key": "Savski blokovi",
+        "value": 7
+      },
+      {
+        "key": "Banjica",
+        "value": 6
+      },
+      {
+        "key": "Blok 67 (Belville)",
+        "value": 6
+      },
+      {
+        "key": "Gradska bolnica",
+        "value": 6
+      },
+      {
+        "key": "Gundulićev venac",
+        "value": 6
+      },
+      {
+        "key": "Krnjača",
+        "value": 6
+      },
+      {
+        "key": "Mirijevo II",
+        "value": 6
+      },
+      {
+        "key": "Obilićev venac",
+        "value": 6
+      },
+      {
+        "key": "Senjak",
+        "value": 6
+      },
+      {
+        "key": "Đeram",
+        "value": 6
+      },
+      {
+        "key": "Bežanija",
+        "value": 5
+      },
+      {
+        "key": "Bežanijska kosa",
+        "value": 5
+      },
+      {
+        "key": "Blok 30",
+        "value": 5
+      },
+      {
+        "key": "Blok 63",
+        "value": 5
+      },
+      {
+        "key": "Blok 67a (A Blok)",
+        "value": 5
+      },
+      {
+        "key": "Cerak",
+        "value": 5
+      },
+      {
+        "key": "Paviljoni",
+        "value": 5
+      },
+      {
+        "key": "Tašmajdan",
+        "value": 5
+      },
+      {
+        "key": "Trošarina",
+        "value": 5
+      },
+      {
+        "key": "Zeleno brdo",
+        "value": 5
+      },
+      {
+        "key": "Žarkovo",
+        "value": 5
+      },
+      {
+        "key": "Bele Vode",
+        "value": 4
+      },
+      {
+        "key": "Blok 11c (Stari Merkator)",
+        "value": 4
+      },
+      {
+        "key": "Blok 21",
+        "value": 4
+      },
+      {
+        "key": "Blok 23",
+        "value": 4
+      },
+      {
+        "key": "Blok 28",
+        "value": 4
+      },
+      {
+        "key": "Bogoslovija",
+        "value": 4
+      },
+      {
+        "key": "Cvetanova ćuprija",
+        "value": 4
+      },
+      {
+        "key": "Hotel Jugoslavija",
+        "value": 4
+      },
+      {
+        "key": "Klinički centar",
+        "value": 4
+      },
+      {
+        "key": "Kopitareva Gradina",
+        "value": 4
+      },
+      {
+        "key": "Kumodraž",
+        "value": 4
+      },
+      {
+        "key": "Ledine",
+        "value": 4
+      },
+      {
+        "key": "Miljakovac 1",
+        "value": 4
+      },
+      {
+        "key": "Mirijevo III",
+        "value": 4
+      },
+      {
+        "key": "Novi Dorćol",
+        "value": 4
+      },
+      {
+        "key": "Olimp",
+        "value": 4
+      },
+      {
+        "key": "Padina",
+        "value": 4
+      },
+      {
+        "key": "Severni Bulevar",
+        "value": 4
+      },
+      {
+        "key": "Surčin",
+        "value": 4
+      },
+      {
+        "key": "Šumice",
+        "value": 4
+      },
+      {
+        "key": "Blok 1 (Fontana)",
+        "value": 3
+      },
+      {
+        "key": "Blok 11b",
+        "value": 3
+      },
+      {
+        "key": "Blok 29",
+        "value": 3
+      },
+      {
+        "key": "Blok 61",
+        "value": 3
+      },
+      {
+        "key": "Blok 64",
+        "value": 3
+      },
+      {
+        "key": "Blok 70a",
+        "value": 3
+      },
+      {
+        "key": "Blok 7a",
+        "value": 3
+      },
+      {
+        "key": "Blok 9a",
+        "value": 3
+      },
+      {
+        "key": "Denkova bašta",
+        "value": 3
+      },
+      {
+        "key": "Filmski grad",
+        "value": 3
+      },
+      {
+        "key": "Jajinci",
+        "value": 3
+      },
+      {
+        "key": "Kneza Miloša Residence",
+        "value": 3
+      },
+      {
+        "key": "Košutnjak",
+        "value": 3
+      },
+      {
+        "key": "Medaković",
+        "value": 3
+      },
+      {
+        "key": "Naselje Sava Kovačević",
+        "value": 3
+      },
+      {
+        "key": "Opština Novi Beograd",
+        "value": 3
+      },
+      {
+        "key": "Profesorska kolonija",
+        "value": 3
+      },
+      {
+        "key": "Stara Rakovica",
+        "value": 3
+      },
+      {
+        "key": "Vidikovac",
+        "value": 3
+      },
+      {
+        "key": "Voždove kapije",
+        "value": 3
+      },
+      {
+        "key": "Čukarička padina",
+        "value": 3
+      },
+      {
+        "key": "Altina",
+        "value": 2
+      },
+      {
+        "key": "Blok 22",
+        "value": 2
+      },
+      {
+        "key": "Blok 38",
+        "value": 2
+      },
+      {
+        "key": "Blok 44 (Piramida)",
+        "value": 2
+      },
+      {
+        "key": "Borča",
+        "value": 2
+      },
+      {
+        "key": "Cvetkova pijaca",
+        "value": 2
+      },
+      {
+        "key": "Donji grad (Zemun)",
+        "value": 2
+      },
+      {
+        "key": "Gornji grad",
+        "value": 2
+      },
+      {
+        "key": "Kalvarija",
+        "value": 2
+      },
+      {
+        "key": "Kanarevo brdo",
+        "value": 2
+      },
+      {
+        "key": "Kosančićev venac",
+        "value": 2
+      },
+      {
+        "key": "Kotež",
+        "value": 2
+      },
+      {
+        "key": "Mali Mokri Lug",
+        "value": 2
+      },
+      {
+        "key": "Marije Bursać",
+        "value": 2
+      },
+      {
+        "key": "Mirijevo IV",
+        "value": 2
+      },
+      {
+        "key": "Naselje Veljko Vlahović",
+        "value": 2
+      },
+      {
+        "key": "Nova Galenika",
+        "value": 2
+      },
+      {
+        "key": "Prokop",
+        "value": 2
+      },
+      {
+        "key": "Trg Republike",
+        "value": 2
+      },
+      {
+        "key": "Vojislava Ilića",
+        "value": 2
+      },
+      {
+        "key": "Blok 11a",
+        "value": 1
+      },
+      {
+        "key": "Blok 19",
+        "value": 1
+      },
+      {
+        "key": "Blok 19a",
+        "value": 1
+      },
+      {
+        "key": "Blok 2",
+        "value": 1
+      },
+      {
+        "key": "Blok 24",
+        "value": 1
+      },
+      {
+        "key": "Blok 3",
+        "value": 1
+      },
+      {
+        "key": "Blok 32",
+        "value": 1
+      },
+      {
+        "key": "Blok 34 (Studentski grad)",
+        "value": 1
+      },
+      {
+        "key": "Blok 4",
+        "value": 1
+      },
+      {
+        "key": "Blok 45",
+        "value": 1
+      },
+      {
+        "key": "Blok 49",
+        "value": 1
+      },
+      {
+        "key": "Blok 60",
+        "value": 1
+      },
+      {
+        "key": "Blok 68",
+        "value": 1
+      },
+      {
+        "key": "Blok 70",
+        "value": 1
+      },
+      {
+        "key": "Blok 9b (Retenzija)",
+        "value": 1
+      },
+      {
+        "key": "Central Garden",
+        "value": 1
+      },
+      {
+        "key": "Grocka",
+        "value": 1
+      },
+      {
+        "key": "Julino brdo",
+        "value": 1
+      },
+      {
+        "key": "K-District",
+        "value": 1
+      },
+      {
+        "key": "Kaluđerica",
+        "value": 1
+      },
+      {
+        "key": "Kluz",
+        "value": 1
+      },
+      {
+        "key": "Kneževac",
+        "value": 1
+      },
+      {
+        "key": "Miljakovac 2",
+        "value": 1
+      },
+      {
+        "key": "Miljakovac 3",
+        "value": 1
+      },
+      {
+        "key": "Novi grad (Zemun)",
+        "value": 1
+      },
+      {
+        "key": "Radiofar",
+        "value": 1
+      },
+      {
+        "key": "Radoje Dakić",
+        "value": 1
+      },
+      {
+        "key": "Resnik",
+        "value": 1
+      },
+      {
+        "key": "Skojevsko naselje",
+        "value": 1
+      },
+      {
+        "key": "Skyline",
+        "value": 1
+      },
+      {
+        "key": "Stepa Stepanović",
+        "value": 1
+      },
+      {
+        "key": "Sutjeska",
+        "value": 1
+      },
+      {
+        "key": "Topčider",
+        "value": 1
+      },
+      {
+        "key": "Višnjica",
+        "value": 1
+      },
+      {
+        "key": "West 65",
+        "value": 1
+      },
+      {
+        "key": "Zemun polje",
+        "value": 1
+      },
+      {
+        "key": "Ćukovac",
+        "value": 1
+      },
+      {
+        "key": "Železnik",
+        "value": 1
+      }
+    ],
+    "ptId": [
+      {
+        "key": "1",
+        "value": 824
+      },
+      {
+        "key": "3",
+        "value": 210
+      },
+      {
+        "key": "4",
+        "value": 67
+      },
+      {
+        "key": "5",
+        "value": 54
+      },
+      {
+        "key": "2",
+        "value": 47
+      }
+    ],
+    "structure": [
+      {
+        "key": "2.0",
+        "value": 263
+      },
+      {
+        "key": "3.0",
+        "value": 165
+      },
+      {
+        "key": "1.5",
+        "value": 85
+      },
+      {
+        "key": "2.5",
+        "value": 72
+      },
+      {
+        "key": "4.0",
+        "value": 71
+      },
+      {
+        "key": "1.0",
+        "value": 67
+      },
+      {
+        "key": "0.5",
+        "value": 49
+      },
+      {
+        "key": "5+",
+        "value": 26
+      },
+      {
+        "key": "3.5",
+        "value": 22
+      },
+      {
+        "key": "4.5",
+        "value": 4
+      }
+    ],
+    "yearOfConstruction": [
+      {
+        "key": "6",
+        "value": 490
+      },
+      {
+        "key": "5",
+        "value": 109
+      },
+      {
+        "key": "4",
+        "value": 82
+      },
+      {
+        "key": "2",
+        "value": 52
+      },
+      {
+        "key": "1",
+        "value": 46
+      },
+      {
+        "key": "3",
+        "value": 45
+      }
+    ],
+    "propId": [
+      {
+        "key": "10216",
+        "value": 1
+      },
+      {
+        "key": "10365",
+        "value": 1
+      },
+      {
+        "key": "10417",
+        "value": 1
+      },
+      {
+        "key": "10534",
+        "value": 1
+      },
+      {
+        "key": "10598",
+        "value": 1
+      },
+      {
+        "key": "10829",
+        "value": 1
+      },
+      {
+        "key": "10853",
+        "value": 1
+      },
+      {
+        "key": "10912",
+        "value": 1
+      },
+      {
+        "key": "10944",
+        "value": 1
+      },
+      {
+        "key": "11219",
+        "value": 1
+      },
+      {
+        "key": "11312",
+        "value": 1
+      },
+      {
+        "key": "11474",
+        "value": 1
+      },
+      {
+        "key": "11586",
+        "value": 1
+      },
+      {
+        "key": "11718",
+        "value": 1
+      },
+      {
+        "key": "11930",
+        "value": 1
+      },
+      {
+        "key": "12448",
+        "value": 1
+      },
+      {
+        "key": "12577",
+        "value": 1
+      },
+      {
+        "key": "12766",
+        "value": 1
+      },
+      {
+        "key": "12962",
+        "value": 1
+      },
+      {
+        "key": "13369",
+        "value": 1
+      },
+      {
+        "key": "13615",
+        "value": 1
+      },
+      {
+        "key": "14826",
+        "value": 1
+      },
+      {
+        "key": "14900",
+        "value": 1
+      },
+      {
+        "key": "15332",
+        "value": 1
+      },
+      {
+        "key": "15343",
+        "value": 1
+      },
+      {
+        "key": "15387",
+        "value": 1
+      },
+      {
+        "key": "15555",
+        "value": 1
+      },
+      {
+        "key": "15583",
+        "value": 1
+      },
+      {
+        "key": "15910",
+        "value": 1
+      },
+      {
+        "key": "15987",
+        "value": 1
+      },
+      {
+        "key": "16064",
+        "value": 1
+      },
+      {
+        "key": "16091",
+        "value": 1
+      },
+      {
+        "key": "16178",
+        "value": 1
+      },
+      {
+        "key": "16482",
+        "value": 1
+      },
+      {
+        "key": "16630",
+        "value": 1
+      },
+      {
+        "key": "16680",
+        "value": 1
+      },
+      {
+        "key": "16922",
+        "value": 1
+      },
+      {
+        "key": "16999",
+        "value": 1
+      },
+      {
+        "key": "17232",
+        "value": 1
+      },
+      {
+        "key": "17660",
+        "value": 1
+      },
+      {
+        "key": "17701",
+        "value": 1
+      },
+      {
+        "key": "18015",
+        "value": 1
+      },
+      {
+        "key": "18127",
+        "value": 1
+      },
+      {
+        "key": "18152",
+        "value": 1
+      },
+      {
+        "key": "18169",
+        "value": 1
+      },
+      {
+        "key": "18244",
+        "value": 1
+      },
+      {
+        "key": "18558",
+        "value": 1
+      },
+      {
+        "key": "18757",
+        "value": 1
+      },
+      {
+        "key": "21408",
+        "value": 1
+      },
+      {
+        "key": "21601",
+        "value": 1
+      },
+      {
+        "key": "21627",
+        "value": 1
+      },
+      {
+        "key": "21656",
+        "value": 1
+      },
+      {
+        "key": "21683",
+        "value": 1
+      },
+      {
+        "key": "22940",
+        "value": 1
+      },
+      {
+        "key": "23020",
+        "value": 1
+      },
+      {
+        "key": "23341",
+        "value": 1
+      },
+      {
+        "key": "23378",
+        "value": 1
+      },
+      {
+        "key": "23474",
+        "value": 1
+      },
+      {
+        "key": "23478",
+        "value": 1
+      },
+      {
+        "key": "23999",
+        "value": 1
+      },
+      {
+        "key": "24131",
+        "value": 1
+      },
+      {
+        "key": "25635",
+        "value": 1
+      },
+      {
+        "key": "25645",
+        "value": 1
+      },
+      {
+        "key": "25646",
+        "value": 1
+      },
+      {
+        "key": "25869",
+        "value": 1
+      },
+      {
+        "key": "25987",
+        "value": 1
+      },
+      {
+        "key": "26062",
+        "value": 1
+      },
+      {
+        "key": "26095",
+        "value": 1
+      },
+      {
+        "key": "26147",
+        "value": 1
+      },
+      {
+        "key": "26531",
+        "value": 1
+      },
+      {
+        "key": "26641",
+        "value": 1
+      },
+      {
+        "key": "27863",
+        "value": 1
+      },
+      {
+        "key": "27872",
+        "value": 1
+      },
+      {
+        "key": "28037",
+        "value": 1
+      },
+      {
+        "key": "28152",
+        "value": 1
+      },
+      {
+        "key": "28177",
+        "value": 1
+      },
+      {
+        "key": "28189",
+        "value": 1
+      },
+      {
+        "key": "28605",
+        "value": 1
+      },
+      {
+        "key": "28636",
+        "value": 1
+      },
+      {
+        "key": "28706",
+        "value": 1
+      },
+      {
+        "key": "28784",
+        "value": 1
+      },
+      {
+        "key": "29023",
+        "value": 1
+      },
+      {
+        "key": "29183",
+        "value": 1
+      },
+      {
+        "key": "29510",
+        "value": 1
+      },
+      {
+        "key": "29523",
+        "value": 1
+      },
+      {
+        "key": "31063",
+        "value": 1
+      },
+      {
+        "key": "31135",
+        "value": 1
+      },
+      {
+        "key": "31195",
+        "value": 1
+      },
+      {
+        "key": "31445",
+        "value": 1
+      },
+      {
+        "key": "31446",
+        "value": 1
+      },
+      {
+        "key": "31684",
+        "value": 1
+      },
+      {
+        "key": "31749",
+        "value": 1
+      },
+      {
+        "key": "31763",
+        "value": 1
+      },
+      {
+        "key": "31952",
+        "value": 1
+      },
+      {
+        "key": "31968",
+        "value": 1
+      },
+      {
+        "key": "32205",
+        "value": 1
+      },
+      {
+        "key": "32225",
+        "value": 1
+      },
+      {
+        "key": "32452",
+        "value": 1
+      },
+      {
+        "key": "32552",
+        "value": 1
+      },
+      {
+        "key": "32595",
+        "value": 1
+      },
+      {
+        "key": "32970",
+        "value": 1
+      },
+      {
+        "key": "33222",
+        "value": 1
+      },
+      {
+        "key": "33276",
+        "value": 1
+      },
+      {
+        "key": "33319",
+        "value": 1
+      },
+      {
+        "key": "33368",
+        "value": 1
+      },
+      {
+        "key": "33399",
+        "value": 1
+      },
+      {
+        "key": "33760",
+        "value": 1
+      },
+      {
+        "key": "33832",
+        "value": 1
+      },
+      {
+        "key": "33853",
+        "value": 1
+      },
+      {
+        "key": "34090",
+        "value": 1
+      },
+      {
+        "key": "34170",
+        "value": 1
+      },
+      {
+        "key": "34380",
+        "value": 1
+      },
+      {
+        "key": "34538",
+        "value": 1
+      },
+      {
+        "key": "34656",
+        "value": 1
+      },
+      {
+        "key": "34936",
+        "value": 1
+      },
+      {
+        "key": "35107",
+        "value": 1
+      },
+      {
+        "key": "35127",
+        "value": 1
+      },
+      {
+        "key": "35557",
+        "value": 1
+      },
+      {
+        "key": "35590",
+        "value": 1
+      },
+      {
+        "key": "35678",
+        "value": 1
+      },
+      {
+        "key": "35730",
+        "value": 1
+      },
+      {
+        "key": "35852",
+        "value": 1
+      },
+      {
+        "key": "35877",
+        "value": 1
+      },
+      {
+        "key": "35879",
+        "value": 1
+      },
+      {
+        "key": "35960",
+        "value": 1
+      },
+      {
+        "key": "36012",
+        "value": 1
+      },
+      {
+        "key": "36055",
+        "value": 1
+      },
+      {
+        "key": "36405",
+        "value": 1
+      },
+      {
+        "key": "36419",
+        "value": 1
+      },
+      {
+        "key": "36426",
+        "value": 1
+      },
+      {
+        "key": "36463",
+        "value": 1
+      },
+      {
+        "key": "36494",
+        "value": 1
+      },
+      {
+        "key": "36531",
+        "value": 1
+      },
+      {
+        "key": "36562",
+        "value": 1
+      },
+      {
+        "key": "36602",
+        "value": 1
+      },
+      {
+        "key": "36750",
+        "value": 1
+      },
+      {
+        "key": "36997",
+        "value": 1
+      },
+      {
+        "key": "37000",
+        "value": 1
+      },
+      {
+        "key": "37258",
+        "value": 1
+      },
+      {
+        "key": "37340",
+        "value": 1
+      },
+      {
+        "key": "37359",
+        "value": 1
+      },
+      {
+        "key": "37392",
+        "value": 1
+      },
+      {
+        "key": "37417",
+        "value": 1
+      },
+      {
+        "key": "37647",
+        "value": 1
+      },
+      {
+        "key": "37948",
+        "value": 1
+      },
+      {
+        "key": "37994",
+        "value": 1
+      },
+      {
+        "key": "38100",
+        "value": 1
+      },
+      {
+        "key": "38329",
+        "value": 1
+      },
+      {
+        "key": "38570",
+        "value": 1
+      },
+      {
+        "key": "38911",
+        "value": 1
+      },
+      {
+        "key": "38932",
+        "value": 1
+      },
+      {
+        "key": "38948",
+        "value": 1
+      },
+      {
+        "key": "39313",
+        "value": 1
+      },
+      {
+        "key": "39367",
+        "value": 1
+      },
+      {
+        "key": "39477",
+        "value": 1
+      },
+      {
+        "key": "39631",
+        "value": 1
+      },
+      {
+        "key": "39700",
+        "value": 1
+      },
+      {
+        "key": "39776",
+        "value": 1
+      },
+      {
+        "key": "39978",
+        "value": 1
+      },
+      {
+        "key": "40127",
+        "value": 1
+      },
+      {
+        "key": "40202",
+        "value": 1
+      },
+      {
+        "key": "40272",
+        "value": 1
+      },
+      {
+        "key": "40298",
+        "value": 1
+      },
+      {
+        "key": "40449",
+        "value": 1
+      },
+      {
+        "key": "40521",
+        "value": 1
+      },
+      {
+        "key": "40680",
+        "value": 1
+      },
+      {
+        "key": "40732",
+        "value": 1
+      },
+      {
+        "key": "40783",
+        "value": 1
+      },
+      {
+        "key": "40861",
+        "value": 1
+      },
+      {
+        "key": "40864",
+        "value": 1
+      },
+      {
+        "key": "41146",
+        "value": 1
+      },
+      {
+        "key": "41272",
+        "value": 1
+      },
+      {
+        "key": "41288",
+        "value": 1
+      },
+      {
+        "key": "41350",
+        "value": 1
+      },
+      {
+        "key": "41364",
+        "value": 1
+      },
+      {
+        "key": "41548",
+        "value": 1
+      },
+      {
+        "key": "41649",
+        "value": 1
+      },
+      {
+        "key": "41662",
+        "value": 1
+      },
+      {
+        "key": "41677",
+        "value": 1
+      },
+      {
+        "key": "41698",
+        "value": 1
+      },
+      {
+        "key": "41714",
+        "value": 1
+      },
+      {
+        "key": "41862",
+        "value": 1
+      },
+      {
+        "key": "42388",
+        "value": 1
+      },
+      {
+        "key": "42537",
+        "value": 1
+      },
+      {
+        "key": "42629",
+        "value": 1
+      },
+      {
+        "key": "42663",
+        "value": 1
+      },
+      {
+        "key": "42701",
+        "value": 1
+      },
+      {
+        "key": "42721",
+        "value": 1
+      },
+      {
+        "key": "42755",
+        "value": 1
+      },
+      {
+        "key": "42860",
+        "value": 1
+      },
+      {
+        "key": "43068",
+        "value": 1
+      },
+      {
+        "key": "43119",
+        "value": 1
+      },
+      {
+        "key": "43175",
+        "value": 1
+      },
+      {
+        "key": "43231",
+        "value": 1
+      },
+      {
+        "key": "43454",
+        "value": 1
+      },
+      {
+        "key": "43482",
+        "value": 1
+      },
+      {
+        "key": "43569",
+        "value": 1
+      },
+      {
+        "key": "43654",
+        "value": 1
+      },
+      {
+        "key": "43745",
+        "value": 1
+      },
+      {
+        "key": "43789",
+        "value": 1
+      },
+      {
+        "key": "43897",
+        "value": 1
+      },
+      {
+        "key": "44049",
+        "value": 1
+      },
+      {
+        "key": "44089",
+        "value": 1
+      },
+      {
+        "key": "44099",
+        "value": 1
+      },
+      {
+        "key": "44345",
+        "value": 1
+      },
+      {
+        "key": "44363",
+        "value": 1
+      },
+      {
+        "key": "44478",
+        "value": 1
+      },
+      {
+        "key": "44491",
+        "value": 1
+      },
+      {
+        "key": "44546",
+        "value": 1
+      },
+      {
+        "key": "44964",
+        "value": 1
+      },
+      {
+        "key": "45029",
+        "value": 1
+      },
+      {
+        "key": "45095",
+        "value": 1
+      },
+      {
+        "key": "45152",
+        "value": 1
+      },
+      {
+        "key": "45610",
+        "value": 1
+      },
+      {
+        "key": "45861",
+        "value": 1
+      },
+      {
+        "key": "45882",
+        "value": 1
+      },
+      {
+        "key": "45911",
+        "value": 1
+      },
+      {
+        "key": "46081",
+        "value": 1
+      },
+      {
+        "key": "46168",
+        "value": 1
+      },
+      {
+        "key": "46169",
+        "value": 1
+      },
+      {
+        "key": "46333",
+        "value": 1
+      },
+      {
+        "key": "46743",
+        "value": 1
+      },
+      {
+        "key": "46762",
+        "value": 1
+      },
+      {
+        "key": "46841",
+        "value": 1
+      },
+      {
+        "key": "46889",
+        "value": 1
+      },
+      {
+        "key": "46897",
+        "value": 1
+      },
+      {
+        "key": "46972",
+        "value": 1
+      },
+      {
+        "key": "47002",
+        "value": 1
+      },
+      {
+        "key": "47023",
+        "value": 1
+      },
+      {
+        "key": "47029",
+        "value": 1
+      },
+      {
+        "key": "47311",
+        "value": 1
+      },
+      {
+        "key": "47337",
+        "value": 1
+      },
+      {
+        "key": "47375",
+        "value": 1
+      },
+      {
+        "key": "47385",
+        "value": 1
+      },
+      {
+        "key": "47422",
+        "value": 1
+      },
+      {
+        "key": "47430",
+        "value": 1
+      },
+      {
+        "key": "47450",
+        "value": 1
+      },
+      {
+        "key": "47481",
+        "value": 1
+      },
+      {
+        "key": "47628",
+        "value": 1
+      },
+      {
+        "key": "47675",
+        "value": 1
+      },
+      {
+        "key": "47869",
+        "value": 1
+      },
+      {
+        "key": "48200",
+        "value": 1
+      },
+      {
+        "key": "48336",
+        "value": 1
+      },
+      {
+        "key": "48342",
+        "value": 1
+      },
+      {
+        "key": "48378",
+        "value": 1
+      },
+      {
+        "key": "48570",
+        "value": 1
+      },
+      {
+        "key": "48618",
+        "value": 1
+      },
+      {
+        "key": "48641",
+        "value": 1
+      },
+      {
+        "key": "48710",
+        "value": 1
+      },
+      {
+        "key": "48996",
+        "value": 1
+      },
+      {
+        "key": "49377",
+        "value": 1
+      },
+      {
+        "key": "49413",
+        "value": 1
+      },
+      {
+        "key": "49711",
+        "value": 1
+      },
+      {
+        "key": "49797",
+        "value": 1
+      },
+      {
+        "key": "49858",
+        "value": 1
+      },
+      {
+        "key": "49880",
+        "value": 1
+      },
+      {
+        "key": "49902",
+        "value": 1
+      },
+      {
+        "key": "49957",
+        "value": 1
+      },
+      {
+        "key": "50001",
+        "value": 1
+      },
+      {
+        "key": "50057",
+        "value": 1
+      },
+      {
+        "key": "50116",
+        "value": 1
+      },
+      {
+        "key": "50159",
+        "value": 1
+      },
+      {
+        "key": "50369",
+        "value": 1
+      },
+      {
+        "key": "50424",
+        "value": 1
+      },
+      {
+        "key": "50550",
+        "value": 1
+      },
+      {
+        "key": "50590",
+        "value": 1
+      },
+      {
+        "key": "50682",
+        "value": 1
+      },
+      {
+        "key": "50748",
+        "value": 1
+      },
+      {
+        "key": "50753",
+        "value": 1
+      },
+      {
+        "key": "50830",
+        "value": 1
+      },
+      {
+        "key": "50914",
+        "value": 1
+      },
+      {
+        "key": "51013",
+        "value": 1
+      },
+      {
+        "key": "51074",
+        "value": 1
+      },
+      {
+        "key": "51132",
+        "value": 1
+      },
+      {
+        "key": "51164",
+        "value": 1
+      },
+      {
+        "key": "51272",
+        "value": 1
+      },
+      {
+        "key": "51313",
+        "value": 1
+      },
+      {
+        "key": "51454",
+        "value": 1
+      },
+      {
+        "key": "51549",
+        "value": 1
+      },
+      {
+        "key": "51622",
+        "value": 1
+      },
+      {
+        "key": "51703",
+        "value": 1
+      },
+      {
+        "key": "51741",
+        "value": 1
+      },
+      {
+        "key": "51743",
+        "value": 1
+      },
+      {
+        "key": "51842",
+        "value": 1
+      },
+      {
+        "key": "51883",
+        "value": 1
+      },
+      {
+        "key": "51910",
+        "value": 1
+      },
+      {
+        "key": "52028",
+        "value": 1
+      },
+      {
+        "key": "52082",
+        "value": 1
+      },
+      {
+        "key": "52102",
+        "value": 1
+      },
+      {
+        "key": "52169",
+        "value": 1
+      },
+      {
+        "key": "52267",
+        "value": 1
+      },
+      {
+        "key": "52312",
+        "value": 1
+      },
+      {
+        "key": "52569",
+        "value": 1
+      },
+      {
+        "key": "52729",
+        "value": 1
+      },
+      {
+        "key": "52784",
+        "value": 1
+      },
+      {
+        "key": "53024",
+        "value": 1
+      },
+      {
+        "key": "53051",
+        "value": 1
+      },
+      {
+        "key": "53081",
+        "value": 1
+      },
+      {
+        "key": "53208",
+        "value": 1
+      },
+      {
+        "key": "53254",
+        "value": 1
+      },
+      {
+        "key": "53336",
+        "value": 1
+      },
+      {
+        "key": "53551",
+        "value": 1
+      },
+      {
+        "key": "53921",
+        "value": 1
+      },
+      {
+        "key": "54113",
+        "value": 1
+      },
+      {
+        "key": "54137",
+        "value": 1
+      },
+      {
+        "key": "54237",
+        "value": 1
+      },
+      {
+        "key": "54265",
+        "value": 1
+      },
+      {
+        "key": "54361",
+        "value": 1
+      },
+      {
+        "key": "54406",
+        "value": 1
+      },
+      {
+        "key": "54611",
+        "value": 1
+      },
+      {
+        "key": "54795",
+        "value": 1
+      },
+      {
+        "key": "54963",
+        "value": 1
+      },
+      {
+        "key": "55047",
+        "value": 1
+      },
+      {
+        "key": "55084",
+        "value": 1
+      },
+      {
+        "key": "55125",
+        "value": 1
+      },
+      {
+        "key": "55171",
+        "value": 1
+      },
+      {
+        "key": "55289",
+        "value": 1
+      },
+      {
+        "key": "55418",
+        "value": 1
+      },
+      {
+        "key": "55482",
+        "value": 1
+      },
+      {
+        "key": "55503",
+        "value": 1
+      },
+      {
+        "key": "55528",
+        "value": 1
+      },
+      {
+        "key": "55642",
+        "value": 1
+      },
+      {
+        "key": "55690",
+        "value": 1
+      },
+      {
+        "key": "55705",
+        "value": 1
+      },
+      {
+        "key": "55838",
+        "value": 1
+      },
+      {
+        "key": "56026",
+        "value": 1
+      },
+      {
+        "key": "56049",
+        "value": 1
+      },
+      {
+        "key": "56462",
+        "value": 1
+      },
+      {
+        "key": "56523",
+        "value": 1
+      },
+      {
+        "key": "56538",
+        "value": 1
+      },
+      {
+        "key": "56582",
+        "value": 1
+      },
+      {
+        "key": "56618",
+        "value": 1
+      },
+      {
+        "key": "56643",
+        "value": 1
+      },
+      {
+        "key": "56772",
+        "value": 1
+      },
+      {
+        "key": "56808",
+        "value": 1
+      },
+      {
+        "key": "56830",
+        "value": 1
+      },
+      {
+        "key": "57039",
+        "value": 1
+      },
+      {
+        "key": "57168",
+        "value": 1
+      },
+      {
+        "key": "57185",
+        "value": 1
+      },
+      {
+        "key": "57222",
+        "value": 1
+      },
+      {
+        "key": "57293",
+        "value": 1
+      },
+      {
+        "key": "57433",
+        "value": 1
+      },
+      {
+        "key": "57620",
+        "value": 1
+      },
+      {
+        "key": "57706",
+        "value": 1
+      },
+      {
+        "key": "57739",
+        "value": 1
+      },
+      {
+        "key": "57989",
+        "value": 1
+      },
+      {
+        "key": "58154",
+        "value": 1
+      },
+      {
+        "key": "58248",
+        "value": 1
+      },
+      {
+        "key": "58415",
+        "value": 1
+      },
+      {
+        "key": "58422",
+        "value": 1
+      },
+      {
+        "key": "58448",
+        "value": 1
+      },
+      {
+        "key": "58510",
+        "value": 1
+      },
+      {
+        "key": "58531",
+        "value": 1
+      },
+      {
+        "key": "58565",
+        "value": 1
+      },
+      {
+        "key": "58864",
+        "value": 1
+      },
+      {
+        "key": "58899",
+        "value": 1
+      },
+      {
+        "key": "59014",
+        "value": 1
+      },
+      {
+        "key": "59093",
+        "value": 1
+      },
+      {
+        "key": "59115",
+        "value": 1
+      },
+      {
+        "key": "59144",
+        "value": 1
+      },
+      {
+        "key": "59442",
+        "value": 1
+      },
+      {
+        "key": "59448",
+        "value": 1
+      },
+      {
+        "key": "59629",
+        "value": 1
+      },
+      {
+        "key": "59630",
+        "value": 1
+      },
+      {
+        "key": "59815",
+        "value": 1
+      },
+      {
+        "key": "59884",
+        "value": 1
+      },
+      {
+        "key": "59917",
+        "value": 1
+      },
+      {
+        "key": "60000",
+        "value": 1
+      },
+      {
+        "key": "60005",
+        "value": 1
+      },
+      {
+        "key": "60058",
+        "value": 1
+      },
+      {
+        "key": "60166",
+        "value": 1
+      },
+      {
+        "key": "60322",
+        "value": 1
+      },
+      {
+        "key": "60324",
+        "value": 1
+      },
+      {
+        "key": "60495",
+        "value": 1
+      },
+      {
+        "key": "60550",
+        "value": 1
+      },
+      {
+        "key": "60665",
+        "value": 1
+      },
+      {
+        "key": "60669",
+        "value": 1
+      },
+      {
+        "key": "60675",
+        "value": 1
+      },
+      {
+        "key": "60716",
+        "value": 1
+      },
+      {
+        "key": "60782",
+        "value": 1
+      },
+      {
+        "key": "60918",
+        "value": 1
+      },
+      {
+        "key": "60947",
+        "value": 1
+      },
+      {
+        "key": "61113",
+        "value": 1
+      },
+      {
+        "key": "61246",
+        "value": 1
+      },
+      {
+        "key": "61543",
+        "value": 1
+      },
+      {
+        "key": "61732",
+        "value": 1
+      },
+      {
+        "key": "61808",
+        "value": 1
+      },
+      {
+        "key": "61990",
+        "value": 1
+      },
+      {
+        "key": "62135",
+        "value": 1
+      },
+      {
+        "key": "62235",
+        "value": 1
+      },
+      {
+        "key": "62278",
+        "value": 1
+      },
+      {
+        "key": "62297",
+        "value": 1
+      },
+      {
+        "key": "62315",
+        "value": 1
+      },
+      {
+        "key": "62415",
+        "value": 1
+      },
+      {
+        "key": "62444",
+        "value": 1
+      },
+      {
+        "key": "62624",
+        "value": 1
+      },
+      {
+        "key": "62636",
+        "value": 1
+      },
+      {
+        "key": "62687",
+        "value": 1
+      },
+      {
+        "key": "62739",
+        "value": 1
+      },
+      {
+        "key": "62994",
+        "value": 1
+      },
+      {
+        "key": "63074",
+        "value": 1
+      },
+      {
+        "key": "63178",
+        "value": 1
+      },
+      {
+        "key": "63242",
+        "value": 1
+      },
+      {
+        "key": "63606",
+        "value": 1
+      },
+      {
+        "key": "63663",
+        "value": 1
+      },
+      {
+        "key": "63666",
+        "value": 1
+      },
+      {
+        "key": "63827",
+        "value": 1
+      },
+      {
+        "key": "63990",
+        "value": 1
+      },
+      {
+        "key": "64344",
+        "value": 1
+      },
+      {
+        "key": "64391",
+        "value": 1
+      },
+      {
+        "key": "64428",
+        "value": 1
+      },
+      {
+        "key": "64442",
+        "value": 1
+      },
+      {
+        "key": "64462",
+        "value": 1
+      },
+      {
+        "key": "64583",
+        "value": 1
+      },
+      {
+        "key": "64695",
+        "value": 1
+      },
+      {
+        "key": "64787",
+        "value": 1
+      },
+      {
+        "key": "64864",
+        "value": 1
+      },
+      {
+        "key": "64968",
+        "value": 1
+      },
+      {
+        "key": "64996",
+        "value": 1
+      },
+      {
+        "key": "65039",
+        "value": 1
+      },
+      {
+        "key": "65075",
+        "value": 1
+      },
+      {
+        "key": "65097",
+        "value": 1
+      },
+      {
+        "key": "65639",
+        "value": 1
+      },
+      {
+        "key": "65760",
+        "value": 1
+      },
+      {
+        "key": "65813",
+        "value": 1
+      },
+      {
+        "key": "66035",
+        "value": 1
+      },
+      {
+        "key": "66046",
+        "value": 1
+      },
+      {
+        "key": "66073",
+        "value": 1
+      },
+      {
+        "key": "66160",
+        "value": 1
+      },
+      {
+        "key": "66304",
+        "value": 1
+      },
+      {
+        "key": "66370",
+        "value": 1
+      },
+      {
+        "key": "66455",
+        "value": 1
+      },
+      {
+        "key": "66522",
+        "value": 1
+      },
+      {
+        "key": "66545",
+        "value": 1
+      },
+      {
+        "key": "66552",
+        "value": 1
+      },
+      {
+        "key": "66904",
+        "value": 1
+      },
+      {
+        "key": "66914",
+        "value": 1
+      },
+      {
+        "key": "67066",
+        "value": 1
+      },
+      {
+        "key": "67155",
+        "value": 1
+      },
+      {
+        "key": "67202",
+        "value": 1
+      },
+      {
+        "key": "67250",
+        "value": 1
+      },
+      {
+        "key": "67289",
+        "value": 1
+      },
+      {
+        "key": "67580",
+        "value": 1
+      },
+      {
+        "key": "67723",
+        "value": 1
+      },
+      {
+        "key": "67752",
+        "value": 1
+      },
+      {
+        "key": "67800",
+        "value": 1
+      },
+      {
+        "key": "67826",
+        "value": 1
+      },
+      {
+        "key": "67921",
+        "value": 1
+      },
+      {
+        "key": "68033",
+        "value": 1
+      },
+      {
+        "key": "68042",
+        "value": 1
+      },
+      {
+        "key": "68060",
+        "value": 1
+      },
+      {
+        "key": "68134",
+        "value": 1
+      },
+      {
+        "key": "68145",
+        "value": 1
+      },
+      {
+        "key": "68162",
+        "value": 1
+      },
+      {
+        "key": "68194",
+        "value": 1
+      },
+      {
+        "key": "68221",
+        "value": 1
+      },
+      {
+        "key": "68315",
+        "value": 1
+      },
+      {
+        "key": "68329",
+        "value": 1
+      },
+      {
+        "key": "68436",
+        "value": 1
+      },
+      {
+        "key": "68444",
+        "value": 1
+      },
+      {
+        "key": "68460",
+        "value": 1
+      },
+      {
+        "key": "68528",
+        "value": 1
+      },
+      {
+        "key": "68869",
+        "value": 1
+      },
+      {
+        "key": "68921",
+        "value": 1
+      },
+      {
+        "key": "69171",
+        "value": 1
+      },
+      {
+        "key": "69311",
+        "value": 1
+      },
+      {
+        "key": "69325",
+        "value": 1
+      },
+      {
+        "key": "69435",
+        "value": 1
+      },
+      {
+        "key": "69436",
+        "value": 1
+      },
+      {
+        "key": "69462",
+        "value": 1
+      },
+      {
+        "key": "69605",
+        "value": 1
+      },
+      {
+        "key": "69613",
+        "value": 1
+      },
+      {
+        "key": "69614",
+        "value": 1
+      },
+      {
+        "key": "69775",
+        "value": 1
+      },
+      {
+        "key": "69778",
+        "value": 1
+      },
+      {
+        "key": "69789",
+        "value": 1
+      },
+      {
+        "key": "69839",
+        "value": 1
+      },
+      {
+        "key": "69846",
+        "value": 1
+      },
+      {
+        "key": "70013",
+        "value": 1
+      },
+      {
+        "key": "70092",
+        "value": 1
+      },
+      {
+        "key": "70130",
+        "value": 1
+      },
+      {
+        "key": "70131",
+        "value": 1
+      },
+      {
+        "key": "70133",
+        "value": 1
+      },
+      {
+        "key": "70171",
+        "value": 1
+      },
+      {
+        "key": "70319",
+        "value": 1
+      },
+      {
+        "key": "70392",
+        "value": 1
+      },
+      {
+        "key": "70393",
+        "value": 1
+      },
+      {
+        "key": "70434",
+        "value": 1
+      },
+      {
+        "key": "70451",
+        "value": 1
+      },
+      {
+        "key": "70471",
+        "value": 1
+      },
+      {
+        "key": "70533",
+        "value": 1
+      },
+      {
+        "key": "70570",
+        "value": 1
+      },
+      {
+        "key": "70615",
+        "value": 1
+      },
+      {
+        "key": "70623",
+        "value": 1
+      },
+      {
+        "key": "70658",
+        "value": 1
+      },
+      {
+        "key": "70662",
+        "value": 1
+      },
+      {
+        "key": "70704",
+        "value": 1
+      },
+      {
+        "key": "70777",
+        "value": 1
+      },
+      {
+        "key": "70800",
+        "value": 1
+      },
+      {
+        "key": "70891",
+        "value": 1
+      },
+      {
+        "key": "70948",
+        "value": 1
+      },
+      {
+        "key": "71040",
+        "value": 1
+      },
+      {
+        "key": "71078",
+        "value": 1
+      },
+      {
+        "key": "71083",
+        "value": 1
+      },
+      {
+        "key": "71087",
+        "value": 1
+      },
+      {
+        "key": "71190",
+        "value": 1
+      },
+      {
+        "key": "71258",
+        "value": 1
+      },
+      {
+        "key": "71263",
+        "value": 1
+      },
+      {
+        "key": "71267",
+        "value": 1
+      },
+      {
+        "key": "71360",
+        "value": 1
+      },
+      {
+        "key": "71768",
+        "value": 1
+      },
+      {
+        "key": "71836",
+        "value": 1
+      },
+      {
+        "key": "71889",
+        "value": 1
+      },
+      {
+        "key": "71907",
+        "value": 1
+      },
+      {
+        "key": "71932",
+        "value": 1
+      },
+      {
+        "key": "71954",
+        "value": 1
+      },
+      {
+        "key": "72007",
+        "value": 1
+      },
+      {
+        "key": "72120",
+        "value": 1
+      },
+      {
+        "key": "72226",
+        "value": 1
+      },
+      {
+        "key": "72327",
+        "value": 1
+      },
+      {
+        "key": "72375",
+        "value": 1
+      },
+      {
+        "key": "72420",
+        "value": 1
+      },
+      {
+        "key": "72568",
+        "value": 1
+      },
+      {
+        "key": "72717",
+        "value": 1
+      },
+      {
+        "key": "72753",
+        "value": 1
+      },
+      {
+        "key": "72825",
+        "value": 1
+      },
+      {
+        "key": "72854",
+        "value": 1
+      },
+      {
+        "key": "72905",
+        "value": 1
+      },
+      {
+        "key": "72927",
+        "value": 1
+      },
+      {
+        "key": "72943",
+        "value": 1
+      },
+      {
+        "key": "72983",
+        "value": 1
+      },
+      {
+        "key": "73024",
+        "value": 1
+      },
+      {
+        "key": "73279",
+        "value": 1
+      },
+      {
+        "key": "73447",
+        "value": 1
+      },
+      {
+        "key": "73479",
+        "value": 1
+      },
+      {
+        "key": "73619",
+        "value": 1
+      },
+      {
+        "key": "73682",
+        "value": 1
+      },
+      {
+        "key": "73813",
+        "value": 1
+      },
+      {
+        "key": "73842",
+        "value": 1
+      },
+      {
+        "key": "73844",
+        "value": 1
+      },
+      {
+        "key": "73908",
+        "value": 1
+      },
+      {
+        "key": "74043",
+        "value": 1
+      },
+      {
+        "key": "74063",
+        "value": 1
+      },
+      {
+        "key": "74106",
+        "value": 1
+      },
+      {
+        "key": "74259",
+        "value": 1
+      },
+      {
+        "key": "74296",
+        "value": 1
+      },
+      {
+        "key": "74326",
+        "value": 1
+      },
+      {
+        "key": "74479",
+        "value": 1
+      },
+      {
+        "key": "74552",
+        "value": 1
+      },
+      {
+        "key": "74596",
+        "value": 1
+      },
+      {
+        "key": "74606",
+        "value": 1
+      },
+      {
+        "key": "74616",
+        "value": 1
+      },
+      {
+        "key": "74771",
+        "value": 1
+      },
+      {
+        "key": "74781",
+        "value": 1
+      },
+      {
+        "key": "74854",
+        "value": 1
+      },
+      {
+        "key": "74949",
+        "value": 1
+      },
+      {
+        "key": "75018",
+        "value": 1
+      },
+      {
+        "key": "75091",
+        "value": 1
+      },
+      {
+        "key": "75140",
+        "value": 1
+      },
+      {
+        "key": "75158",
+        "value": 1
+      },
+      {
+        "key": "75185",
+        "value": 1
+      },
+      {
+        "key": "75197",
+        "value": 1
+      },
+      {
+        "key": "75230",
+        "value": 1
+      },
+      {
+        "key": "75347",
+        "value": 1
+      },
+      {
+        "key": "75396",
+        "value": 1
+      },
+      {
+        "key": "75402",
+        "value": 1
+      },
+      {
+        "key": "75445",
+        "value": 1
+      },
+      {
+        "key": "75484",
+        "value": 1
+      },
+      {
+        "key": "75500",
+        "value": 1
+      },
+      {
+        "key": "75519",
+        "value": 1
+      },
+      {
+        "key": "75554",
+        "value": 1
+      },
+      {
+        "key": "75644",
+        "value": 1
+      },
+      {
+        "key": "75661",
+        "value": 1
+      },
+      {
+        "key": "75686",
+        "value": 1
+      },
+      {
+        "key": "75687",
+        "value": 1
+      },
+      {
+        "key": "75705",
+        "value": 1
+      },
+      {
+        "key": "75706",
+        "value": 1
+      },
+      {
+        "key": "75720",
+        "value": 1
+      },
+      {
+        "key": "75728",
+        "value": 1
+      },
+      {
+        "key": "75733",
+        "value": 1
+      },
+      {
+        "key": "75736",
+        "value": 1
+      },
+      {
+        "key": "75743",
+        "value": 1
+      },
+      {
+        "key": "75759",
+        "value": 1
+      },
+      {
+        "key": "75764",
+        "value": 1
+      },
+      {
+        "key": "75789",
+        "value": 1
+      },
+      {
+        "key": "75791",
+        "value": 1
+      },
+      {
+        "key": "75802",
+        "value": 1
+      },
+      {
+        "key": "75812",
+        "value": 1
+      },
+      {
+        "key": "75839",
+        "value": 1
+      },
+      {
+        "key": "75843",
+        "value": 1
+      },
+      {
+        "key": "75887",
+        "value": 1
+      },
+      {
+        "key": "75904",
+        "value": 1
+      },
+      {
+        "key": "75907",
+        "value": 1
+      },
+      {
+        "key": "75929",
+        "value": 1
+      },
+      {
+        "key": "75946",
+        "value": 1
+      },
+      {
+        "key": "75960",
+        "value": 1
+      },
+      {
+        "key": "75967",
+        "value": 1
+      },
+      {
+        "key": "75971",
+        "value": 1
+      },
+      {
+        "key": "76014",
+        "value": 1
+      },
+      {
+        "key": "76074",
+        "value": 1
+      },
+      {
+        "key": "76083",
+        "value": 1
+      },
+      {
+        "key": "76198",
+        "value": 1
+      },
+      {
+        "key": "76241",
+        "value": 1
+      },
+      {
+        "key": "76278",
+        "value": 1
+      },
+      {
+        "key": "76288",
+        "value": 1
+      },
+      {
+        "key": "76308",
+        "value": 1
+      },
+      {
+        "key": "76355",
+        "value": 1
+      },
+      {
+        "key": "76408",
+        "value": 1
+      },
+      {
+        "key": "76437",
+        "value": 1
+      },
+      {
+        "key": "76443",
+        "value": 1
+      },
+      {
+        "key": "76454",
+        "value": 1
+      },
+      {
+        "key": "76519",
+        "value": 1
+      },
+      {
+        "key": "76523",
+        "value": 1
+      },
+      {
+        "key": "76534",
+        "value": 1
+      },
+      {
+        "key": "76559",
+        "value": 1
+      },
+      {
+        "key": "76576",
+        "value": 1
+      },
+      {
+        "key": "76588",
+        "value": 1
+      },
+      {
+        "key": "76611",
+        "value": 1
+      },
+      {
+        "key": "76627",
+        "value": 1
+      },
+      {
+        "key": "76660",
+        "value": 1
+      },
+      {
+        "key": "76664",
+        "value": 1
+      },
+      {
+        "key": "76668",
+        "value": 1
+      },
+      {
+        "key": "76762",
+        "value": 1
+      },
+      {
+        "key": "76785",
+        "value": 1
+      },
+      {
+        "key": "76813",
+        "value": 1
+      },
+      {
+        "key": "76821",
+        "value": 1
+      },
+      {
+        "key": "76822",
+        "value": 1
+      },
+      {
+        "key": "76842",
+        "value": 1
+      },
+      {
+        "key": "76876",
+        "value": 1
+      },
+      {
+        "key": "76892",
+        "value": 1
+      },
+      {
+        "key": "76909",
+        "value": 1
+      },
+      {
+        "key": "76930",
+        "value": 1
+      },
+      {
+        "key": "76941",
+        "value": 1
+      },
+      {
+        "key": "76944",
+        "value": 1
+      },
+      {
+        "key": "76949",
+        "value": 1
+      },
+      {
+        "key": "76957",
+        "value": 1
+      },
+      {
+        "key": "76958",
+        "value": 1
+      },
+      {
+        "key": "76960",
+        "value": 1
+      },
+      {
+        "key": "76963",
+        "value": 1
+      },
+      {
+        "key": "76988",
+        "value": 1
+      },
+      {
+        "key": "77004",
+        "value": 1
+      },
+      {
+        "key": "77022",
+        "value": 1
+      },
+      {
+        "key": "77024",
+        "value": 1
+      },
+      {
+        "key": "77049",
+        "value": 1
+      },
+      {
+        "key": "77075",
+        "value": 1
+      },
+      {
+        "key": "77101",
+        "value": 1
+      },
+      {
+        "key": "77106",
+        "value": 1
+      },
+      {
+        "key": "77151",
+        "value": 1
+      },
+      {
+        "key": "77187",
+        "value": 1
+      },
+      {
+        "key": "77194",
+        "value": 1
+      },
+      {
+        "key": "77210",
+        "value": 1
+      },
+      {
+        "key": "77216",
+        "value": 1
+      },
+      {
+        "key": "77225",
+        "value": 1
+      },
+      {
+        "key": "77233",
+        "value": 1
+      },
+      {
+        "key": "77238",
+        "value": 1
+      },
+      {
+        "key": "77254",
+        "value": 1
+      },
+      {
+        "key": "77270",
+        "value": 1
+      },
+      {
+        "key": "77277",
+        "value": 1
+      },
+      {
+        "key": "77294",
+        "value": 1
+      },
+      {
+        "key": "77305",
+        "value": 1
+      },
+      {
+        "key": "77352",
+        "value": 1
+      },
+      {
+        "key": "77364",
+        "value": 1
+      },
+      {
+        "key": "77365",
+        "value": 1
+      },
+      {
+        "key": "77367",
+        "value": 1
+      },
+      {
+        "key": "77400",
+        "value": 1
+      },
+      {
+        "key": "77401",
+        "value": 1
+      },
+      {
+        "key": "77436",
+        "value": 1
+      },
+      {
+        "key": "77452",
+        "value": 1
+      },
+      {
+        "key": "77464",
+        "value": 1
+      },
+      {
+        "key": "77465",
+        "value": 1
+      },
+      {
+        "key": "77468",
+        "value": 1
+      },
+      {
+        "key": "77499",
+        "value": 1
+      },
+      {
+        "key": "77501",
+        "value": 1
+      },
+      {
+        "key": "77515",
+        "value": 1
+      },
+      {
+        "key": "77517",
+        "value": 1
+      },
+      {
+        "key": "77534",
+        "value": 1
+      },
+      {
+        "key": "77537",
+        "value": 1
+      },
+      {
+        "key": "77541",
+        "value": 1
+      },
+      {
+        "key": "77550",
+        "value": 1
+      },
+      {
+        "key": "77559",
+        "value": 1
+      },
+      {
+        "key": "77571",
+        "value": 1
+      },
+      {
+        "key": "77576",
+        "value": 1
+      },
+      {
+        "key": "77592",
+        "value": 1
+      },
+      {
+        "key": "77598",
+        "value": 1
+      },
+      {
+        "key": "77603",
+        "value": 1
+      },
+      {
+        "key": "77649",
+        "value": 1
+      },
+      {
+        "key": "77671",
+        "value": 1
+      },
+      {
+        "key": "77704",
+        "value": 1
+      },
+      {
+        "key": "77707",
+        "value": 1
+      },
+      {
+        "key": "77730",
+        "value": 1
+      },
+      {
+        "key": "77732",
+        "value": 1
+      },
+      {
+        "key": "77733",
+        "value": 1
+      },
+      {
+        "key": "77736",
+        "value": 1
+      },
+      {
+        "key": "77740",
+        "value": 1
+      },
+      {
+        "key": "77758",
+        "value": 1
+      },
+      {
+        "key": "77781",
+        "value": 1
+      },
+      {
+        "key": "77796",
+        "value": 1
+      },
+      {
+        "key": "77797",
+        "value": 1
+      },
+      {
+        "key": "77799",
+        "value": 1
+      },
+      {
+        "key": "77811",
+        "value": 1
+      },
+      {
+        "key": "77821",
+        "value": 1
+      },
+      {
+        "key": "77827",
+        "value": 1
+      },
+      {
+        "key": "77840",
+        "value": 1
+      },
+      {
+        "key": "77860",
+        "value": 1
+      },
+      {
+        "key": "77876",
+        "value": 1
+      },
+      {
+        "key": "77890",
+        "value": 1
+      },
+      {
+        "key": "77898",
+        "value": 1
+      },
+      {
+        "key": "77900",
+        "value": 1
+      },
+      {
+        "key": "77903",
+        "value": 1
+      },
+      {
+        "key": "77905",
+        "value": 1
+      },
+      {
+        "key": "77908",
+        "value": 1
+      },
+      {
+        "key": "77910",
+        "value": 1
+      },
+      {
+        "key": "77930",
+        "value": 1
+      },
+      {
+        "key": "77944",
+        "value": 1
+      },
+      {
+        "key": "77947",
+        "value": 1
+      },
+      {
+        "key": "77948",
+        "value": 1
+      },
+      {
+        "key": "77950",
+        "value": 1
+      },
+      {
+        "key": "77956",
+        "value": 1
+      },
+      {
+        "key": "77957",
+        "value": 1
+      },
+      {
+        "key": "77972",
+        "value": 1
+      },
+      {
+        "key": "77979",
+        "value": 1
+      },
+      {
+        "key": "77980",
+        "value": 1
+      },
+      {
+        "key": "77982",
+        "value": 1
+      },
+      {
+        "key": "77985",
+        "value": 1
+      },
+      {
+        "key": "77986",
+        "value": 1
+      },
+      {
+        "key": "77988",
+        "value": 1
+      },
+      {
+        "key": "78004",
+        "value": 1
+      },
+      {
+        "key": "78006",
+        "value": 1
+      },
+      {
+        "key": "78028",
+        "value": 1
+      },
+      {
+        "key": "78030",
+        "value": 1
+      },
+      {
+        "key": "78034",
+        "value": 1
+      },
+      {
+        "key": "78038",
+        "value": 1
+      },
+      {
+        "key": "78044",
+        "value": 1
+      },
+      {
+        "key": "78046",
+        "value": 1
+      },
+      {
+        "key": "78047",
+        "value": 1
+      },
+      {
+        "key": "78051",
+        "value": 1
+      },
+      {
+        "key": "78055",
+        "value": 1
+      },
+      {
+        "key": "78057",
+        "value": 1
+      },
+      {
+        "key": "78061",
+        "value": 1
+      },
+      {
+        "key": "78066",
+        "value": 1
+      },
+      {
+        "key": "78073",
+        "value": 1
+      },
+      {
+        "key": "78074",
+        "value": 1
+      },
+      {
+        "key": "78081",
+        "value": 1
+      },
+      {
+        "key": "78096",
+        "value": 1
+      },
+      {
+        "key": "78101",
+        "value": 1
+      },
+      {
+        "key": "78102",
+        "value": 1
+      },
+      {
+        "key": "78103",
+        "value": 1
+      },
+      {
+        "key": "78105",
+        "value": 1
+      },
+      {
+        "key": "78111",
+        "value": 1
+      },
+      {
+        "key": "78120",
+        "value": 1
+      },
+      {
+        "key": "78127",
+        "value": 1
+      },
+      {
+        "key": "78131",
+        "value": 1
+      },
+      {
+        "key": "78148",
+        "value": 1
+      },
+      {
+        "key": "78151",
+        "value": 1
+      },
+      {
+        "key": "78153",
+        "value": 1
+      },
+      {
+        "key": "78154",
+        "value": 1
+      },
+      {
+        "key": "78155",
+        "value": 1
+      },
+      {
+        "key": "78156",
+        "value": 1
+      },
+      {
+        "key": "78158",
+        "value": 1
+      },
+      {
+        "key": "78169",
+        "value": 1
+      },
+      {
+        "key": "78185",
+        "value": 1
+      },
+      {
+        "key": "78188",
+        "value": 1
+      },
+      {
+        "key": "78195",
+        "value": 1
+      },
+      {
+        "key": "78197",
+        "value": 1
+      },
+      {
+        "key": "78200",
+        "value": 1
+      },
+      {
+        "key": "78202",
+        "value": 1
+      },
+      {
+        "key": "78209",
+        "value": 1
+      },
+      {
+        "key": "78216",
+        "value": 1
+      },
+      {
+        "key": "78226",
+        "value": 1
+      },
+      {
+        "key": "78232",
+        "value": 1
+      },
+      {
+        "key": "78243",
+        "value": 1
+      },
+      {
+        "key": "78244",
+        "value": 1
+      },
+      {
+        "key": "78248",
+        "value": 1
+      },
+      {
+        "key": "78255",
+        "value": 1
+      },
+      {
+        "key": "78258",
+        "value": 1
+      },
+      {
+        "key": "78262",
+        "value": 1
+      },
+      {
+        "key": "78265",
+        "value": 1
+      },
+      {
+        "key": "78267",
+        "value": 1
+      },
+      {
+        "key": "78269",
+        "value": 1
+      },
+      {
+        "key": "78280",
+        "value": 1
+      },
+      {
+        "key": "78298",
+        "value": 1
+      },
+      {
+        "key": "78318",
+        "value": 1
+      },
+      {
+        "key": "78326",
+        "value": 1
+      },
+      {
+        "key": "78330",
+        "value": 1
+      },
+      {
+        "key": "78331",
+        "value": 1
+      },
+      {
+        "key": "78333",
+        "value": 1
+      },
+      {
+        "key": "78334",
+        "value": 1
+      },
+      {
+        "key": "78336",
+        "value": 1
+      },
+      {
+        "key": "78340",
+        "value": 1
+      },
+      {
+        "key": "78342",
+        "value": 1
+      },
+      {
+        "key": "78343",
+        "value": 1
+      },
+      {
+        "key": "78344",
+        "value": 1
+      },
+      {
+        "key": "78346",
+        "value": 1
+      },
+      {
+        "key": "78362",
+        "value": 1
+      },
+      {
+        "key": "78366",
+        "value": 1
+      },
+      {
+        "key": "78367",
+        "value": 1
+      },
+      {
+        "key": "78368",
+        "value": 1
+      },
+      {
+        "key": "78369",
+        "value": 1
+      },
+      {
+        "key": "78371",
+        "value": 1
+      },
+      {
+        "key": "78373",
+        "value": 1
+      },
+      {
+        "key": "78374",
+        "value": 1
+      },
+      {
+        "key": "78377",
+        "value": 1
+      },
+      {
+        "key": "78386",
+        "value": 1
+      },
+      {
+        "key": "78389",
+        "value": 1
+      },
+      {
+        "key": "78390",
+        "value": 1
+      },
+      {
+        "key": "78396",
+        "value": 1
+      },
+      {
+        "key": "78397",
+        "value": 1
+      },
+      {
+        "key": "78408",
+        "value": 1
+      },
+      {
+        "key": "78411",
+        "value": 1
+      },
+      {
+        "key": "78416",
+        "value": 1
+      },
+      {
+        "key": "78418",
+        "value": 1
+      },
+      {
+        "key": "78419",
+        "value": 1
+      },
+      {
+        "key": "78427",
+        "value": 1
+      },
+      {
+        "key": "78432",
+        "value": 1
+      },
+      {
+        "key": "78434",
+        "value": 1
+      },
+      {
+        "key": "78438",
+        "value": 1
+      },
+      {
+        "key": "78440",
+        "value": 1
+      },
+      {
+        "key": "78444",
+        "value": 1
+      },
+      {
+        "key": "78445",
+        "value": 1
+      },
+      {
+        "key": "78457",
+        "value": 1
+      },
+      {
+        "key": "78462",
+        "value": 1
+      },
+      {
+        "key": "78468",
+        "value": 1
+      },
+      {
+        "key": "78474",
+        "value": 1
+      },
+      {
+        "key": "78478",
+        "value": 1
+      }
+    ],
+    "isSalonac": [
+      {
+        "key": "false",
+        "value": 816
+      },
+      {
+        "key": "true",
+        "value": 8
+      }
+    ],
+    "isNotLastFloor": [
+      {
+        "key": "true",
+        "value": 689
+      },
+      {
+        "key": "false",
+        "value": 135
+      }
+    ],
+    "isNoElevatorButLow": [
+      {
+        "key": "true",
+        "value": 798
+      },
+      {
+        "key": "false",
+        "value": 26
+      }
+    ],
+    "bedroomsArray": [
+      {
+        "key": "r1",
+        "value": 343
+      },
+      {
+        "key": "r2",
+        "value": 250
+      },
+      {
+        "key": "r3",
+        "value": 86
+      },
+      {
+        "key": "r4",
+        "value": 15
+      },
+      {
+        "key": "r5",
+        "value": 4
+      },
+      {
+        "key": "r6+",
+        "value": 2
+      }
+    ],
+    "bathroomArray": [
+      {
+        "key": "b1+",
+        "value": 791
+      },
+      {
+        "key": "b2+",
+        "value": 243
+      },
+      {
+        "key": "b3+",
+        "value": 48
+      },
+      {
+        "key": "b4+",
+        "value": 15
+      }
+    ],
+    "renovationArray": [
+      {
+        "key": "1",
+        "value": 208
+      },
+      {
+        "key": "2",
+        "value": 77
+      }
+    ],
+    "minLeaseArray": [
+      {
+        "key": "12",
+        "value": 623
+      },
+      {
+        "key": "6",
+        "value": 152
+      },
+      {
+        "key": "3",
+        "value": 11
+      },
+      {
+        "key": "24",
+        "value": 8
+      },
+      {
+        "key": "18",
+        "value": 2
+      },
+      {
+        "key": "36",
+        "value": 2
+      },
+      {
+        "key": "2",
+        "value": 1
+      }
+    ],
+    "newDevelopment": [
+      {
+        "key": "false",
+        "value": 824
+      }
+    ],
+    "distanceCenterArray": [
+      {
+        "key": "5",
+        "value": 432
+      },
+      {
+        "key": "5_10",
+        "value": 264
+      },
+      {
+        "key": "10+",
+        "value": 26
+      }
+    ],
+    "isFeatured": [
+      {
+        "key": "false",
+        "value": 499
+      },
+      {
+        "key": "true",
+        "value": 325
+      }
+    ],
+    "isLux": [
+      {
+        "key": "false",
+        "value": 819
+      },
+      {
+        "key": "true",
+        "value": 5
+      }
+    ],
+    "isRecommended": [
+      {
+        "key": "false",
+        "value": 813
+      },
+      {
+        "key": "true",
+        "value": 11
+      }
+    ],
+    "underConstruction": [
+      {
+        "key": "false",
+        "value": 824
+      }
+    ]
+  },
+  "facetRanges": null,
+  "stats": null,
+  "info": {
+    "pageNumber": 1,
+    "pageCount": 17,
+    "pageSize": 50,
+    "documentCount": 824,
+    "documentsOnPage": 50,
+    "isFirstPage": true,
+    "isLastPage": false,
+    "hasPreviousPage": false,
+    "hasNextPage": true
+  }
+}
