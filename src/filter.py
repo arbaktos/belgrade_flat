@@ -118,10 +118,14 @@ def _check_extraction(l: Listing, cfg: FilterConfig) -> tuple[list[str], list[st
             soft.append("pets unclear")
 
     # ---- dishwasher ---------------------------------------------------------
+    # Same logic as pets: structured True = positive signal, structured False
+    # = "not on the source's checkbox list" (unknown, not no). Trust the LLM
+    # to find an explicit absence in the description text.
     if cfg.dishwasher_required:
-        dish = l.dishwasher
-        if dish is None and e is not None:
-            dish = e.dishwasher
+        if l.dishwasher is True:
+            dish: bool | None = True
+        else:
+            dish = e.dishwasher if e is not None else None
         if dish is False:
             hard.append("no dishwasher")
         elif dish is None:
@@ -188,11 +192,15 @@ def canonicalize_heating(raw: str | None) -> str | None:
 
 
 def _resolve_pets(l: Listing, e) -> bool | None:
-    """Prefer structured Listing.pets_allowed; fall back to LLM's string answer."""
+    """Prefer structured Listing.pets_allowed when *positive*; otherwise consult the LLM.
+
+    Sources expose pets as a boolean checkbox, and `False` in 4zida/cityexpert
+    typically means "owner didn't tick yes" — not a definitive prohibition. We
+    only trust structured True as a positive signal; for structured False we
+    still let the LLM read the description text to find an explicit ban.
+    """
     if l.pets_allowed is True:
         return True
-    if l.pets_allowed is False:
-        return False
     if e is None:
         return None
     if e.pets_allowed == "yes":
