@@ -33,7 +33,7 @@ def conn(tmp_path):
     db.execute(
         """CREATE TABLE commute_cache (
             bucket_key TEXT PRIMARY KEY,
-            walk_min INTEGER, transit_min INTEGER,
+            walk_min INTEGER, transit_min INTEGER, transit_transfers INTEGER,
             fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
         )"""
     )
@@ -87,11 +87,26 @@ def test_compute_commute_hits_api_then_cache(conn):
 
     def fake_post(url, json=None, headers=None, **_):
         mode = json["travelMode"]
-        # walking 20 min, transit 12 min — Routes API returns "1800s" string
-        duration = "1200s" if mode == "WALK" else "720s"
+        # walking 20 min, transit 12 min with 1 transfer (2 transit steps).
+        if mode == "WALK":
+            return MagicMock(
+                status_code=200,
+                json=MagicMock(return_value={"routes": [{"duration": "1200s"}]}),
+            )
         return MagicMock(
             status_code=200,
-            json=MagicMock(return_value={"routes": [{"duration": duration}]}),
+            json=MagicMock(return_value={
+                "routes": [{
+                    "duration": "720s",
+                    "legs": [{"steps": [
+                        {"travelMode": "WALK"},
+                        {"travelMode": "TRANSIT"},
+                        {"travelMode": "WALK"},
+                        {"travelMode": "TRANSIT"},
+                        {"travelMode": "WALK"},
+                    ]}],
+                }],
+            }),
         )
 
     fake_client.post.side_effect = fake_post
@@ -103,7 +118,12 @@ def test_compute_commute_hits_api_then_cache(conn):
     assert r.source == "api"
     assert r.walk_min == 20
     assert r.transit_min == 12
+    assert r.transit_transfers == 1
     assert fake_client.post.call_count == 2
+
+    # Verify transit request includes the FEWER_TRANSFERS preference
+    transit_call = next(c for c in fake_client.post.call_args_list if c.kwargs["json"]["travelMode"] == "TRANSIT")
+    assert transit_call.kwargs["json"]["transitPreferences"]["routingPreference"] == "FEWER_TRANSFERS"
 
     # Second call uses cache.
     r2 = route.compute_commute(

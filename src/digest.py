@@ -125,7 +125,11 @@ def _listing_block(
     if l.walk_min is not None:
         commute_bits.append(f"🚶 {l.walk_min} min")
     if l.transit_min is not None:
-        commute_bits.append(f"🚌 {l.transit_min} min")
+        if l.transit_transfers is not None:
+            label = "direct" if l.transit_transfers == 0 else f"{l.transit_transfers} transfer{'s' if l.transit_transfers != 1 else ''}"
+            commute_bits.append(f"🚌 {l.transit_min} min ({label})")
+        else:
+            commute_bits.append(f"🚌 {l.transit_min} min")
     commute_str = " · ".join(commute_bits) if commute_bits else ""
 
     block = [

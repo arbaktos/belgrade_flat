@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 
 def _rclone_env() -> dict[str, str]:
@@ -97,13 +97,20 @@ def ensure_schema() -> sqlite3.Connection:
                 conn.execute(col_sql)
             except sqlite3.OperationalError:
                 pass    # column already exists from a previous partial migration
+
+    # v7 adds transit_transfers to commute_cache. Drop the table so we re-query
+    # Google with FEWER_TRANSFERS preference and a new field mask.
+    if prev is not None and int(prev[0]) < 7:
+        log.info("state: dropping commute_cache to recompute with FEWER_TRANSFERS preference")
+        conn.execute("DROP TABLE IF EXISTS commute_cache")
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS commute_cache (
-            bucket_key   TEXT PRIMARY KEY,         -- "lat,lng" 3-decimal bucket OR "addr:<hash>"
-            walk_min     INTEGER,                   -- null = "Google said no route"
-            transit_min  INTEGER,
-            fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+            bucket_key        TEXT PRIMARY KEY,    -- "lat,lng" 3-decimal bucket OR "addr:<hash>"
+            walk_min          INTEGER,              -- null = "Google said no route"
+            transit_min       INTEGER,
+            transit_transfers INTEGER,              -- null = direct (no transit) or unknown
+            fetched_at        TEXT NOT NULL DEFAULT (datetime('now'))
         )
         """
     )

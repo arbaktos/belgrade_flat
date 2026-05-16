@@ -110,6 +110,7 @@ def _run_pipeline(cfg: dict, conn) -> dict:
                 )
                 l.walk_min = r.walk_min
                 l.transit_min = r.transit_min
+                l.transit_transfers = r.transit_transfers
             except route.DirectionsConfigError as e:
                 # Config failure (REQUEST_DENIED / OVER_QUERY_LIMIT) won't get better
                 # by retrying — stop calling the API for the rest of this run.
@@ -157,9 +158,21 @@ def _run_pipeline(cfg: dict, conn) -> dict:
                  len(matched), len(surfaced), dedup_stats["suppressed"])
         matched = surfaced
 
-    # Composite score ordering: highest score first (best price / shortest commute / biggest / freshest).
+    # Composite score ordering: highest score first (best commute / cheapest / biggest / freshest).
     matched = score.rank_descending(
         matched, price_cap_eur=cfg_obj.price_eur_max, freshness_days=cfg_obj.freshness_days
+    )
+    # Near-misses also get sorted so the top 5 shown in Telegram are the best
+    # of the bunch, not the first to be scraped.
+    near_listings = [l for l, _ in llm_filtered.near_misses]
+    near_listings = score.rank_descending(
+        near_listings, price_cap_eur=cfg_obj.price_eur_max, freshness_days=cfg_obj.freshness_days
+    )
+    reasons_by_key = {l.fingerprint_key: r for l, r in llm_filtered.near_misses}
+    llm_filtered = filt.FilterResult(
+        passed=llm_filtered.passed,
+        near_misses=[(l, reasons_by_key[l.fingerprint_key]) for l in near_listings],
+        rejected=llm_filtered.rejected,
     )
 
     today = datetime.now(timezone.utc)

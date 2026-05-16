@@ -182,13 +182,6 @@ def _render_body(
 
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
-    commute_bits = []
-    if l.walk_min is not None:
-        commute_bits.append(f"{l.walk_min} min walk")
-    if l.transit_min is not None:
-        commute_bits.append(f"{l.transit_min} min transit")
-    commute_str = " / ".join(commute_bits) if commute_bits else "no commute data"
-
     floor_str = f"floor {l.floor}" if l.floor is not None else "floor ?"
     if l.total_floors:
         floor_str += f"/{l.total_floors}"
@@ -229,12 +222,25 @@ def _render_body(
     summary_esc = html.escape(summary)
     red_flags_esc = html.escape(red_flags)
 
+    # One fact per line — much easier to skim than dense ` · ` separators.
     lines: list[str] = [
         f"{head_emoji} €{l.price_eur:.0f}{notify_badge} · {l.rooms} rooms · {l.m2:.0f} m² · {place_esc}",
-        f"📍 {address_esc} — {commute_str}",
-        " · ".join(html.escape(x) for x in (heat, pets, dish, lift, floor_str) if x),
-        f"📅 {posted_rel} · {agency}",
+        f"📍 {address_esc}",
     ]
+    if l.walk_min is not None:
+        lines.append(f"🚶 {l.walk_min} min walk")
+    if l.transit_min is not None:
+        transfers_str = ""
+        if l.transit_transfers is not None:
+            transfers_str = " (direct)" if l.transit_transfers == 0 else f" ({l.transit_transfers} transfer{'s' if l.transit_transfers != 1 else ''})"
+        lines.append(f"🚌 {l.transit_min} min transit{transfers_str}")
+    if l.walk_min is None and l.transit_min is None:
+        lines.append("🚶 no commute data")
+    for fact in (heat, pets, dish, lift, floor_str):
+        if fact:
+            lines.append(html.escape(fact))
+    lines.append(f"📅 {posted_rel}")
+    lines.append(agency)
     if near_miss_reasons:
         lines.append("⚠️ Unconfirmed: " + html.escape("; ".join(near_miss_reasons)))
     if red_flags_esc:

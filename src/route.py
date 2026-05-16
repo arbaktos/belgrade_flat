@@ -41,6 +41,7 @@ BUCKET_DECIMALS = 3
 class CommuteResult:
     walk_min: int | None
     transit_min: int | None
+    transit_transfers: int | None
     source: str   # "cache", "api", "haversine_skipped"
 
 
@@ -68,22 +69,26 @@ def bucket_key(listing: Listing) -> str:
 def get_cached(conn: sqlite3.Connection, key: str) -> CommuteResult | None:
     cutoff = (datetime.utcnow() - timedelta(days=CACHE_TTL_DAYS)).isoformat(" ", "seconds")
     row = conn.execute(
-        "SELECT walk_min, transit_min FROM commute_cache "
+        "SELECT walk_min, transit_min, transit_transfers FROM commute_cache "
         "WHERE bucket_key=? AND fetched_at > ?",
         (key, cutoff),
     ).fetchone()
     if row is None:
         return None
-    return CommuteResult(walk_min=row[0], transit_min=row[1], source="cache")
+    return CommuteResult(walk_min=row[0], transit_min=row[1], transit_transfers=row[2], source="cache")
 
 
-def put_cached(conn: sqlite3.Connection, key: str, walk_min: int | None, transit_min: int | None) -> None:
+def put_cached(
+    conn: sqlite3.Connection, key: str,
+    walk_min: int | None, transit_min: int | None, transit_transfers: int | None,
+) -> None:
     conn.execute(
-        "INSERT INTO commute_cache (bucket_key, walk_min, transit_min, fetched_at) "
-        "VALUES (?, ?, ?, datetime('now')) "
+        "INSERT INTO commute_cache (bucket_key, walk_min, transit_min, transit_transfers, fetched_at) "
+        "VALUES (?, ?, ?, ?, datetime('now')) "
         "ON CONFLICT(bucket_key) DO UPDATE SET "
-        "walk_min=excluded.walk_min, transit_min=excluded.transit_min, fetched_at=excluded.fetched_at",
-        (key, walk_min, transit_min),
+        "walk_min=excluded.walk_min, transit_min=excluded.transit_min, "
+        "transit_transfers=excluded.transit_transfers, fetched_at=excluded.fetched_at",
+        (key, walk_min, transit_min, transit_transfers),
     )
     conn.commit()
 
@@ -114,8 +119,9 @@ def compute_commute(
         if d_km > HAVERSINE_KM_MAX:
             log.info("commute %s: haversine=%.1fkm > %skm — skipping Directions",
                      listing.fingerprint_key, d_km, HAVERSINE_KM_MAX)
-            result = CommuteResult(walk_min=None, transit_min=None, source="haversine_skipped")
-            put_cached(conn, key, None, None)
+            result = CommuteResult(walk_min=None, transit_min=None, transit_transfers=None,
+                                   source="haversine_skipped")
+            put_cached(conn, key, None, None, None)
             return result
 
     api_key = api_key or os.environ["GOOGLE_DIRECTIONS_API_KEY"]
@@ -124,10 +130,10 @@ def compute_commute(
     try:
         origin_payload = _waypoint(listing.lat, listing.lng, _address_string(listing))
         destination_payload = _waypoint(office_lat, office_lng, None)
-        walk = _query(client, origin_payload, destination_payload, "WALK", api_key)
-        transit = _query(client, origin_payload, destination_payload, "TRANSIT", api_key)
-        put_cached(conn, key, walk, transit)
-        return CommuteResult(walk_min=walk, transit_min=transit, source="api")
+        walk, _ = _query(client, origin_payload, destination_payload, "WALK", api_key)
+        transit, transfers = _query(client, origin_payload, destination_payload, "TRANSIT", api_key)
+        put_cached(conn, key, walk, transit, transfers)
+        return CommuteResult(walk_min=walk, transit_min=transit, transit_transfers=transfers, source="api")
     finally:
         if own_client:
             client.close()
@@ -149,22 +155,33 @@ class DirectionsConfigError(RuntimeError):
     """REQUEST_DENIED / 403 / quota — caller should stop trying for this run."""
 
 
-def _query(client: httpx.Client, origin: dict, destination: dict, travel_mode: str, api_key: str) -> int | None:
-    """One Routes API call. Returns minutes (int), or None if no route.
+def _query(
+    client: httpx.Client, origin: dict, destination: dict, travel_mode: str, api_key: str,
+) -> tuple[int | None, int | None]:
+    """One Routes API call. Returns (minutes, transit_transfers_or_None).
+
+    For WALK, the transfers value is always None. For TRANSIT, we request
+    FEWER_TRANSFERS routing and count transit-mode legs to derive transfer count.
 
     Raises DirectionsConfigError on 401/403/429 — config or quota problems
     that don't get better by retrying within this run.
     """
-    body = {
+    body: dict = {
         "origin": origin,
         "destination": destination,
         "travelMode": travel_mode,
         "computeAlternativeRoutes": False,
     }
+    field_mask = "routes.duration,routes.distanceMeters"
+    if travel_mode == "TRANSIT":
+        body["transitPreferences"] = {"routingPreference": "FEWER_TRANSFERS"}
+        # Steps required so we can count transfers (transit-mode steps - 1).
+        field_mask += ",routes.legs.steps.travelMode"
+
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters",
+        "X-Goog-FieldMask": field_mask,
     }
     r = client.post(ROUTES_URL, json=body, headers=headers)
     if r.status_code in {401, 403}:
@@ -173,20 +190,35 @@ def _query(client: httpx.Client, origin: dict, destination: dict, travel_mode: s
         raise DirectionsConfigError(f"Routes {travel_mode} HTTP 429: quota exhausted")
     if r.status_code >= 400:
         log.warning("Routes %s HTTP %s: %s", travel_mode, r.status_code, r.text[:200])
-        return None
+        return None, None
 
     data = r.json()
     routes = data.get("routes") or []
     if not routes:
-        return None
+        return None, None
     duration_raw = routes[0].get("duration")        # e.g. "1800s"
     if not duration_raw:
-        return None
+        return None, None
     try:
         seconds = int(str(duration_raw).rstrip("s"))
     except ValueError:
-        return None
-    return int(round(seconds / 60))
+        return None, None
+    minutes = int(round(seconds / 60))
+
+    transfers = _count_transit_transfers(routes[0]) if travel_mode == "TRANSIT" else None
+    return minutes, transfers
+
+
+def _count_transit_transfers(route: dict) -> int | None:
+    """Count vehicle changes — number of transit-mode steps minus 1."""
+    transit_steps = 0
+    for leg in route.get("legs") or []:
+        for step in leg.get("steps") or []:
+            if step.get("travelMode") == "TRANSIT":
+                transit_steps += 1
+    if transit_steps == 0:
+        return None  # walking-only fallback; no meaningful transfer count
+    return transit_steps - 1
 
 
 def _error_message(response) -> str:
