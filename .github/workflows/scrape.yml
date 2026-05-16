@@ -16,6 +16,20 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
+    services:
+      flaresolverr:
+        image: ghcr.io/flaresolverr/flaresolverr:latest
+        ports:
+          - 8191:8191
+        env:
+          LOG_LEVEL: info
+          CAPTCHA_SOLVER: none
+        options: >-
+          --health-cmd "wget -q --spider http://localhost:8191/ || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 30s
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -42,23 +56,38 @@ jobs:
           curl -fsSL https://rclone.org/install.sh | sudo bash
           rclone version
 
+      - name: Wait for FlareSolverr
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:8191/ > /dev/null; then
+              echo "FlareSolverr ready after ${i}0s"
+              break
+            fi
+            sleep 2
+          done
+          curl -s http://localhost:8191/ | head -c 400 || true
+        env:
+          FLARESOLVERR_URL: http://localhost:8191/v1
+
       - name: Install Python deps
         run: pip install -r requirements.txt
 
       - name: Run
         run: python -m src.main
+        env:
+          FLARESOLVERR_URL: http://localhost:8191/v1
 
-      - name: Commit digest if generated
+      - name: Commit digest + debug artifacts if generated
         if: github.event_name == 'workflow_dispatch'
         run: |
-          if [ -n "$(git status --porcelain digests/)" ]; then
+          if [ -n "$(git status --porcelain digests/ debug/)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add digests/
-            git commit -m "digest: M2 test run ${GITHUB_RUN_ID}"
+            git add digests/ debug/
+            git commit -m "digest: test run ${GITHUB_RUN_ID}"
             git push
           else
-            echo "No digest changes to commit."
+            echo "No digest or debug changes to commit."
           fi
 
       - name: Notify failure
