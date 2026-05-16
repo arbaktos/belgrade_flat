@@ -1,3 +1,4 @@
+import logging
 import os
 import sqlite3
 import subprocess
@@ -5,8 +6,10 @@ from pathlib import Path
 
 from src.models import Listing
 
+log = logging.getLogger(__name__)
+
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 def _rclone_env() -> dict[str, str]:
@@ -64,6 +67,18 @@ def ensure_schema() -> sqlite3.Connection:
     conn.execute(
         "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
     )
+
+    # Schema v3 makes `elevator` nullable so card-only sources (halooglasi)
+    # can persist listings with elevator data still pending detail-page fetch.
+    # SQLite can't ALTER a column's NOT NULL constraint, so drop the v2 table
+    # if present; M6 dedup isn't wired yet, so losing in-flight rows is fine.
+    prev = conn.execute(
+        "SELECT value FROM meta WHERE key='schema_version'"
+    ).fetchone()
+    if prev is not None and int(prev[0]) < 3:
+        log.info("state: migrating listings table from v%s → v3", prev[0])
+        conn.execute("DROP TABLE IF EXISTS listings")
+
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS listings (
@@ -77,7 +92,7 @@ def ensure_schema() -> sqlite3.Connection:
             floor           INTEGER,
             total_floors    INTEGER,
             last_floor      INTEGER NOT NULL,
-            elevator        INTEGER NOT NULL,
+            elevator        INTEGER,
             furnished       TEXT,
             heating_type    TEXT,
             pets_allowed    INTEGER,
