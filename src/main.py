@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import dedup, digest, extract, filter as filt, route, state, telegram
+from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_digest
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -47,8 +47,7 @@ def main() -> int:
 
     try:
         if is_dispatch:
-            summary = _run_pipeline(cfg, conn)
-            _report(summary, schedule_label="dispatch", run_id=run_id, pulled=pulled)
+            _run_pipeline(cfg, conn)
         else:
             stats = state.stats(conn)
             telegram.send_message(
@@ -158,6 +157,11 @@ def _run_pipeline(cfg: dict, conn) -> dict:
                  len(matched), len(surfaced), dedup_stats["suppressed"])
         matched = surfaced
 
+    # Composite score ordering: highest score first (best price / shortest commute / biggest / freshest).
+    matched = score.rank_descending(
+        matched, price_cap_eur=cfg_obj.price_eur_max, freshness_days=cfg_obj.freshness_days
+    )
+
     today = datetime.now(timezone.utc)
     source_stats = {sr.name: (len(sr.listings), sr.error) for sr in source_results}
     api_count = route.monthly_api_count(conn)
@@ -177,6 +181,26 @@ def _run_pipeline(cfg: dict, conn) -> dict:
     )
     path = digest.write(content, today)
     log.info("digest written to %s", path)
+
+    # Spec §8 Telegram delivery — header summary + per-listing messages.
+    stats_after = state.stats(conn)
+    try:
+        telegram_digest.send(
+            full_result,
+            today=today,
+            source_stats=source_stats,
+            api_count=api_count,
+            dedup_stats=dedup_stats,
+            notify_reasons=notify_reasons,
+            commute_config_error=commute_config_error,
+            state_size_bytes=stats_after["size_bytes"],
+            listings_tracked=stats_after["listings_tracked"],
+            digest_path=f"digests/{today.strftime('%Y-%m-%d')}.md",
+            office_lat=float(os.environ.get("OFFICE_LAT", 0)),
+            office_lng=float(os.environ.get("OFFICE_LNG", 0)),
+        )
+    except Exception as e:  # noqa: BLE001 - delivery failure shouldn't lose state
+        log.error("telegram digest send failed: %s", e, exc_info=True)
 
     return {
         "source_results": source_results,
@@ -199,26 +223,6 @@ def _fetch_source(name: str, fn: Callable[..., list[Listing]], freshness_days: i
     except Exception as e:  # noqa: BLE001 - one bad source must not kill the whole run
         log.warning("source %s failed: %s", name, e, exc_info=True)
         return SourceResult(name=name, listings=[], error=str(e))
-
-
-def _report(summary: dict, *, schedule_label: str, run_id: str, pulled: bool) -> None:
-    src_line = " · ".join(
-        f"{sr.name} {len(sr.listings)}{' ⚠️' if sr.error else ''}"
-        for sr in summary["source_results"]
-    )
-    llm_line = (
-        f"\nLLM failures: {summary['extraction_failures']}"
-        if summary['extraction_failures'] else ""
-    )
-    telegram.send_message(
-        f"🧪 Test run ({schedule_label})\n"
-        f"🩺 {src_line}\n"
-        f"Fetched: {summary['fetched']} · structural pass: {summary['structural_passed']}\n"
-        f"Matched: {summary['matched']} · near-miss: {summary['near_miss']} · rejected: {summary['rejected']}"
-        f"{llm_line}\n"
-        f"Digest: {summary['digest_path']}\n"
-        f"R2: {'pulled' if pulled else 'seeded'} · Run: {run_id}"
-    )
 
 
 if __name__ == "__main__":
