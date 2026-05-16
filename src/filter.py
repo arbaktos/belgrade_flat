@@ -118,10 +118,14 @@ def _check_structural(l: Listing, cfg: FilterConfig, cutoff: datetime) -> str | 
         return f"rooms {l.rooms} outside [{cfg.rooms_min}, {cfg.rooms_max}]"
     if l.m2 < cfg.surface_m2_min:
         return f"surface {l.m2}m² < {cfg.surface_m2_min}m²"
-    if l.floor is None or l.floor <= 0:
-        return f"ground/basement floor ({l.floor})"
-    # elevator=None means the source did not expose this field — near-miss not hard-reject
-    if cfg.elevator_required and l.elevator is False:
+    if l.floor is None:
+        return "floor unknown"
+    if l.floor < 0:
+        return f"basement floor ({l.floor})"
+    # Ground floor (0) is allowed; user accepts walk-up flats there. For
+    # floor 1+ we still require an elevator when configured.
+    # elevator=None means the source did not expose the field — near-miss-only.
+    if cfg.elevator_required and l.floor > 0 and l.elevator is False:
         return "no elevator"
     if l.created_at < cutoff:
         return f"older than {cfg.freshness_days}d"

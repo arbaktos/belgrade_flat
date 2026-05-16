@@ -62,9 +62,32 @@ def test_too_small_rejected():
     assert "surface" in result.rejected[0][1]
 
 
-def test_ground_floor_rejected():
+def test_ground_floor_passes():
+    """Ground floor (0) is allowed; user explicitly accepts walk-up flats there."""
     result = filt.apply([_listing(floor=0)], CFG)
-    assert "ground" in result.rejected[0][1]
+    assert len(result.passed) == 1
+
+
+def test_ground_floor_skips_elevator_requirement():
+    """No-elevator + ground floor still passes (you don't need a lift on floor 0)."""
+    result = filt.apply([_listing(floor=0, elevator=False)], CFG)
+    assert len(result.passed) == 1
+
+
+def test_basement_rejected():
+    result = filt.apply([_listing(floor=-1)], CFG)
+    assert "basement" in result.rejected[0][1]
+
+
+def test_unknown_floor_rejected():
+    result = filt.apply([_listing(floor=None)], CFG)
+    assert "unknown" in result.rejected[0][1]
+
+
+def test_no_elevator_above_ground_rejected():
+    """Floor 2 + no elevator is still a hard reject when elevator is required."""
+    result = filt.apply([_listing(floor=2, elevator=False)], CFG)
+    assert "elevator" in result.rejected[0][1]
 
 
 def test_no_elevator_rejected():
