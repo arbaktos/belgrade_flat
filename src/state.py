@@ -1,11 +1,12 @@
 import os
-import shutil
 import sqlite3
 import subprocess
 from pathlib import Path
 
+from src.models import Listing
+
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _rclone_env() -> dict[str, str]:
@@ -64,13 +65,68 @@ def ensure_schema() -> sqlite3.Connection:
         "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
     )
     conn.execute(
-        "INSERT OR IGNORE INTO meta (key, value) VALUES ('schema_version', ?)",
+        """
+        CREATE TABLE IF NOT EXISTS listings (
+            fingerprint_key TEXT PRIMARY KEY,
+            source          TEXT NOT NULL,
+            id              TEXT NOT NULL,
+            url             TEXT NOT NULL,
+            price_eur       REAL NOT NULL,
+            m2              REAL NOT NULL,
+            rooms           REAL NOT NULL,
+            floor           INTEGER,
+            total_floors    INTEGER,
+            last_floor      INTEGER NOT NULL,
+            elevator        INTEGER NOT NULL,
+            furnished       TEXT,
+            heating_type    TEXT,
+            pets_allowed    INTEGER,
+            title           TEXT NOT NULL,
+            description     TEXT NOT NULL,
+            address         TEXT,
+            place_names     TEXT NOT NULL,
+            image_url       TEXT,
+            is_agency       INTEGER NOT NULL,
+            created_at      TEXT NOT NULL,
+            first_seen_at   TEXT NOT NULL DEFAULT (datetime('now')),
+            last_seen_at    TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_source ON listings(source)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at)")
+    conn.execute(
+        "INSERT INTO meta (key, value) VALUES ('schema_version', ?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
         (str(SCHEMA_VERSION),),
     )
     conn.commit()
     return conn
 
 
+def upsert_listings(conn: sqlite3.Connection, listings: list[Listing]) -> int:
+    rows = [l.to_row() for l in listings]
+    if not rows:
+        return 0
+    cols = [
+        "fingerprint_key", "source", "id", "url", "price_eur", "m2", "rooms",
+        "floor", "total_floors", "last_floor", "elevator", "furnished",
+        "heating_type", "pets_allowed", "title", "description", "address",
+        "place_names", "image_url", "is_agency", "created_at",
+    ]
+    placeholders = ",".join(["?"] * len(cols))
+    set_clause = ",".join(f"{c}=excluded.{c}" for c in cols if c != "fingerprint_key")
+    sql = (
+        f"INSERT INTO listings ({','.join(cols)}) VALUES ({placeholders}) "
+        f"ON CONFLICT(fingerprint_key) DO UPDATE SET {set_clause}, "
+        f"last_seen_at=datetime('now')"
+    )
+    conn.executemany(sql, [tuple(r[c] for c in cols) for r in rows])
+    conn.commit()
+    return len(rows)
+
+
 def stats(conn: sqlite3.Connection) -> dict[str, int]:
     size_bytes = LOCAL_DB.stat().st_size if LOCAL_DB.exists() else 0
-    return {"size_bytes": size_bytes}
+    n_listings = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
+    return {"size_bytes": size_bytes, "listings_tracked": n_listings}

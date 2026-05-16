@@ -14,6 +14,8 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -45,6 +47,19 @@ jobs:
 
       - name: Run
         run: python -m src.main
+
+      - name: Commit digest if generated
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ -n "$(git status --porcelain digests/)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add digests/
+            git commit -m "digest: M2 test run ${GITHUB_RUN_ID}"
+            git push
+          else
+            echo "No digest changes to commit."
+          fi
 
       - name: Notify failure
         if: failure()

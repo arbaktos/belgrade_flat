@@ -11,7 +11,8 @@ def test_config_loads():
 
 
 def test_imports():
-    from src import main, state, telegram  # noqa: F401
+    from src import digest, filter, main, sources, state, telegram  # noqa: F401
+    from src.sources import four_zida  # noqa: F401
 
 
 def test_schema_init(tmp_path, monkeypatch):
@@ -21,4 +22,7 @@ def test_schema_init(tmp_path, monkeypatch):
     conn = state.ensure_schema()
     row = conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
     assert row == (str(state.SCHEMA_VERSION),)
+    # listings table exists and has expected columns
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(listings)")}
+    assert {"fingerprint_key", "price_eur", "m2", "rooms", "elevator"} <= cols
     conn.close()
