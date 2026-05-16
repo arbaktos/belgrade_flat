@@ -96,6 +96,7 @@ def _parse(prop: dict[str, Any]) -> Listing | None:
             return None
         created_at = datetime.fromisoformat(first_pub.replace("Z", "+00:00"))
 
+        lat, lng = _parse_location(prop.get("location"))
         # "floor" = "2_4" → floor 2, total 4. "PR"/"VPR"/"SU" = ground/high-ground/basement.
         floor, total = _parse_floor(prop.get("floor"))
         size = float(prop.get("size") or 0)
@@ -131,10 +132,23 @@ def _parse(prop: dict[str, Any]) -> Listing | None:
             is_agency=True,  # cityexpert is itself an agency
             created_at=created_at,
             dishwasher=("furDishWasher" in furnishing),
+            lat=lat,
+            lng=lng,
         )
     except (KeyError, ValueError, TypeError) as e:
         log.warning("cityexpert: skipping malformed prop %s: %s", prop.get("uniqueID", "?"), e)
         return None
+
+
+def _parse_location(raw: Any) -> tuple[float | None, float | None]:
+    """cityexpert's location field is 'lat, lng' as a single string."""
+    if not raw or not isinstance(raw, str):
+        return None, None
+    try:
+        a, b = raw.split(",", 1)
+        return float(a.strip()), float(b.strip())
+    except (ValueError, TypeError):
+        return None, None
 
 
 def _parse_floor(raw: Any) -> tuple[int | None, int | None]:

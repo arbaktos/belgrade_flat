@@ -42,6 +42,10 @@ class Listing:
     is_agency: bool
     created_at: datetime
     dishwasher: bool | None = None       # only some sources expose this structurally; None = ask the LLM
+    lat: float | None = None
+    lng: float | None = None
+    walk_min: int | None = None          # populated by route.py after commute computation
+    transit_min: int | None = None
     extraction: Extraction | None = None
 
     @property

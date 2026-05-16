@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import digest, extract, filter as filt, state, telegram
+from src import digest, extract, filter as filt, route, state, telegram
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -90,21 +90,50 @@ def _run_pipeline(cfg: dict, conn) -> dict:
         log.warning("ANTHROPIC_API_KEY not set — skipping LLM extraction")
 
     # Stage 3: post-LLM filter — pets, dishwasher, heating, max-lease + near-miss split.
-    final = filt.apply_with_extraction(structural.passed, cfg_obj)
-    log.info("final: %d passed, %d near-miss, %d rejected (LLM-stage)",
-             len(final.passed), len(final.near_misses), len(final.rejected))
+    llm_filtered = filt.apply_with_extraction(structural.passed, cfg_obj)
+    log.info("LLM filter: %d passed, %d near-miss, %d rejected",
+             len(llm_filtered.passed), len(llm_filtered.near_misses), len(llm_filtered.rejected))
+
+    # Stage 4: commute filter. Compute walk+transit minutes for both passed and
+    # near-miss candidates (so even near-misses get the commute info surfaced),
+    # then hard-filter the matches by walk≤30m OR transit≤30m.
+    candidates_for_commute = llm_filtered.passed + [l for l, _ in llm_filtered.near_misses]
+    commute_rejected: list[tuple[Listing, str]] = []
+    if "GOOGLE_DIRECTIONS_API_KEY" in os.environ and candidates_for_commute:
+        office_lat = float(os.environ["OFFICE_LAT"])
+        office_lng = float(os.environ["OFFICE_LNG"])
+        log.info("computing commute for %d candidates", len(candidates_for_commute))
+        for l in candidates_for_commute:
+            try:
+                r = route.compute_commute(
+                    l, office_lat=office_lat, office_lng=office_lng, conn=conn
+                )
+                l.walk_min = r.walk_min
+                l.transit_min = r.transit_min
+            except Exception as e:  # noqa: BLE001
+                log.warning("commute failed for %s: %s", l.fingerprint_key, e)
+
+        commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj)
+        commute_rejected = commute_passed.rejected
+        matched = commute_passed.passed
+    else:
+        log.warning("Skipping commute filter (no API key or no candidates)")
+        matched = llm_filtered.passed
 
     today = datetime.now(timezone.utc)
     source_stats = {sr.name: (len(sr.listings), sr.error) for sr in source_results}
+    api_count = route.monthly_api_count(conn)
 
-    # Merge structural rejections into final.rejected so the digest sees the full picture.
-    all_rejected = structural.rejected + final.rejected
+    # Merge all rejections (structural + LLM + commute) into final.rejected.
+    all_rejected = structural.rejected + llm_filtered.rejected + commute_rejected
     full_result = filt.FilterResult(
-        passed=final.passed,
-        near_misses=final.near_misses,
+        passed=matched,
+        near_misses=llm_filtered.near_misses,
         rejected=all_rejected,
     )
-    content = digest.render(full_result, source_stats=source_stats, today=today)
+    content = digest.render(
+        full_result, source_stats=source_stats, today=today, api_count=api_count
+    )
     path = digest.write(content, today)
     log.info("digest written to %s", path)
 
@@ -112,10 +141,11 @@ def _run_pipeline(cfg: dict, conn) -> dict:
         "source_results": source_results,
         "fetched": len(all_listings),
         "structural_passed": len(structural.passed),
-        "matched": len(final.passed),
-        "near_miss": len(final.near_misses),
+        "matched": len(matched),
+        "near_miss": len(llm_filtered.near_misses),
         "rejected": len(all_rejected),
         "extraction_failures": extraction_failures,
+        "api_count": api_count,
         "digest_path": str(path),
     }
 

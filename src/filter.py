@@ -18,6 +18,8 @@ class FilterConfig:
     dishwasher_required: bool
     pets_required: bool
     max_lease_months: int
+    walk_min_max: int = 30
+    transit_min_max: int = 30
 
 
 @dataclass
@@ -29,6 +31,7 @@ class FilterResult:
 
 def from_dict(cfg: dict) -> FilterConfig:
     f = cfg["filters"]
+    commute = f.get("commute") or {}
     return FilterConfig(
         price_eur_max=float(f["price_eur_max"]),
         rooms_min=float(f["rooms_min"]),
@@ -40,7 +43,33 @@ def from_dict(cfg: dict) -> FilterConfig:
         dishwasher_required=bool(f.get("dishwasher_required", False)),
         pets_required=bool(f.get("pets_required", False)),
         max_lease_months=int(f.get("max_lease_months", 12)),
+        walk_min_max=int(commute.get("walk_min_max", 30)),
+        transit_min_max=int(commute.get("transit_min_max", 30)),
     )
+
+
+def apply_commute(listings: list[Listing], cfg: FilterConfig) -> FilterResult:
+    """Filter on walk_min/transit_min populated by src/route.py.
+
+    Per spec §4: pass if walk ≤ 30 min OR transit ≤ 30 min. Listings with both
+    fields None (Google had no route or haversine-skipped) get hard-rejected.
+    """
+    passed: list[Listing] = []
+    rejected: list[tuple[Listing, str]] = []
+    for l in listings:
+        walk_ok = l.walk_min is not None and l.walk_min <= cfg.walk_min_max
+        transit_ok = l.transit_min is not None and l.transit_min <= cfg.transit_min_max
+        if walk_ok or transit_ok:
+            passed.append(l)
+        else:
+            best = []
+            if l.walk_min is not None:
+                best.append(f"walk {l.walk_min}m")
+            if l.transit_min is not None:
+                best.append(f"transit {l.transit_min}m")
+            reason = ("no route" if not best else " / ".join(best)) + f" > {cfg.walk_min_max}m"
+            rejected.append((l, reason))
+    return FilterResult(passed=passed, rejected=rejected)
 
 
 def apply(listings: list[Listing], cfg: FilterConfig, *, now: datetime | None = None) -> FilterResult:

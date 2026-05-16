@@ -14,6 +14,7 @@ def render(
     *,
     source_stats: dict[str, tuple[int, str | None]],
     today: datetime,
+    api_count: int = 0,
 ) -> str:
     """Render the digest.
 
@@ -31,7 +32,8 @@ def render(
     src_line = " · ".join(
         f"{name} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
     )
-    lines.append(f"🩺 Sources: {src_line}\n")
+    lines.append(f"🩺 Sources: {src_line}")
+    lines.append(f"🔢 Google API: {api_count}/40 000 this month\n")
 
     error_lines = [
         f"- ⚠️ {name}: {err}" for name, (_c, err) in source_stats.items() if err
@@ -97,12 +99,21 @@ def _listing_block(l: Listing, near_miss_reasons: list[str] | None = None) -> st
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
     head_emoji = "⚠️" if near_miss_reasons else "✅"
+    commute_bits: list[str] = []
+    if l.walk_min is not None:
+        commute_bits.append(f"🚶 {l.walk_min} min")
+    if l.transit_min is not None:
+        commute_bits.append(f"🚌 {l.transit_min} min")
+    commute_str = " · ".join(commute_bits) if commute_bits else ""
+
     block = [
         f"### {head_emoji} €{l.price_eur:.0f} · {l.rooms} rooms · {l.m2:.0f} m² · {place}",
         f"- 📍 {l.address or '?'} · {floor_str} · {lift}",
         f"- {heat} · {pets} · {agency} · 📅 {l.created_at.strftime('%Y-%m-%d %H:%M UTC')}",
-        f"- 🔗 [{l.title}]({l.url})",
     ]
+    if commute_str:
+        block.append(f"- {commute_str}")
+    block.append(f"- 🔗 [{l.title}]({l.url})")
     if near_miss_reasons:
         block.append("- ⚠️ Unconfirmed: " + "; ".join(near_miss_reasons))
     if l.extraction:

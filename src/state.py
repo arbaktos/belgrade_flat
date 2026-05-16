@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 def _rclone_env() -> dict[str, str]:
@@ -78,6 +78,18 @@ def ensure_schema() -> sqlite3.Connection:
     if prev is not None and int(prev[0]) < 3:
         log.info("state: migrating listings table from v%s → v3", prev[0])
         conn.execute("DROP TABLE IF EXISTS listings")
+
+    # v4 adds the commute_cache table — no listings drop needed.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS commute_cache (
+            bucket_key   TEXT PRIMARY KEY,         -- "lat,lng" 3-decimal bucket OR "addr:<hash>"
+            walk_min     INTEGER,                   -- null = "Google said no route"
+            transit_min  INTEGER,
+            fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
 
     conn.execute(
         """
