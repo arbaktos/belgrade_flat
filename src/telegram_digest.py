@@ -15,6 +15,7 @@ Limits per spec §8:
 """
 from __future__ import annotations
 
+import html
 import logging
 import os
 from datetime import datetime, timezone
@@ -56,14 +57,17 @@ def send(
     near = list(result.near_misses)[:MAX_NEAR_MISS]
     near_overflow = max(0, len(result.near_misses) - MAX_NEAR_MISS)
 
-    telegram.send_message(_render_header(
-        today=today,
-        perfect=len(result.passed), near=len(result.near_misses),
-        source_stats=source_stats, api_count=api_count, dedup_stats=dedup_stats,
-        commute_config_error=commute_config_error,
-        state_size_bytes=state_size_bytes, listings_tracked=listings_tracked,
-        digest_path=digest_path,
-    ))
+    telegram.send_message(
+        _render_header(
+            today=today,
+            perfect=len(result.passed), near=len(result.near_misses),
+            source_stats=source_stats, api_count=api_count, dedup_stats=dedup_stats,
+            commute_config_error=commute_config_error,
+            state_size_bytes=state_size_bytes, listings_tracked=listings_tracked,
+            digest_path=digest_path,
+        ),
+        parse_mode="HTML",
+    )
 
     if not perfect and not near:
         telegram.send_message("Nothing new today. All systems green.")
@@ -98,15 +102,15 @@ def _render_header(
     digest_path: str,
 ) -> str:
     src_line = " · ".join(
-        f"{name} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
+        f"{html.escape(name)} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
     )
     lines = [
-        f"Belgrade rentals — {today.strftime('%Y-%m-%d')}",
+        f"<b>Belgrade rentals — {today.strftime('%Y-%m-%d')}</b>",
         f"{perfect} matches · {near} near-misses",
         f"🩺 {src_line}",
     ]
     if commute_config_error:
-        lines.append(f"🔢 Google API: ⚠️ {commute_config_error[:120]}")
+        lines.append(f"🔢 Google API: ⚠️ {html.escape(commute_config_error[:120])}")
     else:
         lines.append(f"🔢 Google API: {api_count}/40 000 this month")
     if dedup_stats and dedup_stats.get("clusters"):
@@ -116,7 +120,13 @@ def _render_header(
         )
     kb = max(1, state_size_bytes // 1024)
     lines.append(f"💾 R2 state: {kb} KB · {listings_tracked} flats tracked")
-    lines.append(f"📝 Archive: {digest_path}")
+    # Archive link to the GitHub blob if we can guess the repo from env.
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    if repo:
+        archive_url = f"https://github.com/{repo}/blob/main/{digest_path}"
+        lines.append(f'📝 <a href="{html.escape(archive_url, quote=True)}">Archive</a>')
+    else:
+        lines.append(f"📝 Archive: {html.escape(digest_path)}")
     return "\n".join(lines)
 
 
@@ -134,11 +144,11 @@ def _send_listing(
     )
     if l.image_url:
         try:
-            telegram.send_photo(l.image_url, caption=caption)
+            telegram.send_photo(l.image_url, caption=caption, parse_mode="HTML")
             return
         except Exception as e:  # noqa: BLE001
             log.warning("telegram sendPhoto failed for %s (%s); falling back to text", l.fingerprint_key, e)
-    telegram.send_message(caption)
+    telegram.send_message(caption, parse_mode="HTML")
 
 
 def _render_listing(
@@ -197,31 +207,42 @@ def _render_listing(
     red_flags = "; ".join(l.extraction.red_flags) if l.extraction and l.extraction.red_flags else ""
     bills_line = ""
     if l.extraction and l.extraction.bills_estimate_eur and l.extraction.bills_estimate_eur > 200:
-        bills_line = f"\n💸 bills ≈ €{l.extraction.bills_estimate_eur}"
+        bills_line = f"💸 bills ≈ €{l.extraction.bills_estimate_eur}"
+
+    # All text is HTML-escaped; links use <a href> so URLs hide behind labels.
+    place_esc = html.escape(place)
+    address_esc = html.escape(l.address or "?")
+    summary_esc = html.escape(summary)
+    red_flags_esc = html.escape(red_flags)
 
     lines: list[str] = [
-        f"{head_emoji} €{l.price_eur:.0f}{notify_badge} · {l.rooms} rooms · {l.m2:.0f} m² · {place}",
-        f"📍 {l.address or '?'} — {commute_str}",
-        " · ".join(x for x in (heat, pets, dish, lift, floor_str) if x),
+        f"{head_emoji} €{l.price_eur:.0f}{notify_badge} · {l.rooms} rooms · {l.m2:.0f} m² · {place_esc}",
+        f"📍 {address_esc} — {commute_str}",
+        " · ".join(html.escape(x) for x in (heat, pets, dish, lift, floor_str) if x),
         f"📅 {posted_rel} · {agency}",
     ]
     if near_miss_reasons:
-        lines.append("⚠️ Unconfirmed: " + "; ".join(near_miss_reasons))
-    if red_flags:
-        lines.append(f"🚩 {red_flags}")
+        lines.append("⚠️ Unconfirmed: " + html.escape("; ".join(near_miss_reasons)))
+    if red_flags_esc:
+        lines.append(f"🚩 {red_flags_esc}")
     if bills_line:
-        lines.append(bills_line.lstrip("\n"))
-    if summary:
+        lines.append(bills_line)
+    if summary_esc:
         lines.append("")
-        lines.append(summary)
+        lines.append(f"<i>{summary_esc}</i>")
 
-    # Links — use plain URLs (Telegram auto-detects, no parse mode needed).
+    # Compact link line — labels only, no bare URLs.
     map_link = _maps_link(l)
     walk_link = _route_link(l, office_lat, office_lng, "walking")
     transit_link = _route_link(l, office_lat, office_lng, "transit")
+    source_label = html.escape(l.source)
     lines.append("")
-    lines.append(f"🔗 {l.url}")
-    lines.append(f"🗺 Map: {map_link}  ·  🚶 {walk_link}  ·  🚌 {transit_link}")
+    lines.append(
+        f'<a href="{html.escape(l.url, quote=True)}">🔗 {source_label}</a> · '
+        f'<a href="{html.escape(map_link, quote=True)}">🗺 Map</a> · '
+        f'<a href="{html.escape(walk_link, quote=True)}">🚶 Walk</a> · '
+        f'<a href="{html.escape(transit_link, quote=True)}">🚌 Transit</a>'
+    )
     return "\n".join(lines)
 
 
