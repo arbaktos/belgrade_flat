@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 def _rclone_env() -> dict[str, str]:
@@ -79,7 +79,11 @@ def ensure_schema() -> sqlite3.Connection:
         log.info("state: migrating listings table from v%s → v3", prev[0])
         conn.execute("DROP TABLE IF EXISTS listings")
 
-    # v4 adds the commute_cache table — no listings drop needed.
+    # v4 added commute_cache. v5 drops + recreates it once to flush poisoned
+    # (None, None) entries written during the brief REQUEST_DENIED period.
+    if prev is not None and int(prev[0]) < 5:
+        log.info("state: dropping commute_cache to flush poisoned entries from REQUEST_DENIED era")
+        conn.execute("DROP TABLE IF EXISTS commute_cache")
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS commute_cache (

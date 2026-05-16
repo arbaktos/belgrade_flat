@@ -28,7 +28,7 @@ def render(
     near_miss_blurb = f" · {near_miss_count} near-miss" if near_miss_count else ""
     lines.append(
         f"**{len(result.passed)} matches{near_miss_blurb} · "
-        f"{len(result.rejected)} rejected** (structural + LLM filters; commute & dedup pending)\n"
+        f"{len(result.rejected)} rejected**\n"
     )
     src_line = " · ".join(
         f"{name} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
