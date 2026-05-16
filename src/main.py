@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import digest, extract, filter as filt, route, state, telegram
+from src import dedup, digest, extract, filter as filt, route, state, telegram
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -131,6 +131,33 @@ def _run_pipeline(cfg: dict, conn) -> dict:
         log.warning("Skipping commute filter (no API key or no candidates)")
         matched = llm_filtered.passed
 
+    # Stage 5: dedup — cross-portal duplicates. Compute pHash for matches +
+    # near-misses (~50 image downloads), cluster matches by the cascade, pick
+    # one canonical per cluster, then apply the re-notify policy. Near-misses
+    # are not deduped in M6 — they're already a manual-vet bucket.
+    candidates_for_phash = matched + [l for l, _ in llm_filtered.near_misses]
+    dedup_stats = {"phashed": 0, "clusters": 0, "suppressed": 0}
+    notify_reasons: dict[str, str] = {}
+    if candidates_for_phash:
+        dedup_stats["phashed"] = dedup.compute_phashes(candidates_for_phash)
+        dedup.persist_phashes(candidates_for_phash, conn)
+
+        clusters = dedup.cluster_duplicates(matched)
+        dedup_stats["clusters"] = len(clusters)
+        surfaced: list[Listing] = []
+        for cluster in clusters:
+            canonical = dedup.pick_canonical(cluster)
+            ok, reason = dedup.should_notify(canonical, conn)
+            if ok:
+                surfaced.append(canonical)
+                notify_reasons[canonical.fingerprint_key] = reason
+                dedup.mark_notified(canonical, conn)
+            else:
+                dedup_stats["suppressed"] += 1
+        log.info("dedup: %d→%d canonical, %d suppressed by re-notify policy",
+                 len(matched), len(surfaced), dedup_stats["suppressed"])
+        matched = surfaced
+
     today = datetime.now(timezone.utc)
     source_stats = {sr.name: (len(sr.listings), sr.error) for sr in source_results}
     api_count = route.monthly_api_count(conn)
@@ -145,6 +172,8 @@ def _run_pipeline(cfg: dict, conn) -> dict:
     content = digest.render(
         full_result, source_stats=source_stats, today=today, api_count=api_count,
         commute_config_error=commute_config_error,
+        notify_reasons=notify_reasons,
+        dedup_stats=dedup_stats,
     )
     path = digest.write(content, today)
     log.info("digest written to %s", path)

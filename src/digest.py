@@ -16,6 +16,8 @@ def render(
     today: datetime,
     api_count: int = 0,
     commute_config_error: str | None = None,
+    notify_reasons: dict[str, str] | None = None,
+    dedup_stats: dict | None = None,
 ) -> str:
     """Render the digest.
 
@@ -35,9 +37,15 @@ def render(
     )
     lines.append(f"🩺 Sources: {src_line}")
     if commute_config_error:
-        lines.append(f"🔢 Google API: ⚠️ {commute_config_error}\n")
+        lines.append(f"🔢 Google API: ⚠️ {commute_config_error}")
     else:
-        lines.append(f"🔢 Google API: {api_count}/40 000 this month\n")
+        lines.append(f"🔢 Google API: {api_count}/40 000 this month")
+    if dedup_stats and dedup_stats.get("clusters"):
+        lines.append(
+            f"🪞 Dedup: {dedup_stats['clusters']} cluster(s), "
+            f"{dedup_stats['suppressed']} suppressed by re-notify policy"
+        )
+    lines.append("")
 
     error_lines = [
         f"- ⚠️ {name}: {err}" for name, (_c, err) in source_stats.items() if err
@@ -61,7 +69,8 @@ def render(
     else:
         lines.append(f"## Matches ({len(result.passed)})\n")
         for l in result.passed:
-            lines.append(_listing_block(l))
+            reason = (notify_reasons or {}).get(l.fingerprint_key)
+            lines.append(_listing_block(l, notify_reason=reason))
 
     if result.rejected:
         lines.append(f"\n## Rejected ({len(result.rejected)})\n")
@@ -76,7 +85,11 @@ def render(
     return "\n".join(lines) + "\n"
 
 
-def _listing_block(l: Listing, near_miss_reasons: list[str] | None = None) -> str:
+def _listing_block(
+    l: Listing,
+    near_miss_reasons: list[str] | None = None,
+    notify_reason: str | None = None,
+) -> str:
     floor_str = f"floor {l.floor}" if l.floor is not None else "floor ?"
     if l.total_floors:
         floor_str += f"/{l.total_floors}"
@@ -103,6 +116,11 @@ def _listing_block(l: Listing, near_miss_reasons: list[str] | None = None) -> st
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
     head_emoji = "⚠️" if near_miss_reasons else "✅"
+    notify_badge = ""
+    if notify_reason == "price_drop":
+        notify_badge = " · 📉 price drop"
+    elif notify_reason == "reappeared":
+        notify_badge = " · 🔁 reappeared"
     commute_bits: list[str] = []
     if l.walk_min is not None:
         commute_bits.append(f"🚶 {l.walk_min} min")
@@ -111,7 +129,7 @@ def _listing_block(l: Listing, near_miss_reasons: list[str] | None = None) -> st
     commute_str = " · ".join(commute_bits) if commute_bits else ""
 
     block = [
-        f"### {head_emoji} €{l.price_eur:.0f} · {l.rooms} rooms · {l.m2:.0f} m² · {place}",
+        f"### {head_emoji} €{l.price_eur:.0f}{notify_badge} · {l.rooms} rooms · {l.m2:.0f} m² · {place}",
         f"- 📍 {l.address or '?'} · {floor_str} · {lift}",
         f"- {heat} · {pets} · {agency} · 📅 {l.created_at.strftime('%Y-%m-%d %H:%M UTC')}",
     ]

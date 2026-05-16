@@ -46,6 +46,7 @@ class Listing:
     lng: float | None = None
     walk_min: int | None = None          # populated by route.py after commute computation
     transit_min: int | None = None
+    image_phash: str | None = None       # populated by dedup.compute_phashes (hex string)
     extraction: Extraction | None = None
 
     @property
@@ -58,6 +59,8 @@ class Listing:
         d["created_at"] = self.created_at.isoformat()
         d["place_names"] = ",".join(self.place_names)
         d["fingerprint_key"] = self.fingerprint_key
-        # extraction is stored separately; strip from the listings row
-        d.pop("extraction", None)
+        # extraction + commute live in their own columns / are computed at runtime;
+        # strip them from the row we send to the listings table.
+        for k in ("extraction", "walk_min", "transit_min"):
+            d.pop(k, None)
         return d

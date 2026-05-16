@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 
 def _rclone_env() -> dict[str, str]:
@@ -84,6 +84,19 @@ def ensure_schema() -> sqlite3.Connection:
     if prev is not None and int(prev[0]) < 5:
         log.info("state: dropping commute_cache to flush poisoned entries from REQUEST_DENIED era")
         conn.execute("DROP TABLE IF EXISTS commute_cache")
+
+    # v6 adds dedup columns to listings. SQLite supports ADD COLUMN cheaply.
+    if prev is not None and int(prev[0]) < 6:
+        log.info("state: migrating listings table to v6 (dedup columns)")
+        for col_sql in (
+            "ALTER TABLE listings ADD COLUMN image_phash TEXT",
+            "ALTER TABLE listings ADD COLUMN notified_at TEXT",
+            "ALTER TABLE listings ADD COLUMN notified_price REAL",
+        ):
+            try:
+                conn.execute(col_sql)
+            except sqlite3.OperationalError:
+                pass    # column already exists from a previous partial migration
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS commute_cache (
@@ -120,12 +133,16 @@ def ensure_schema() -> sqlite3.Connection:
             is_agency       INTEGER NOT NULL,
             created_at      TEXT NOT NULL,
             first_seen_at   TEXT NOT NULL DEFAULT (datetime('now')),
-            last_seen_at    TEXT NOT NULL DEFAULT (datetime('now'))
+            last_seen_at    TEXT NOT NULL DEFAULT (datetime('now')),
+            image_phash     TEXT,
+            notified_at     TEXT,
+            notified_price  REAL
         )
         """
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_source ON listings(source)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_image_phash ON listings(image_phash) WHERE image_phash IS NOT NULL")
     conn.execute(
         "INSERT INTO meta (key, value) VALUES ('schema_version', ?) "
         "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
