@@ -57,7 +57,15 @@ def _call(method: str, payload: dict, *, max_retries: int = 3) -> dict:
             log.warning("Telegram %s 429 — sleeping %ds", method, retry_after)
             time.sleep(retry_after + 1)
             continue
-        r.raise_for_status()
+        if r.status_code >= 400:
+            # Surface Telegram's actual error reason ('description' field) so a
+            # bad caption/parse_mode/photo URL doesn't fail silently.
+            try:
+                desc = r.json().get("description", "")[:300]
+            except Exception:
+                desc = r.text[:300]
+            log.warning("Telegram %s HTTP %s: %s", method, r.status_code, desc)
+            r.raise_for_status()
         return r.json()
     raise RuntimeError(f"Telegram {method} failed after {max_retries} retries")
 
