@@ -22,9 +22,11 @@ def render(
     """
     lines: list[str] = []
     lines.append(f"# Belgrade rentals — {today.strftime('%Y-%m-%d')} (test run)\n")
+    near_miss_count = len(result.near_misses)
+    near_miss_blurb = f" · {near_miss_count} near-miss" if near_miss_count else ""
     lines.append(
-        f"**{len(result.passed)} matches · {len(result.rejected)} rejected** "
-        f"(structural filters only — no LLM / commute / dedup yet)\n"
+        f"**{len(result.passed)} matches{near_miss_blurb} · "
+        f"{len(result.rejected)} rejected** (structural + LLM filters; commute & dedup pending)\n"
     )
     src_line = " · ".join(
         f"{name} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
@@ -81,7 +83,10 @@ def _listing_block(l: Listing, near_miss_reasons: list[str] | None = None) -> st
     # Prefer LLM-confirmed heating if it differs from the raw source value.
     heating_label = (l.extraction.heating_type_confirmed if l.extraction else None) or l.heating_type
     heat = f"🔥 {heating_label}" if heating_label else "🔥?"
-    pets_state = (l.extraction.pets_allowed if l.extraction else None) or _pets_string(l.pets_allowed)
+    # Pets: prefer a *positive* signal from either side over "unknown".
+    pets_state = _pets_string(l.pets_allowed)
+    if pets_state == "unknown" and l.extraction and l.extraction.pets_allowed:
+        pets_state = l.extraction.pets_allowed
     if pets_state == "yes":
         pets = "🐾 pets OK"
     elif pets_state == "no":
