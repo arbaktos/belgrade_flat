@@ -1,9 +1,13 @@
 """Composite score used to rank listings within the digest (spec §8).
 
-    score = 0.4·(1 − price/cap)
-          + 0.3·(1 − best_commute/30)
-          + 0.2·(m²/80)
-          + 0.1·freshness  (1.0 = just posted; 0.0 = older than freshness window)
+User preference (May 2026): time-to-office matters more than price within the
+allowed range — anything ≤ €1000 is acceptable, what really differentiates is
+how long the commute is. Weights diverge from spec §8 to reflect that:
+
+    score = 0.45·(1 − best_commute/30)
+          + 0.25·(1 − price/cap)
+          + 0.20·(m²/80)
+          + 0.10·freshness  (1.0 = just posted; 0.0 = older than freshness window)
 
 The score is NEVER shown to the user — only used for digest ordering. Higher
 is better.
@@ -15,10 +19,10 @@ from datetime import datetime, timezone
 from src.models import Listing
 
 
-PRICE_WEIGHT = 0.4
-COMMUTE_WEIGHT = 0.3
-SURFACE_WEIGHT = 0.2
-FRESHNESS_WEIGHT = 0.1
+COMMUTE_WEIGHT = 0.45
+PRICE_WEIGHT = 0.25
+SURFACE_WEIGHT = 0.20
+FRESHNESS_WEIGHT = 0.10
 
 SURFACE_CAP_M2 = 80      # diminishing returns above this
 COMMUTE_CAP_MIN = 30
