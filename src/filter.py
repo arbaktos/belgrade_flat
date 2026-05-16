@@ -100,37 +100,103 @@ def _check_structural(l: Listing, cfg: FilterConfig, cutoff: datetime) -> str | 
 
 
 def _check_extraction(l: Listing, cfg: FilterConfig) -> tuple[list[str], list[str]]:
-    """Returns (hard_rejects, near_miss_reasons). If extraction is None, both empty."""
-    if l.extraction is None:
-        return [], []
+    """Apply the LLM-aware rules. Each source's structured data is preferred
+    over the LLM's confirmation; the LLM is fallback only.
+
+    Returns (hard_rejects, near_miss_reasons).
+    """
     e = l.extraction
     hard: list[str] = []
     soft: list[str] = []
 
+    # ---- pets ---------------------------------------------------------------
     if cfg.pets_required:
-        if e.pets_allowed == "no":
+        pets = _resolve_pets(l, e)
+        if pets is False:
             hard.append("pets not allowed")
-        elif e.pets_allowed == "unknown" or e.pets_allowed is None:
+        elif pets is None:
             soft.append("pets unclear")
 
+    # ---- dishwasher ---------------------------------------------------------
     if cfg.dishwasher_required:
-        if e.dishwasher is False:
+        dish = l.dishwasher
+        if dish is None and e is not None:
+            dish = e.dishwasher
+        if dish is False:
             hard.append("no dishwasher")
-        elif e.dishwasher is None:
+        elif dish is None:
             soft.append("dishwasher unclear")
 
+    # ---- heating ------------------------------------------------------------
     if cfg.heating_allowed:
-        confirmed = e.heating_type_confirmed
-        if confirmed is None:
+        canonical = canonicalize_heating(l.heating_type)
+        if canonical is None and e is not None:
+            canonical = canonicalize_heating(e.heating_type_confirmed)
+        if canonical is None:
             soft.append("heating unclear")
-        elif confirmed not in cfg.heating_allowed:
-            hard.append(f"heating={confirmed} not in {list(cfg.heating_allowed)}")
+        elif canonical not in cfg.heating_allowed:
+            hard.append(f"heating={canonical} not in {list(cfg.heating_allowed)}")
 
-    if cfg.max_lease_months and e.max_lease_months is not None:
+    # ---- lease length (LLM-only — sources don't expose this) ---------------
+    if cfg.max_lease_months and e is not None and e.max_lease_months is not None:
         if e.max_lease_months > cfg.max_lease_months:
             hard.append(f"min lease {e.max_lease_months}mo > {cfg.max_lease_months}mo")
 
-    # elevator: if structural pass was lenient (elevator=None) but LLM confirmed presence,
-    # this is informational; no extra rejection here — structural pass already enforced it.
-
     return hard, soft
+
+
+# Source-specific terms → canonical values from spec §3.
+_HEATING_MAP: dict[str, str] = {
+    # 4zida raw values
+    "district": "centralno",
+    "central": "centralno",
+    "gas": "etazno",
+    "tapec": "TA",
+    # nekretnine raw values
+    "centralno": "centralno",
+    "etazno": "etazno",
+    "etažno": "etazno",
+    "podno": "podno",
+    "ta": "TA",
+    "klima": "klima",
+    "klimatizacija": "klima",
+    "elektricno": "elektricni",
+    "električno": "elektricni",
+    "elektricni": "elektricni",
+    "podno grejanje": "podno",
+    "centralno grejanje": "centralno",
+    "etažno grejanje": "etazno",
+    "etazno grejanje": "etazno",
+}
+
+
+def canonicalize_heating(raw: str | None) -> str | None:
+    """Normalize a source-specific heating term to the spec's vocabulary.
+
+    Returns one of {centralno, etazno, podno, TA, klima, elektricni}, or None
+    if the input is unknown / unmappable.
+    """
+    if not raw:
+        return None
+    key = raw.strip().lower()
+    if key in _HEATING_MAP:
+        return _HEATING_MAP[key]
+    # Also accept inputs that are already canonical (case-insensitive).
+    if key in {"centralno", "etazno", "podno", "ta", "klima", "elektricni"}:
+        return "TA" if key == "ta" else key
+    return None
+
+
+def _resolve_pets(l: Listing, e) -> bool | None:
+    """Prefer structured Listing.pets_allowed; fall back to LLM's string answer."""
+    if l.pets_allowed is True:
+        return True
+    if l.pets_allowed is False:
+        return False
+    if e is None:
+        return None
+    if e.pets_allowed == "yes":
+        return True
+    if e.pets_allowed == "no":
+        return False
+    return None

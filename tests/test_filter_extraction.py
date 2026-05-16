@@ -67,7 +67,33 @@ def test_long_lease_hard_reject():
     assert "lease" in r.rejected[0][1]
 
 
-def test_missing_extraction_passes_through():
-    """Listings without extraction (e.g. LLM failed) shouldn't error or get LLM-rejected."""
+def test_missing_extraction_lands_in_near_miss_not_hard_reject():
+    """If the LLM failed AND no structured data, treat as near-miss not silent pass."""
     r = filt.apply_with_extraction([_listing(None)], CFG)
+    assert not r.passed and not r.rejected
+    assert len(r.near_misses) == 1
+    reasons = r.near_misses[0][1]
+    assert any("pets" in x for x in reasons)
+
+
+def test_structured_data_prefers_over_llm():
+    """4zida exposes heatingType='district' structurally → should be canonicalized
+    to 'centralno' without needing LLM confirmation."""
+    e = Extraction(pets_allowed="unknown", dishwasher=True, heating_type_confirmed=None)
+    listing = _listing(e)
+    listing.heating_type = "district"
+    listing.pets_allowed = True
+    listing.dishwasher = None  # let LLM handle this one
+    r = filt.apply_with_extraction([listing], CFG)
+    # pets=True structurally → pass; dishwasher=True (LLM) → pass; heating=district→centralno → pass
     assert len(r.passed) == 1
+
+
+def test_canonicalize_heating():
+    assert filt.canonicalize_heating("district") == "centralno"
+    assert filt.canonicalize_heating("gas") == "etazno"
+    assert filt.canonicalize_heating("Centralno") == "centralno"
+    assert filt.canonicalize_heating("TA") == "TA"
+    assert filt.canonicalize_heating("TA peć") is None  # diacritic; we lowercase but don't normalize spaces/special chars yet
+    assert filt.canonicalize_heating(None) is None
+    assert filt.canonicalize_heating("Centralno grejanje") == "centralno"

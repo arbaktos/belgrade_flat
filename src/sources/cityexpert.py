@@ -102,7 +102,6 @@ def _parse(prop: dict[str, Any]) -> Listing | None:
         price = float(prop.get("price") or 0)
         rooms = _to_float(prop.get("structure"))
         furnishing = prop.get("furnishingArray") or []
-        has_dishwasher = "furDishWasher" in furnishing
         bldg_opts = prop.get("bldgOptsArray") or []
         # Elevator: not explicitly exposed as a structured feature in this API,
         # but `isNoElevatorButLow` set to True implies there is no elevator.
@@ -131,6 +130,7 @@ def _parse(prop: dict[str, Any]) -> Listing | None:
             image_url=_image_url(prop),
             is_agency=True,  # cityexpert is itself an agency
             created_at=created_at,
+            dishwasher=("furDishWasher" in furnishing),
         )
     except (KeyError, ValueError, TypeError) as e:
         log.warning("cityexpert: skipping malformed prop %s: %s", prop.get("uniqueID", "?"), e)

@@ -32,7 +32,7 @@ class Listing:
     last_floor: bool
     elevator: bool | None
     furnished: str | None        # raw value from source: "yes"/"no"/"semi"/etc.
-    heating_type: str | None     # raw value from source
+    heating_type: str | None     # raw value from source (4zida 'district', nekretnine 'Centralno', etc.)
     pets_allowed: bool | None
     title: str
     description: str
@@ -41,6 +41,7 @@ class Listing:
     image_url: str | None
     is_agency: bool
     created_at: datetime
+    dishwasher: bool | None = None       # only some sources expose this structurally; None = ask the LLM
     extraction: Extraction | None = None
 
     @property
