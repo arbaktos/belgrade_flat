@@ -85,19 +85,16 @@ def test_compute_commute_hits_api_then_cache(conn):
     near = _listing(lat=44.810, lng=20.465)
     fake_client = MagicMock()
 
-    def fake_get(url, params=None, **_):
-        mode = params["mode"]
-        # walking 20 min, transit 12 min
-        duration = 1200 if mode == "walking" else 720
+    def fake_post(url, json=None, headers=None, **_):
+        mode = json["travelMode"]
+        # walking 20 min, transit 12 min — Routes API returns "1800s" string
+        duration = "1200s" if mode == "WALK" else "720s"
         return MagicMock(
-            raise_for_status=MagicMock(),
-            json=MagicMock(return_value={
-                "status": "OK",
-                "routes": [{"legs": [{"duration": {"value": duration}}]}],
-            }),
+            status_code=200,
+            json=MagicMock(return_value={"routes": [{"duration": duration}]}),
         )
 
-    fake_client.get.side_effect = fake_get
+    fake_client.post.side_effect = fake_post
 
     r = route.compute_commute(
         near, office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
@@ -106,7 +103,7 @@ def test_compute_commute_hits_api_then_cache(conn):
     assert r.source == "api"
     assert r.walk_min == 20
     assert r.transit_min == 12
-    assert fake_client.get.call_count == 2     # one walk, one transit
+    assert fake_client.post.call_count == 2
 
     # Second call uses cache.
     r2 = route.compute_commute(
@@ -114,16 +111,16 @@ def test_compute_commute_hits_api_then_cache(conn):
         conn=conn, api_key="fake", client=fake_client,
     )
     assert r2.source == "cache"
-    assert fake_client.get.call_count == 2     # unchanged — no new API hits
+    assert fake_client.post.call_count == 2     # no new API hits
 
 
 def test_compute_commute_handles_no_route(conn):
-    """Google returning ZERO_RESULTS should land in cache as (None, None)."""
+    """Routes API returning empty routes list should land as (None, None)."""
     near = _listing(lat=44.810, lng=20.465)
     fake_client = MagicMock()
-    fake_client.get.return_value = MagicMock(
-        raise_for_status=MagicMock(),
-        json=MagicMock(return_value={"status": "ZERO_RESULTS"}),
+    fake_client.post.return_value = MagicMock(
+        status_code=200,
+        json=MagicMock(return_value={"routes": []}),
     )
     r = route.compute_commute(
         near, office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
@@ -131,3 +128,19 @@ def test_compute_commute_handles_no_route(conn):
     )
     assert r.walk_min is None and r.transit_min is None
     assert r.source == "api"
+
+
+def test_compute_commute_raises_on_403(conn):
+    """HTTP 403 from Routes API = config issue; should raise DirectionsConfigError."""
+    near = _listing(lat=44.810, lng=20.465)
+    fake_client = MagicMock()
+    fake_client.post.return_value = MagicMock(
+        status_code=403,
+        text='{"error": {"message": "Routes API not enabled"}}',
+        json=MagicMock(return_value={"error": {"message": "Routes API not enabled"}}),
+    )
+    with pytest.raises(route.DirectionsConfigError):
+        route.compute_commute(
+            near, office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            conn=conn, api_key="fake", client=fake_client,
+        )

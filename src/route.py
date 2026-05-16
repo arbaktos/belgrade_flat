@@ -31,7 +31,7 @@ from src.models import Listing
 
 log = logging.getLogger(__name__)
 
-DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json"
+ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 CACHE_TTL_DAYS = 90
 HAVERSINE_KM_MAX = 10
 BUCKET_DECIMALS = 3
@@ -122,10 +122,10 @@ def compute_commute(
     own_client = client is None
     client = client or httpx.Client(timeout=15.0)
     try:
-        origin = _origin_string(listing)
-        destination = f"{office_lat},{office_lng}"
-        walk = _query(client, origin, destination, "walking", api_key)
-        transit = _query(client, origin, destination, "transit", api_key)
+        origin_payload = _waypoint(listing.lat, listing.lng, _address_string(listing))
+        destination_payload = _waypoint(office_lat, office_lng, None)
+        walk = _query(client, origin_payload, destination_payload, "WALK", api_key)
+        transit = _query(client, origin_payload, destination_payload, "TRANSIT", api_key)
         put_cached(conn, key, walk, transit)
         return CommuteResult(walk_min=walk, transit_min=transit, source="api")
     finally:
@@ -133,49 +133,67 @@ def compute_commute(
             client.close()
 
 
-def _origin_string(listing: Listing) -> str:
-    if listing.lat is not None and listing.lng is not None:
-        return f"{listing.lat},{listing.lng}"
+def _waypoint(lat: float | None, lng: float | None, address: str | None) -> dict:
+    """Build a Routes API waypoint — prefer coordinates, fall back to address."""
+    if lat is not None and lng is not None:
+        return {"location": {"latLng": {"latitude": lat, "longitude": lng}}}
+    return {"address": address or ""}
+
+
+def _address_string(listing: Listing) -> str:
     parts = [listing.address or "", *(listing.place_names[:2] if listing.place_names else []), "Beograd"]
     return ", ".join(p for p in parts if p)
 
 
 class DirectionsConfigError(RuntimeError):
-    """REQUEST_DENIED or similar — caller should stop trying for this run."""
+    """REQUEST_DENIED / 403 / quota — caller should stop trying for this run."""
 
 
-def _query(client: httpx.Client, origin: str, destination: str, mode: str, api_key: str) -> int | None:
-    """One Directions call. Returns minutes (int), or None if no route.
+def _query(client: httpx.Client, origin: dict, destination: dict, travel_mode: str, api_key: str) -> int | None:
+    """One Routes API call. Returns minutes (int), or None if no route.
 
-    Raises DirectionsConfigError if Google says REQUEST_DENIED / OVER_QUERY_LIMIT
-    — these are configuration problems that don't get better by retrying.
+    Raises DirectionsConfigError on 401/403/429 — config or quota problems
+    that don't get better by retrying within this run.
     """
-    params = {
+    body = {
         "origin": origin,
         "destination": destination,
-        "mode": mode,
-        "key": api_key,
+        "travelMode": travel_mode,
+        "computeAlternativeRoutes": False,
     }
-    r = client.get(DIRECTIONS_URL, params=params)
-    r.raise_for_status()
-    data = r.json()
-    status = data.get("status")
-    if status in {"REQUEST_DENIED", "OVER_QUERY_LIMIT", "INVALID_REQUEST"}:
-        msg = data.get("error_message") or "(no message from Google)"
-        raise DirectionsConfigError(f"Directions {mode} returned {status}: {msg}")
-    if status != "OK":
-        log.warning("Directions %s for %s: %s", mode, origin, status)
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters",
+    }
+    r = client.post(ROUTES_URL, json=body, headers=headers)
+    if r.status_code in {401, 403}:
+        raise DirectionsConfigError(f"Routes {travel_mode} HTTP {r.status_code}: {_error_message(r)}")
+    if r.status_code == 429:
+        raise DirectionsConfigError(f"Routes {travel_mode} HTTP 429: quota exhausted")
+    if r.status_code >= 400:
+        log.warning("Routes %s HTTP %s: %s", travel_mode, r.status_code, r.text[:200])
         return None
+
+    data = r.json()
     routes = data.get("routes") or []
     if not routes:
         return None
-    legs = routes[0].get("legs") or []
-    if not legs:
+    duration_raw = routes[0].get("duration")        # e.g. "1800s"
+    if not duration_raw:
         return None
-    duration_s = legs[0].get("duration", {}).get("value")
-    if duration_s is None:
+    try:
+        seconds = int(str(duration_raw).rstrip("s"))
+    except ValueError:
         return None
-    return int(round(duration_s / 60))
+    return int(round(seconds / 60))
+
+
+def _error_message(response) -> str:
+    try:
+        return response.json().get("error", {}).get("message") or response.text[:200]
+    except Exception:
+        return response.text[:200]
 
 
 def monthly_api_count(conn: sqlite3.Connection) -> int:
