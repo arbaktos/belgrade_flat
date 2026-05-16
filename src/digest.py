@@ -65,9 +65,19 @@ def _listing_block(l: Listing) -> str:
     floor_str = f"floor {l.floor}" if l.floor is not None else "floor ?"
     if l.total_floors:
         floor_str += f"/{l.total_floors}"
-    lift = "🛗 lift" if l.elevator else "no lift"
-    heat = f"🔥 {l.heating_type}" if l.heating_type else ""
-    pets = "🐾 pets OK" if l.pets_allowed else ("🚫🐾" if l.pets_allowed is False else "")
+    if l.elevator is True:
+        lift = "🛗 lift"
+    elif l.elevator is False:
+        lift = "no lift"
+    else:
+        lift = "🛗?"           # data not exposed by this source — verify on the listing
+    heat = f"🔥 {l.heating_type}" if l.heating_type else "🔥?"
+    if l.pets_allowed is True:
+        pets = "🐾 pets OK"
+    elif l.pets_allowed is False:
+        pets = "🚫🐾"
+    else:
+        pets = ""
     agency = "🏢 agency" if l.is_agency else "👤 owner/unknown"
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
