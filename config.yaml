@@ -7,7 +7,9 @@ filters:
   furnishing_allowed: [furnished, semi-furnished]
   floor_exclude: [ground, basement]
   elevator_required: true
-  dishwasher_required: true
+  # Soft preference: most Serbian listings don't mention dishwasher even when present.
+  # We still annotate dishwasher presence in the digest when the LLM finds it.
+  dishwasher_required: false
   pets_required: true
   max_lease_months: 12
   freshness_days: 7
