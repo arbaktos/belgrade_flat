@@ -99,6 +99,7 @@ def _run_pipeline(cfg: dict, conn) -> dict:
     # then hard-filter the matches by walk≤30m OR transit≤30m.
     candidates_for_commute = llm_filtered.passed + [l for l, _ in llm_filtered.near_misses]
     commute_rejected: list[tuple[Listing, str]] = []
+    commute_config_error: str | None = None
     if "GOOGLE_DIRECTIONS_API_KEY" in os.environ and candidates_for_commute:
         office_lat = float(os.environ["OFFICE_LAT"])
         office_lng = float(os.environ["OFFICE_LNG"])
@@ -110,12 +111,22 @@ def _run_pipeline(cfg: dict, conn) -> dict:
                 )
                 l.walk_min = r.walk_min
                 l.transit_min = r.transit_min
+            except route.DirectionsConfigError as e:
+                # Config failure (REQUEST_DENIED / OVER_QUERY_LIMIT) won't get better
+                # by retrying — stop calling the API for the rest of this run.
+                log.error("commute aborted — Directions config error: %s", e)
+                commute_config_error = str(e)
+                break
             except Exception as e:  # noqa: BLE001
                 log.warning("commute failed for %s: %s", l.fingerprint_key, e)
 
-        commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj)
-        commute_rejected = commute_passed.rejected
-        matched = commute_passed.passed
+        if commute_config_error:
+            log.warning("Skipping commute filter due to API config error; matches keep LLM-pass status")
+            matched = llm_filtered.passed
+        else:
+            commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj)
+            commute_rejected = commute_passed.rejected
+            matched = commute_passed.passed
     else:
         log.warning("Skipping commute filter (no API key or no candidates)")
         matched = llm_filtered.passed
@@ -132,7 +143,8 @@ def _run_pipeline(cfg: dict, conn) -> dict:
         rejected=all_rejected,
     )
     content = digest.render(
-        full_result, source_stats=source_stats, today=today, api_count=api_count
+        full_result, source_stats=source_stats, today=today, api_count=api_count,
+        commute_config_error=commute_config_error,
     )
     path = digest.write(content, today)
     log.info("digest written to %s", path)

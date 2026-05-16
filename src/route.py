@@ -140,8 +140,16 @@ def _origin_string(listing: Listing) -> str:
     return ", ".join(p for p in parts if p)
 
 
+class DirectionsConfigError(RuntimeError):
+    """REQUEST_DENIED or similar — caller should stop trying for this run."""
+
+
 def _query(client: httpx.Client, origin: str, destination: str, mode: str, api_key: str) -> int | None:
-    """One Directions call. Returns minutes (int) or None if no route."""
+    """One Directions call. Returns minutes (int), or None if no route.
+
+    Raises DirectionsConfigError if Google says REQUEST_DENIED / OVER_QUERY_LIMIT
+    — these are configuration problems that don't get better by retrying.
+    """
     params = {
         "origin": origin,
         "destination": destination,
@@ -151,8 +159,12 @@ def _query(client: httpx.Client, origin: str, destination: str, mode: str, api_k
     r = client.get(DIRECTIONS_URL, params=params)
     r.raise_for_status()
     data = r.json()
-    if data.get("status") != "OK":
-        log.warning("Directions %s for %s → %s: %s", mode, origin, destination, data.get("status"))
+    status = data.get("status")
+    if status in {"REQUEST_DENIED", "OVER_QUERY_LIMIT", "INVALID_REQUEST"}:
+        msg = data.get("error_message") or "(no message from Google)"
+        raise DirectionsConfigError(f"Directions {mode} returned {status}: {msg}")
+    if status != "OK":
+        log.warning("Directions %s for %s: %s", mode, origin, status)
         return None
     routes = data.get("routes") or []
     if not routes:
@@ -160,7 +172,7 @@ def _query(client: httpx.Client, origin: str, destination: str, mode: str, api_k
     legs = routes[0].get("legs") or []
     if not legs:
         return None
-    duration_s = legs[0].get("duration", {}).get("value")   # seconds
+    duration_s = legs[0].get("duration", {}).get("value")
     if duration_s is None:
         return None
     return int(round(duration_s / 60))

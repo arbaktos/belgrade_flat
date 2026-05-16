@@ -15,6 +15,7 @@ def render(
     source_stats: dict[str, tuple[int, str | None]],
     today: datetime,
     api_count: int = 0,
+    commute_config_error: str | None = None,
 ) -> str:
     """Render the digest.
 
@@ -33,7 +34,10 @@ def render(
         f"{name} {count}{' ⚠️' if err else ''}" for name, (count, err) in source_stats.items()
     )
     lines.append(f"🩺 Sources: {src_line}")
-    lines.append(f"🔢 Google API: {api_count}/40 000 this month\n")
+    if commute_config_error:
+        lines.append(f"🔢 Google API: ⚠️ {commute_config_error}\n")
+    else:
+        lines.append(f"🔢 Google API: {api_count}/40 000 this month\n")
 
     error_lines = [
         f"- ⚠️ {name}: {err}" for name, (_c, err) in source_stats.items() if err
