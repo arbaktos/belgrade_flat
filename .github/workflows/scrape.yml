@@ -1,0 +1,57 @@
+name: scrape
+
+on:
+  schedule:
+    - cron: '30 4 * * *'    # 04:30 UTC = 10:30 Asia/Bishkek — daily digest
+    - cron: '0 */2 * * *'   # every 2h — perfect-match poll
+  workflow_dispatch: {}
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      GOOGLE_DIRECTIONS_API_KEY: ${{ secrets.GOOGLE_DIRECTIONS_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      OFFICE_LAT: ${{ secrets.OFFICE_LAT }}
+      OFFICE_LNG: ${{ secrets.OFFICE_LNG }}
+      GITHUB_EVENT_SCHEDULE: ${{ github.event.schedule }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install rclone
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+          rclone version
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Run
+        run: python -m src.main
+
+      - name: Notify failure
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -sS -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TG_CHAT}" \
+            --data-urlencode "text=🚨 scrape workflow failed: run ${GITHUB_RUN_ID} (${GITHUB_EVENT_NAME}/${{ github.event.schedule }})"

@@ -1,0 +1,55 @@
+filters:
+  price_eur_max: 1000
+  rooms_min: 1.5
+  rooms_max: 3.0
+  surface_m2_min: 55
+  heating_allowed: [centralno, etazno, podno]
+  furnishing_allowed: [furnished, semi-furnished]
+  floor_exclude: [ground, basement]
+  elevator_required: true
+  dishwasher_required: true
+  pets_required: true
+  max_lease_months: 12
+  freshness_days: 7
+  commute:
+    walk_min_max: 30
+    transit_min_max: 30
+    haversine_prefilter_km: 10
+
+office:
+  address: "Kneza Miloša 88A, Beograd, Serbia"
+
+routing:
+  cache_grid_decimals: 3
+  cache_ttl_days: 90
+  daily_call_cap: 500
+
+dedup:
+  price_drop_resend_pct: 5
+  reappear_silence_days: 14
+  fingerprint:
+    coord_decimals: 4
+    price_bucket_eur: 50
+    title_trigram_threshold: 0.8
+
+digest:
+  max_perfect: 10
+  max_near_miss: 5
+  score_weights:
+    price: 0.4
+    commute: 0.3
+    surface: 0.2
+    freshness: 0.1
+
+schedule:
+  digest_cron_utc: "30 4 * * *"
+  poll_cron_utc: "0 */2 * * *"
+  quiet_hours_kgt:
+    start: "23:00"
+    end: "08:00"
+
+llm:
+  model: "claude-haiku-4-5-20251001"
+
+state:
+  r2_key: "state/db.sqlite"
