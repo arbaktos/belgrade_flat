@@ -24,12 +24,8 @@ jobs:
         env:
           LOG_LEVEL: info
           CAPTCHA_SOLVER: none
-        options: >-
-          --health-cmd "wget -q --spider http://localhost:8191/ || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 12
-          --health-start-period 30s
+        # No service healthcheck — the FlareSolverr image doesn't bundle curl/wget,
+        # so the runner-side "Wait for FlareSolverr" step handles readiness instead.
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
