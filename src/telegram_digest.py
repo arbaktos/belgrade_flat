@@ -138,27 +138,41 @@ def _send_listing(
     office_lat: float,
     office_lng: float,
 ) -> None:
-    caption = _render_listing(
+    """Send a listing as photo (with body caption) + follow-up text (links).
+
+    Captions max 1024 *bytes* effectively (emoji + diacritics count multi-byte),
+    so we keep the caption to listing facts + LLM summary and put the four
+    HTML link labels in a separate follow-up message which has more room.
+    """
+    body = _render_body(
         l, near_miss_reasons=near_miss_reasons, notify_reason=notify_reason,
-        office_lat=office_lat, office_lng=office_lng,
     )
+    link_line = _render_links(l, office_lat=office_lat, office_lng=office_lng)
+
+    sent_photo = False
     if l.image_url:
         try:
-            telegram.send_photo(l.image_url, caption=caption, parse_mode="HTML")
-            return
+            telegram.send_photo(l.image_url, caption=body, parse_mode="HTML")
+            sent_photo = True
         except Exception as e:  # noqa: BLE001
-            log.warning("telegram sendPhoto failed for %s (%s); falling back to text", l.fingerprint_key, e)
-    telegram.send_message(caption, parse_mode="HTML")
+            log.warning("telegram sendPhoto failed for %s (%s); falling back to text",
+                        l.fingerprint_key, e)
+    if not sent_photo:
+        # Combine body + links into one text message when no photo.
+        telegram.send_message(f"{body}\n\n{link_line}", parse_mode="HTML")
+        return
+    # Photo went through; send the link line as a follow-up text so all link
+    # labels stay visible (caption space is too tight).
+    telegram.send_message(link_line, parse_mode="HTML", disable_notification=True)
 
 
-def _render_listing(
+def _render_body(
     l: Listing,
     *,
     near_miss_reasons: list[str] | None,
     notify_reason: str | None,
-    office_lat: float,
-    office_lng: float,
 ) -> str:
+    """Listing details + LLM summary — fits in a 1024-byte caption."""
     head_emoji = "⚠️" if near_miss_reasons else "✅"
     notify_badge = ""
     if notify_reason == "price_drop":
@@ -231,19 +245,37 @@ def _render_listing(
         lines.append("")
         lines.append(f"<i>{summary_esc}</i>")
 
-    # Compact link line — labels only, no bare URLs.
+    body = "\n".join(lines)
+    # Caption byte limit on Telegram photos is ~1024; trim from the summary
+    # tail before sending to avoid splitting a tag.
+    return _byte_clip(body, max_bytes=1000)
+
+
+def _render_links(l: Listing, *, office_lat: float, office_lng: float) -> str:
     map_link = _maps_link(l)
     walk_link = _route_link(l, office_lat, office_lng, "walking")
     transit_link = _route_link(l, office_lat, office_lng, "transit")
     source_label = html.escape(l.source)
-    lines.append("")
-    lines.append(
+    return (
         f'<a href="{html.escape(l.url, quote=True)}">🔗 {source_label}</a> · '
         f'<a href="{html.escape(map_link, quote=True)}">🗺 Map</a> · '
         f'<a href="{html.escape(walk_link, quote=True)}">🚶 Walk</a> · '
         f'<a href="{html.escape(transit_link, quote=True)}">🚌 Transit</a>'
     )
-    return "\n".join(lines)
+
+
+def _byte_clip(s: str, *, max_bytes: int) -> str:
+    """Clip `s` so its UTF-8 byte length stays ≤ max_bytes, breaking on whitespace."""
+    if len(s.encode("utf-8")) <= max_bytes:
+        return s
+    # Walk back from the end, dropping characters until we fit, then break on whitespace.
+    trimmed = s
+    while len(trimmed.encode("utf-8")) > max_bytes - 1:
+        trimmed = trimmed[:-1]
+    cut = trimmed.rfind(" ")
+    if cut > 0 and (len(trimmed) - cut) < 40:
+        trimmed = trimmed[:cut]
+    return trimmed + "…"
 
 
 # ---------------------------------------------------------------------------

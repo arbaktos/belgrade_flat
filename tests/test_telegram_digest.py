@@ -31,11 +31,10 @@ def _l(**over) -> Listing:
     return Listing(**base)
 
 
-def test_render_listing_includes_all_spec_fields():
+def test_render_body_includes_listing_facts_and_summary():
     listing = _l()
-    body = telegram_digest._render_listing(
+    body = telegram_digest._render_body(
         listing, near_miss_reasons=None, notify_reason=None,
-        office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
     )
     assert "€890" in body
     assert "Vračar" in body
@@ -45,27 +44,38 @@ def test_render_listing_includes_all_spec_fields():
     assert "centralno" in body
     assert "🐾 pets OK" in body
     assert "Two-bedroom flat" in body                       # LLM summary
-    assert "https://www.4zida.rs/abc" in body                # portal link
-    assert "google.com/maps?q=44.8,20.47" in body            # map link
-    assert "travelmode=walking" in body
-    assert "travelmode=transit" in body
 
 
-def test_render_listing_near_miss_marks_unconfirmed():
-    body = telegram_digest._render_listing(
+def test_render_links_has_all_four():
+    links = telegram_digest._render_links(_l(), office_lat=OFFICE_LAT, office_lng=OFFICE_LNG)
+    assert "https://www.4zida.rs/abc" in links               # portal link
+    assert "google.com/maps?q=44.8,20.47" in links           # map link
+    assert "travelmode=walking" in links
+    assert "travelmode=transit" in links
+
+
+def test_render_body_near_miss_marks_unconfirmed():
+    body = telegram_digest._render_body(
         _l(), near_miss_reasons=["pets unclear"], notify_reason=None,
-        office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
     )
     assert body.startswith("⚠️")
     assert "Unconfirmed: pets unclear" in body
 
 
-def test_render_listing_price_drop_badge():
-    body = telegram_digest._render_listing(
+def test_render_body_price_drop_badge():
+    body = telegram_digest._render_body(
         _l(), near_miss_reasons=None, notify_reason="price_drop",
-        office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
     )
     assert "📉 price drop" in body
+
+
+def test_byte_clip_handles_emoji():
+    """Don't truncate mid-byte on UTF-8 emoji (each is 4 bytes)."""
+    s = "x" * 100 + "🏠" * 50
+    clipped = telegram_digest._byte_clip(s, max_bytes=200)
+    # Should be valid UTF-8 and within budget.
+    assert clipped.encode("utf-8")
+    assert len(clipped.encode("utf-8")) <= 200
 
 
 def test_render_header_basic():
