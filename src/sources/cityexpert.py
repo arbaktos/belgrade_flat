@@ -199,11 +199,42 @@ def _furnished_label(code: Any) -> str | None:
     return None
 
 
+# CityExpert heating codes mapped to the canonical vocabulary used by
+# filter.canonicalize_heating. Confirmed against the cityexpert.rs filter
+# sidebar in 2026-05. Code 26 (heat pump) has no exact canonical match —
+# we surface it as "klima" since both are refrigerant-cycle systems; if a
+# dedicated "toplotna_pumpa" category is ever added, update this and
+# _HEATING_MAP in filter.py together.
+_HEATING_CODES: dict[int, str] = {
+    1: "centralno",   # district / city central
+    4: "elektricni",  # electric panels
+    10: "TA",         # electric storage heater (TA peć)
+    21: "podno",      # underfloor
+    26: "klima",      # heat pump
+    99: "etazno",     # own boiler (per unit / storey)
+}
+# When a listing reports several systems, surface the most informative one
+# downstream consumers (filter + telegram render) only see a single value.
+_HEATING_PRIORITY = ("centralno", "etazno", "podno", "TA", "klima", "elektricni")
+
+
 def _heating_label(heating_array: Any) -> str | None:
-    """cityexpert heating codes are numeric; we just stringify for now."""
     if not heating_array:
         return None
-    return ",".join(str(h) for h in heating_array)
+    mapped: set[str] = set()
+    for code in heating_array:
+        try:
+            key = _HEATING_CODES.get(int(code))
+        except (TypeError, ValueError):
+            continue
+        if key:
+            mapped.add(key)
+    if not mapped:
+        return None
+    for k in _HEATING_PRIORITY:
+        if k in mapped:
+            return k
+    return next(iter(mapped))
 
 
 def _image_url(prop: dict[str, Any]) -> str | None:

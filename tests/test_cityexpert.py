@@ -44,6 +44,29 @@ def test_image_url_none_without_cover_photo():
     assert cityexpert._image_url({"propId": 1}) is None
 
 
+def test_heating_codes_mapped_to_canonical():
+    assert cityexpert._heating_label([1]) == "centralno"
+    assert cityexpert._heating_label([4]) == "elektricni"
+    assert cityexpert._heating_label([10]) == "TA"
+    assert cityexpert._heating_label([21]) == "podno"
+    assert cityexpert._heating_label([26]) == "klima"
+    assert cityexpert._heating_label([99]) == "etazno"
+
+
+def test_heating_multi_code_picks_highest_priority():
+    # centralno beats anything else; etazno beats elektricni; TA beats elektricni.
+    assert cityexpert._heating_label([1, 4]) == "centralno"
+    assert cityexpert._heating_label([4, 4, 99]) == "etazno"
+    assert cityexpert._heating_label([4, 4, 10]) == "TA"
+
+
+def test_heating_empty_or_unknown_returns_none():
+    assert cityexpert._heating_label([]) is None
+    assert cityexpert._heating_label(None) is None
+    assert cityexpert._heating_label([12345]) is None
+    assert cityexpert._heating_label(["bogus"]) is None
+
+
 def test_no_elevator_but_low_implies_no_elevator():
     data = json.loads(FIXTURE.read_text())
     sample = dict(data["result"][0])
