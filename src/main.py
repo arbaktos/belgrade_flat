@@ -157,23 +157,15 @@ def _run_pipeline(cfg: dict, conn) -> dict:
 
         clusters = dedup.cluster_duplicates(matched)
         dedup_stats["clusters"] = len(clusters)
-        always_surface = bool(cfg.get("dedup", {}).get("always_surface_matches", False))
         surfaced: list[Listing] = []
         for cluster in clusters:
             canonical = dedup.pick_canonical(cluster)
-            ok, reason = dedup.should_notify(canonical, conn)
-            if ok or always_surface:
-                surfaced.append(canonical)
-                # If we're surfacing anyway despite a 'already_notified' verdict,
-                # show that visibly so the user knows we've sent this before.
-                effective_reason = reason if ok else "already_notified"
-                notify_reasons[canonical.fingerprint_key] = effective_reason
-                if ok:
-                    dedup.mark_notified(canonical, conn)
-            else:
-                dedup_stats["suppressed"] += 1
-        log.info("dedup: %d→%d canonical, %d suppressed (always_surface=%s)",
-                 len(matched), len(surfaced), dedup_stats["suppressed"], always_surface)
+            surfaced.append(canonical)
+            reason = dedup.price_drop_reason(canonical, conn)
+            if reason:
+                notify_reasons[canonical.fingerprint_key] = reason
+            dedup.mark_notified(canonical, conn)
+        log.info("dedup: %d→%d canonical", len(matched), len(surfaced))
         matched = surfaced
 
     # Composite score ordering: highest score first (best commute / cheapest / biggest / freshest).

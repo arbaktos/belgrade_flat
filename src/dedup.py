@@ -38,8 +38,7 @@ COORD_DECIMALS = 4
 PRICE_BUCKET_EUR = 50
 TITLE_TRIGRAM_THRESHOLD = 0.8
 PRICE_SIMILARITY_PCT = 0.05
-RENOTIFY_PRICE_DROP_PCT = 0.05
-RENOTIFY_SILENCE_DAYS = 14
+PRICE_DROP_BADGE_PCT = 0.05         # informational only — show 📉 when price drops this much
 IMAGE_DOWNLOAD_TIMEOUT_S = 10
 
 
@@ -131,29 +130,23 @@ def pick_canonical(cluster: list[Listing]) -> Listing:
 
 
 # ---------------------------------------------------------------------------
-# Re-notify policy
+# Annotations (informational; suppression has moved to the user's 🙈 button)
 # ---------------------------------------------------------------------------
 
-def should_notify(listing: Listing, conn: sqlite3.Connection) -> tuple[bool, str]:
-    """Decide whether to surface `listing` in the digest.
-
-    Looks up the per-source row in `listings`. Returns (yes, reason) where
-    reason is "new", "price_drop", "reappeared", or the suppressed equivalent.
+def price_drop_reason(listing: Listing, conn: sqlite3.Connection) -> str | None:
+    """Return 'price_drop' if this listing is ≥ PRICE_DROP_BADGE_PCT cheaper
+    than the last time we surfaced it. None otherwise (including first sighting).
     """
     row = conn.execute(
-        "SELECT notified_at, notified_price FROM listings WHERE fingerprint_key=?",
+        "SELECT notified_price FROM listings WHERE fingerprint_key=?",
         (listing.fingerprint_key,),
     ).fetchone()
     if row is None or row[0] is None:
-        return True, "new"
-
-    last_notified_at, last_price = row
-    last_dt = _parse_iso(last_notified_at)
-    if last_price is not None and listing.price_eur < float(last_price) * (1 - RENOTIFY_PRICE_DROP_PCT):
-        return True, "price_drop"
-    if last_dt is not None and (datetime.now(timezone.utc) - last_dt).days > RENOTIFY_SILENCE_DAYS:
-        return True, "reappeared"
-    return False, "already_notified"
+        return None
+    last_price = float(row[0])
+    if listing.price_eur < last_price * (1 - PRICE_DROP_BADGE_PCT):
+        return "price_drop"
+    return None
 
 
 def mark_notified(listing: Listing, conn: sqlite3.Connection) -> None:
@@ -206,11 +199,3 @@ def _price_similar(a: float, b: float) -> bool:
     return abs(a - b) / max(a, b) <= PRICE_SIMILARITY_PCT
 
 
-def _parse_iso(s: str | None) -> datetime | None:
-    if not s:
-        return None
-    try:
-        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-    except (ValueError, TypeError):
-        return None

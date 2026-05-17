@@ -104,32 +104,27 @@ def conn():
     return db
 
 
-def test_should_notify_new_listing(conn):
+def test_price_drop_none_for_new_listing(conn):
     l = _listing()
-    ok, reason = dedup.should_notify(l, conn)
-    assert ok and reason == "new"
+    assert dedup.price_drop_reason(l, conn) is None
 
 
-def test_should_notify_already_notified_suppressed(conn):
-    l = _listing()
+def test_price_drop_none_when_price_unchanged(conn):
+    l = _listing(price_eur=900)
     conn.execute("INSERT INTO listings (fingerprint_key, notified_at, notified_price) VALUES (?, ?, ?)",
                  (l.fingerprint_key, datetime.now(timezone.utc).isoformat(), 900.0))
-    ok, reason = dedup.should_notify(l, conn)
-    assert not ok and reason == "already_notified"
+    assert dedup.price_drop_reason(l, conn) is None
 
 
-def test_should_notify_price_drop_reopens(conn):
-    l = _listing(price_eur=800)   # was 1000 last time, 20% drop
+def test_price_drop_detects_significant_drop(conn):
+    l = _listing(price_eur=800)   # was 1000, 20% drop
     conn.execute("INSERT INTO listings (fingerprint_key, notified_at, notified_price) VALUES (?, ?, ?)",
                  (l.fingerprint_key, datetime.now(timezone.utc).isoformat(), 1000.0))
-    ok, reason = dedup.should_notify(l, conn)
-    assert ok and reason == "price_drop"
+    assert dedup.price_drop_reason(l, conn) == "price_drop"
 
 
-def test_should_notify_reappears_after_silence(conn):
-    l = _listing()
-    old = (datetime.now(timezone.utc) - timedelta(days=20)).isoformat()
+def test_price_drop_none_for_tiny_drop(conn):
+    l = _listing(price_eur=970)   # was 1000, only 3% — below 5% badge threshold
     conn.execute("INSERT INTO listings (fingerprint_key, notified_at, notified_price) VALUES (?, ?, ?)",
-                 (l.fingerprint_key, old, 900.0))
-    ok, reason = dedup.should_notify(l, conn)
-    assert ok and reason == "reappeared"
+                 (l.fingerprint_key, datetime.now(timezone.utc).isoformat(), 1000.0))
+    assert dedup.price_drop_reason(l, conn) is None

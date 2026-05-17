@@ -149,8 +149,8 @@ def _send_listing(
     )
     link_line = _render_links(l, office_lat=office_lat, office_lng=office_lng)
 
-    # 🙈 Skip button attaches to the photo (or the text fallback) so one tap
-    # hides this listing from every future digest.
+    # 🙈 Skip button lives on the follow-up link message so it sits at the
+    # bottom of the listing block (easier to thumb-tap after reading).
     skip_keyboard = {
         "inline_keyboard": [[
             {"text": "🙈 Hide this listing", "callback_data": f"skip:{l.fingerprint_key}"}
@@ -160,22 +160,22 @@ def _send_listing(
     sent_photo = False
     if l.image_url:
         try:
-            telegram.send_photo(
-                l.image_url, caption=body, parse_mode="HTML", reply_markup=skip_keyboard,
-            )
+            telegram.send_photo(l.image_url, caption=body, parse_mode="HTML")
             sent_photo = True
         except Exception as e:  # noqa: BLE001
             log.warning("telegram sendPhoto failed for %s (%s); falling back to text",
                         l.fingerprint_key, e)
     if not sent_photo:
-        # Combine body + links into one text message when no photo.
+        # No photo → fold body, links, and Hide button into one text message.
         telegram.send_message(
             f"{body}\n\n{link_line}", parse_mode="HTML", reply_markup=skip_keyboard,
         )
         return
-    # Photo went through; send the link line as a follow-up text so all link
-    # labels stay visible (caption space is too tight).
-    telegram.send_message(link_line, parse_mode="HTML", disable_notification=True)
+    # Photo went through; follow-up carries the link line and the Hide button.
+    telegram.send_message(
+        link_line, parse_mode="HTML",
+        reply_markup=skip_keyboard, disable_notification=True,
+    )
 
 
 def _render_body(
@@ -186,13 +186,7 @@ def _render_body(
 ) -> str:
     """Listing details + LLM summary — fits in a 1024-byte caption."""
     head_emoji = "⚠️" if near_miss_reasons else "✅"
-    notify_badge = ""
-    if notify_reason == "price_drop":
-        notify_badge = " · 📉 price drop"
-    elif notify_reason == "reappeared":
-        notify_badge = " · 🔁 reappeared"
-    elif notify_reason == "already_notified":
-        notify_badge = " · 📌 seen before"
+    notify_badge = " · 📉 price drop" if notify_reason == "price_drop" else ""
 
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 

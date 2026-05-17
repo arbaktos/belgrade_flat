@@ -116,13 +116,7 @@ def _listing_block(
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
     head_emoji = "⚠️" if near_miss_reasons else "✅"
-    notify_badge = ""
-    if notify_reason == "price_drop":
-        notify_badge = " · 📉 price drop"
-    elif notify_reason == "reappeared":
-        notify_badge = " · 🔁 reappeared"
-    elif notify_reason == "already_notified":
-        notify_badge = " · 📌 seen before"
+    notify_badge = " · 📉 price drop" if notify_reason == "price_drop" else ""
     commute_bits: list[str] = []
     if l.walk_min is not None:
         commute_bits.append(f"🚶 {l.walk_min} min")
