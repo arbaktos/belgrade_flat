@@ -146,6 +146,7 @@ def _send_listing(
     """
     body = _render_body(
         l, near_miss_reasons=near_miss_reasons, notify_reason=notify_reason,
+        office_lat=office_lat, office_lng=office_lng,
     )
     link_line = _render_links(l, office_lat=office_lat, office_lng=office_lng)
 
@@ -183,8 +184,14 @@ def _render_body(
     *,
     near_miss_reasons: list[str] | None,
     notify_reason: str | None,
+    office_lat: float | None = None,
+    office_lng: float | None = None,
 ) -> str:
-    """Listing details + LLM summary — fits in a 1024-byte caption."""
+    """Listing details + LLM summary — fits in a 1024-byte caption.
+
+    When office coords are given, the address / walk / transit lines become
+    clickable links (Google Maps, walk directions, transit directions).
+    """
     head_emoji = "⚠️" if near_miss_reasons else "✅"
     notify_badge = " · 📉 price drop" if notify_reason == "price_drop" else ""
 
@@ -230,18 +237,32 @@ def _render_body(
     summary_esc = html.escape(summary)
     red_flags_esc = html.escape(red_flags)
 
+    # Address + commute lines become clickable when we know the office location.
+    if office_lat is not None and office_lng is not None:
+        addr_line = f'📍 <a href="{html.escape(_maps_link(l), quote=True)}">{address_esc}</a>'
+    else:
+        addr_line = f"📍 {address_esc}"
+
     # One fact per line — much easier to skim than dense ` · ` separators.
     lines: list[str] = [
         f"{head_emoji} €{l.price_eur:.0f}{notify_badge} · {l.rooms} rooms · {l.m2:.0f} m² · {place_esc}",
-        f"📍 {address_esc}",
+        addr_line,
     ]
     if l.walk_min is not None:
-        lines.append(f"🚶 {l.walk_min} min walk")
+        text = f"🚶 {l.walk_min} min walk"
+        if office_lat is not None and office_lng is not None:
+            walk_url = _route_link(l, office_lat, office_lng, "walking")
+            text = f'<a href="{html.escape(walk_url, quote=True)}">{text}</a>'
+        lines.append(text)
     if l.transit_min is not None:
         transfers_str = ""
         if l.transit_transfers is not None:
             transfers_str = " (direct)" if l.transit_transfers == 0 else f" ({l.transit_transfers} transfer{'s' if l.transit_transfers != 1 else ''})"
-        lines.append(f"🚌 {l.transit_min} min transit{transfers_str}")
+        text = f"🚌 {l.transit_min} min transit{transfers_str}"
+        if office_lat is not None and office_lng is not None:
+            transit_url = _route_link(l, office_lat, office_lng, "transit")
+            text = f'<a href="{html.escape(transit_url, quote=True)}">{text}</a>'
+        lines.append(text)
     if l.walk_min is None and l.transit_min is None:
         lines.append("🚶 no commute data")
     for fact in (heat, pets, dish, lift, floor_str):
@@ -266,16 +287,9 @@ def _render_body(
 
 
 def _render_links(l: Listing, *, office_lat: float, office_lng: float) -> str:
-    map_link = _maps_link(l)
-    walk_link = _route_link(l, office_lat, office_lng, "walking")
-    transit_link = _route_link(l, office_lat, office_lng, "transit")
+    """Just the source listing link now — address/walk/transit are embedded in the body."""
     source_label = html.escape(l.source)
-    return (
-        f'<a href="{html.escape(l.url, quote=True)}">🔗 {source_label}</a> · '
-        f'<a href="{html.escape(map_link, quote=True)}">🗺 Map</a> · '
-        f'<a href="{html.escape(walk_link, quote=True)}">🚶 Walk</a> · '
-        f'<a href="{html.escape(transit_link, quote=True)}">🚌 Transit</a>'
-    )
+    return f'🔗 <a href="{html.escape(l.url, quote=True)}">View on {source_label}</a>'
 
 
 def _byte_clip(s: str, *, max_bytes: int) -> str:

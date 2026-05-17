@@ -46,12 +46,27 @@ def test_render_body_includes_listing_facts_and_summary():
     assert "Two-bedroom flat" in body                       # LLM summary
 
 
-def test_render_links_has_all_four():
+def test_render_links_carries_source_link():
+    """Address / walk / transit links live inside the body now;
+    follow-up _render_links only carries the source listing link."""
     links = telegram_digest._render_links(_l(), office_lat=OFFICE_LAT, office_lng=OFFICE_LNG)
-    assert "https://www.4zida.rs/abc" in links               # portal link
-    assert "google.com/maps?q=44.8,20.47" in links           # map link
-    assert "travelmode=walking" in links
-    assert "travelmode=transit" in links
+    assert "https://www.4zida.rs/abc" in links
+    assert "View on 4zida" in links
+
+
+def test_render_body_links_address_walk_transit_when_office_given():
+    body = telegram_digest._render_body(
+        _l(), near_miss_reasons=None, notify_reason=None,
+        office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+    )
+    # Address text wrapped in <a href> to Maps
+    assert "google.com/maps?q=44.8,20.47" in body
+    # Walk minutes are now a link to walking directions
+    assert "travelmode=walking" in body
+    assert "18 min walk" in body
+    # Transit minutes link too
+    assert "travelmode=transit" in body
+    assert "22 min transit" in body
 
 
 def test_render_body_near_miss_marks_unconfirmed():
