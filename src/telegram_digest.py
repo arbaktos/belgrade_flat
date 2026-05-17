@@ -234,7 +234,6 @@ def _render_body(
     # All text is HTML-escaped; links use <a href> so URLs hide behind labels.
     place_esc = html.escape(place)
     address_esc = html.escape(l.address or "?")
-    summary_esc = html.escape(summary)
     red_flags_esc = html.escape(red_flags)
 
     # Address + commute lines become clickable when we know the office location.
@@ -276,14 +275,24 @@ def _render_body(
         lines.append(f"🚩 {red_flags_esc}")
     if bills_line:
         lines.append(bills_line)
-    if summary_esc:
-        lines.append("")
-        lines.append(f"<i>{summary_esc}</i>")
-
     body = "\n".join(lines)
-    # Caption byte limit on Telegram photos is ~1024; trim from the summary
-    # tail before sending to avoid splitting a tag.
-    return _byte_clip(body, max_bytes=1000)
+
+    # Append the summary last, clipped to fit the remaining caption budget so
+    # the <i>...</i> wrapper stays intact (was: byte-clipping the whole body
+    # cut the body mid-tag → Telegram 400 'Can't find end tag for <i>').
+    if summary:
+        wrapper_overhead = len("\n\n<i></i>…".encode("utf-8"))
+        budget = 1000 - len(body.encode("utf-8")) - wrapper_overhead
+        if budget > 30:
+            clipped_raw = _byte_clip(summary, max_bytes=budget)
+            clipped_esc = html.escape(clipped_raw)
+            # html.escape can inflate (& → &amp;); shave more if needed.
+            while len(clipped_esc.encode("utf-8")) > budget and len(clipped_raw) > 20:
+                clipped_raw = clipped_raw[:-10]
+                clipped_esc = html.escape(clipped_raw)
+            body += f"\n\n<i>{clipped_esc}</i>"
+
+    return body
 
 
 def _render_links(l: Listing, *, office_lat: float, office_lng: float) -> str:
@@ -337,8 +346,7 @@ def _relative_time(then: datetime) -> str:
 def _maps_link(l: Listing) -> str:
     if l.lat is not None and l.lng is not None:
         return f"https://www.google.com/maps?q={l.lat},{l.lng}"
-    parts = [l.address or "", *(l.place_names[:2] if l.place_names else []), "Belgrade"]
-    q = quote(", ".join(p for p in parts if p))
+    q = quote(_short_address_for_url(l))
     return f"https://www.google.com/maps?q={q}"
 
 
@@ -346,9 +354,29 @@ def _route_link(l: Listing, office_lat: float, office_lng: float, mode: str) -> 
     if l.lat is not None and l.lng is not None:
         origin = f"{l.lat},{l.lng}"
     else:
-        parts = [l.address or "", *(l.place_names[:2] if l.place_names else []), "Belgrade"]
-        origin = quote(", ".join(p for p in parts if p))
+        origin = quote(_short_address_for_url(l))
     return (
         "https://www.google.com/maps/dir/?api=1"
         f"&origin={origin}&destination={office_lat},{office_lng}&travelmode={mode}"
     )
+
+
+def _short_address_for_url(l: Listing) -> str:
+    """A compact 'street, Belgrade' for URL params.
+
+    Source addresses can run 70+ chars ('… kompleks B5 kula 7 stan 142 …'),
+    and we encode them into THREE URLs per listing (map + walk + transit),
+    blowing past Telegram's 1024-byte caption cap. Take just the street
+    (first comma-separated chunk) + the top neighborhood + Belgrade — enough
+    for Google to geocode while keeping each URL under 200 bytes.
+    """
+    parts: list[str] = []
+    if l.address:
+        parts.append(l.address.split(",", 1)[0].strip())
+    if l.place_names:
+        # Add the smallest place (last in the chain — usually street/quarter).
+        place = l.place_names[-1].strip()
+        if place and place not in parts[0:1]:
+            parts.append(place)
+    parts.append("Belgrade")
+    return ", ".join(p for p in parts if p)
