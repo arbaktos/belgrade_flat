@@ -224,6 +224,18 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
     office_lng = float(os.environ.get("OFFICE_LNG", 0))
     try:
         if mode == "instant":
+            # Surface source errors here — instant-push has no digest header,
+            # so a portal failure would otherwise be invisible to the user.
+            # Daily/manual runs already render errors in the digest header.
+            failed = [sr.name for sr in source_results if sr.error]
+            if failed:
+                try:
+                    telegram.send_message(
+                        f"⚠️ Sources failed during poll: {', '.join(failed)}"
+                    )
+                except Exception as e:  # noqa: BLE001
+                    log.warning("source-error alert failed: %s", e)
+
             fresh = [l for l in matched if l.fingerprint_key not in previously_notified]
             log.info("instant-push: %d/%d matches are new (rest seen before)",
                      len(fresh), len(matched))

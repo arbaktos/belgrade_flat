@@ -78,6 +78,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Pets unclear | spec hard-requires pets | silent pass on "unknown"; only explicit "no" hard-rejects | Most Serbian listings don't mention pets at all — demoting "unknown" to near-miss left ~0 perfect matches |
 | Pet-friendly ranking | not in spec | listings with confirmed pets-allowed form a priority tier ABOVE non-pet-friendly, regardless of composite score | User: "if there IS info that the flat is pet friendly, push it on top always" |
 | Cron behaviour | spec only mentions a daily digest | 04:30 UTC = full digest; every-2h polls 02-16 UTC (08-22 KGT) = silent instant push of NEW perfect matches | M8; "new" = no `notified_at` yet; polls skip nighttime (KGT 23-08) per `config.yaml.quiet_hours_kgt`; poll runs commit nothing to git to avoid churning commits |
+| Source-error visibility in instant-push | M9 only spec'd "error routing" abstractly | every poll sends a brief `⚠️ Sources failed: <names>` if any portal returned an error | Instant-push has no digest header, so portal failures would otherwise be silent; alert fires every run a source is failing (no rate-limit yet) |
 
 ---
 
