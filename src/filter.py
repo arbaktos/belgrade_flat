@@ -153,12 +153,13 @@ def _check_extraction(l: Listing, cfg: FilterConfig) -> tuple[list[str], list[st
     soft: list[str] = []
 
     # ---- pets ---------------------------------------------------------------
+    # Most Serbian listings don't mention pets at all, so "unknown" is the
+    # default state, not a signal. We only hard-reject when the listing
+    # explicitly forbids pets; silence passes cleanly.
     if cfg.pets_required:
         pets = _resolve_pets(l, e)
         if pets is False:
             hard.append("pets not allowed")
-        elif pets is None:
-            soft.append("pets unclear")
 
     # ---- dishwasher ---------------------------------------------------------
     # Same logic as pets: structured True = positive signal, structured False

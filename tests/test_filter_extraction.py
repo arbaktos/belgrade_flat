@@ -47,15 +47,19 @@ def test_structured_pets_false_treated_as_unknown_not_no():
     listing = _listing(e)
     listing.pets_allowed = False    # structured 'no checkbox ticked'
     r = filt.apply_with_extraction([listing], CFG)
-    # Should be near-miss (LLM said unknown), NOT a hard reject
+    # Should NOT be a hard reject. With the relaxed pets rule, "unclear" passes
+    # silently — only explicit "no" rejects.
     assert not r.rejected
-    assert any("pets" in x for x in r.near_misses[0][1])
+    assert r.passed and not r.near_misses
 
 
-def test_pets_unknown_is_near_miss():
+def test_pets_unknown_passes_silently():
+    # Listings that don't mention pets are no longer demoted to near-miss —
+    # Serbian rentals rarely mention pets at all, so "unknown" is the default
+    # state, not a signal. Only explicit "no" should hard-reject.
     e = Extraction(pets_allowed="unknown", dishwasher=True, heating_type_confirmed="centralno")
     r = filt.apply_with_extraction([_listing(e)], CFG)
-    assert not r.passed and r.near_misses and "pets" in r.near_misses[0][1][0]
+    assert r.passed and not r.near_misses and not r.rejected
 
 
 def test_no_dishwasher_hard_reject():
@@ -85,7 +89,9 @@ def test_missing_extraction_lands_in_near_miss_not_hard_reject():
     assert not r.passed and not r.rejected
     assert len(r.near_misses) == 1
     reasons = r.near_misses[0][1]
-    assert any("pets" in x for x in reasons)
+    # With pets relaxed (silent pass on unknown), the residual unclear signals
+    # come from dishwasher/heating which still demand confirmation.
+    assert any("dishwasher" in x or "heating" in x for x in reasons)
 
 
 def test_structured_data_prefers_over_llm():

@@ -27,15 +27,6 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
     """
     counts = {"fetched": 0, "skipped": 0, "unknown": 0}
     offset = _read_offset(conn)
-    # Self-heal: if the stored offset drifted far ahead of any plausible
-    # Telegram update_id (we observed it stuck at ~9.5e8 in May 2026,
-    # silently swallowing every callback), reset and let the next poll
-    # rebuild from scratch. update_ids are monotonic per bot and grow
-    # slowly; >1e8 is a strong sign of corruption rather than usage.
-    if offset > 100_000_000:
-        log.warning("offset %d is implausibly high; resetting to 0", offset)
-        _write_offset(conn, 0)
-        offset = 0
     # Diagnostic: log webhook status — a set webhook silently steals callbacks
     # before getUpdates can drain them.
     try:
