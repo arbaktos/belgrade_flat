@@ -17,14 +17,18 @@ def send_message(
     *,
     disable_notification: bool = False,
     parse_mode: str | None = None,
+    reply_markup: dict | None = None,
 ) -> None:
-    _call("sendMessage", {
+    payload = {
         "chat_id": _chat_id(),
         "text": text,
         "disable_notification": disable_notification,
         **({"parse_mode": parse_mode} if parse_mode else {}),
         "link_preview_options": {"is_disabled": True},
-    })
+    }
+    if reply_markup is not None:
+        payload["reply_markup"] = reply_markup
+    _call("sendMessage", payload)
 
 
 def send_photo(
@@ -33,16 +37,42 @@ def send_photo(
     caption: str | None = None,
     disable_notification: bool = False,
     parse_mode: str | None = None,
+    reply_markup: dict | None = None,
 ) -> None:
     """Send a single photo with caption. Caption max 1024 chars."""
     if caption and len(caption) > 1024:
         caption = caption[:1020] + "…"
-    _call("sendPhoto", {
+    payload = {
         "chat_id": _chat_id(),
         "photo": photo_url,
         "caption": caption or "",
         "disable_notification": disable_notification,
         **({"parse_mode": parse_mode} if parse_mode else {}),
+    }
+    if reply_markup is not None:
+        payload["reply_markup"] = reply_markup
+    _call("sendPhoto", payload)
+
+
+def get_updates(offset: int = 0, *, timeout: int = 0) -> list[dict]:
+    """Long-poll-style getUpdates. With timeout=0 it's a non-blocking drain.
+
+    `offset` should be one greater than the last update_id you processed —
+    Telegram considers that an implicit ACK for everything older.
+    """
+    payload = {
+        "offset": offset,
+        "timeout": timeout,
+        "allowed_updates": ["callback_query"],
+    }
+    return _call("getUpdates", payload).get("result", [])
+
+
+def answer_callback_query(callback_id: str, text: str = "", show_alert: bool = False) -> None:
+    _call("answerCallbackQuery", {
+        "callback_query_id": callback_id,
+        "text": text,
+        "show_alert": show_alert,
     })
 
 

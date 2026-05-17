@@ -121,6 +121,8 @@ def _listing_block(
         notify_badge = " · 📉 price drop"
     elif notify_reason == "reappeared":
         notify_badge = " · 🔁 reappeared"
+    elif notify_reason == "already_notified":
+        notify_badge = " · 📌 seen before"
     commute_bits: list[str] = []
     if l.walk_min is not None:
         commute_bits.append(f"🚶 {l.walk_min} min")

@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 
 def _rclone_env() -> dict[str, str]:
@@ -103,6 +103,9 @@ def ensure_schema() -> sqlite3.Connection:
     if prev is not None and int(prev[0]) < 7:
         log.info("state: dropping commute_cache to recompute with FEWER_TRANSFERS preference")
         conn.execute("DROP TABLE IF EXISTS commute_cache")
+
+    # v8 adds the skipped table (user-clicked 'hide this listing forever').
+    # No migration needed beyond the CREATE TABLE below.
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS commute_cache (
@@ -150,6 +153,14 @@ def ensure_schema() -> sqlite3.Connection:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_source ON listings(source)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_image_phash ON listings(image_phash) WHERE image_phash IS NOT NULL")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS skipped (
+            fingerprint_key TEXT PRIMARY KEY,
+            skipped_at      TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
     conn.execute(
         "INSERT INTO meta (key, value) VALUES ('schema_version', ?) "
         "ON CONFLICT(key) DO UPDATE SET value=excluded.value",

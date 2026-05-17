@@ -29,6 +29,10 @@ routing:
 dedup:
   price_drop_resend_pct: 5
   reappear_silence_days: 14
+  # When true, matches are surfaced in every digest regardless of the
+  # re-notify policy (spec §6). Useful during testing so you can verify
+  # filter behavior across runs. Flip to false in production.
+  always_surface_matches: true
   fingerprint:
     coord_decimals: 4
     price_bucket_eur: 50

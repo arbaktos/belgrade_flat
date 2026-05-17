@@ -149,17 +149,29 @@ def _send_listing(
     )
     link_line = _render_links(l, office_lat=office_lat, office_lng=office_lng)
 
+    # 🙈 Skip button attaches to the photo (or the text fallback) so one tap
+    # hides this listing from every future digest.
+    skip_keyboard = {
+        "inline_keyboard": [[
+            {"text": "🙈 Hide this listing", "callback_data": f"skip:{l.fingerprint_key}"}
+        ]]
+    }
+
     sent_photo = False
     if l.image_url:
         try:
-            telegram.send_photo(l.image_url, caption=body, parse_mode="HTML")
+            telegram.send_photo(
+                l.image_url, caption=body, parse_mode="HTML", reply_markup=skip_keyboard,
+            )
             sent_photo = True
         except Exception as e:  # noqa: BLE001
             log.warning("telegram sendPhoto failed for %s (%s); falling back to text",
                         l.fingerprint_key, e)
     if not sent_photo:
         # Combine body + links into one text message when no photo.
-        telegram.send_message(f"{body}\n\n{link_line}", parse_mode="HTML")
+        telegram.send_message(
+            f"{body}\n\n{link_line}", parse_mode="HTML", reply_markup=skip_keyboard,
+        )
         return
     # Photo went through; send the link line as a follow-up text so all link
     # labels stay visible (caption space is too tight).
@@ -179,6 +191,8 @@ def _render_body(
         notify_badge = " · 📉 price drop"
     elif notify_reason == "reappeared":
         notify_badge = " · 🔁 reappeared"
+    elif notify_reason == "already_notified":
+        notify_badge = " · 📌 seen before"
 
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 

@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_digest
+from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_digest
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -64,15 +64,28 @@ def main() -> int:
 
 
 def _run_pipeline(cfg: dict, conn) -> dict:
-    log.info("dispatch: scrape → structural filter → LLM extract → final filter → digest")
+    log.info("dispatch: drain callbacks → scrape → structural → LLM → final → digest")
     freshness_days = int(cfg["filters"]["freshness_days"])
     cfg_obj = filt.from_dict(cfg)
+
+    # Stage 0: drain any 🙈 Skip button clicks the user made since the last run.
+    # Has to happen BEFORE the new digest so new skips take effect immediately.
+    callback_counts = telegram_callbacks.drain(conn)
+    skipped_set = telegram_callbacks.skipped_keys(conn)
+    if skipped_set:
+        log.info("user has skipped %d listings cumulatively", len(skipped_set))
 
     source_results = [_fetch_source(name, fn, freshness_days) for name, fn in SOURCES]
     all_listings: list[Listing] = []
     for sr in source_results:
         all_listings.extend(sr.listings)
     state.upsert_listings(conn, all_listings)
+
+    # Drop user-skipped listings BEFORE the expensive stages (LLM, Routes API).
+    if skipped_set:
+        before = len(all_listings)
+        all_listings = [l for l in all_listings if l.fingerprint_key not in skipped_set]
+        log.info("skipped filter: dropped %d/%d listings", before - len(all_listings), before)
 
     # Stage 1: cheap structural filter — anything failing here gets no LLM call.
     structural = filt.apply(all_listings, cfg_obj)
@@ -144,18 +157,23 @@ def _run_pipeline(cfg: dict, conn) -> dict:
 
         clusters = dedup.cluster_duplicates(matched)
         dedup_stats["clusters"] = len(clusters)
+        always_surface = bool(cfg.get("dedup", {}).get("always_surface_matches", False))
         surfaced: list[Listing] = []
         for cluster in clusters:
             canonical = dedup.pick_canonical(cluster)
             ok, reason = dedup.should_notify(canonical, conn)
-            if ok:
+            if ok or always_surface:
                 surfaced.append(canonical)
-                notify_reasons[canonical.fingerprint_key] = reason
-                dedup.mark_notified(canonical, conn)
+                # If we're surfacing anyway despite a 'already_notified' verdict,
+                # show that visibly so the user knows we've sent this before.
+                effective_reason = reason if ok else "already_notified"
+                notify_reasons[canonical.fingerprint_key] = effective_reason
+                if ok:
+                    dedup.mark_notified(canonical, conn)
             else:
                 dedup_stats["suppressed"] += 1
-        log.info("dedup: %d→%d canonical, %d suppressed by re-notify policy",
-                 len(matched), len(surfaced), dedup_stats["suppressed"])
+        log.info("dedup: %d→%d canonical, %d suppressed (always_surface=%s)",
+                 len(matched), len(surfaced), dedup_stats["suppressed"], always_surface)
         matched = surfaced
 
     # Composite score ordering: highest score first (best commute / cheapest / biggest / freshest).
