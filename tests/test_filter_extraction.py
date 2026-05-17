@@ -124,11 +124,36 @@ def test_unfurnished_hard_reject_when_required():
 
 def test_unknown_furnishing_lands_in_near_miss():
     cfg = filt.FilterConfig(**{**CFG.__dict__, "furnishing_allowed": ("furnished", "semi-furnished")})
-    l = _listing(Extraction(pets_allowed="yes", dishwasher=True, heating_type_confirmed="centralno"))
-    l.furnished = None  # halooglasi never exposes furnishing
+    # Neither the source nor the LLM has a furnishing signal → near-miss.
+    l = _listing(Extraction(pets_allowed="yes", dishwasher=True, heating_type_confirmed="centralno", furnishing_confirmed=None))
+    l.furnished = None
     r = filt.apply_with_extraction([l], cfg)
     assert not r.passed and not r.rejected
     assert r.near_misses and any("furnishing" in reason for reason in r.near_misses[0][1])
+
+
+def test_llm_furnishing_fallback_rescues_halooglasi_pass():
+    # halooglasi never exposes furnishing structurally; the LLM-confirmed
+    # value should rescue listings that would otherwise sit in near-miss.
+    cfg = filt.FilterConfig(**{**CFG.__dict__, "furnishing_allowed": ("furnished", "semi-furnished")})
+    l = _listing(Extraction(
+        pets_allowed="yes", dishwasher=True, heating_type_confirmed="centralno",
+        furnishing_confirmed="furnished",
+    ))
+    l.furnished = None
+    r = filt.apply_with_extraction([l], cfg)
+    assert r.passed and not r.near_misses and not r.rejected
+
+
+def test_llm_furnishing_fallback_can_also_hard_reject():
+    cfg = filt.FilterConfig(**{**CFG.__dict__, "furnishing_allowed": ("furnished", "semi-furnished")})
+    l = _listing(Extraction(
+        pets_allowed="yes", dishwasher=True, heating_type_confirmed="centralno",
+        furnishing_confirmed="unfurnished",
+    ))
+    l.furnished = None
+    r = filt.apply_with_extraction([l], cfg)
+    assert not r.passed and r.rejected and "furnishing" in r.rejected[0][1]
 
 
 def test_canonicalize_heating():

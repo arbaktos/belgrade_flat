@@ -186,9 +186,12 @@ def _check_extraction(l: Listing, cfg: FilterConfig) -> tuple[list[str], list[st
 
     # ---- furnishing ---------------------------------------------------------
     # Structured field on 4zida/nekretnine/cityexpert; halooglasi never exposes
-    # it (detail-page only) so those listings fall to near-miss on unknown.
+    # it (detail-page only). Fall back to the LLM-confirmed value so halooglasi
+    # listings aren't permanently stuck at "furnishing unclear" near-miss.
     if cfg.furnishing_allowed:
         canonical = canonicalize_furnishing(l.furnished)
+        if canonical is None and e is not None:
+            canonical = canonicalize_furnishing(e.furnishing_confirmed)
         if canonical is None:
             soft.append("furnishing unclear")
         elif canonical not in cfg.furnishing_allowed:

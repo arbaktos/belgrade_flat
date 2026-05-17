@@ -33,6 +33,7 @@ Rules:
 - `pets_allowed`: "yes" only if pets are explicitly allowed. "no" if there is a clear prohibition (e.g. "bez ljubimaca", "kućni ljubimci nisu dozvoljeni"). Otherwise `"unknown"`.
 - `dishwasher`: true only if a dishwasher is listed (look for "sudopera", "mašina za sudove", "dishwasher"). Stove/oven/microwave do not count. Otherwise null.
 - `heating_type_confirmed`: pick the most specific term the listing uses, normalized to one of: "centralno" (city/district heating), "etazno" (own gas/oil boiler for the unit), "podno" (underfloor), "TA" (electric storage heater — the night-time tile stove), "klima" (heating via air-conditioner only), "elektricni" (electric panels), or null if absent.
+- `furnishing_confirmed`: "furnished" if the apartment is fully furnished ("namešten", "potpuno namešten", "kompletno namešten"); "semi-furnished" if partially ("polunamešten", "delimično opremljen"); "unfurnished" if empty or unfurnished ("prazan", "nenamešten", "neopremljen"). Null if absent or genuinely unclear.
 - `max_lease_months`: integer if the listing requires a minimum lease length (e.g. "minimum 12 meseci"). Null otherwise.
 - `bills_estimate_eur`: integer EUR if a monthly utility/bill estimate is given. Null otherwise. (Note: rent and bills are separate; do not double-count.)
 - `agency_or_owner`: "agency" if the listing is posted by a real-estate agency, "owner" if posted by a private owner, otherwise "unknown".
@@ -65,6 +66,11 @@ TOOL_DEF = {
                 "enum": ["centralno", "etazno", "podno", "TA", "klima", "elektricni", None],
                 "description": "Normalized heating type, or null if absent.",
             },
+            "furnishing_confirmed": {
+                "type": ["string", "null"],
+                "enum": ["furnished", "semi-furnished", "unfurnished", None],
+                "description": "Furnishing level inferred from the description, or null if unclear.",
+            },
             "max_lease_months": {
                 "type": ["integer", "null"],
                 "description": "Minimum lease length in months if the listing requires one.",
@@ -89,7 +95,8 @@ TOOL_DEF = {
         },
         "required": [
             "pets_allowed", "dishwasher", "elevator_confirmed",
-            "heating_type_confirmed", "max_lease_months", "bills_estimate_eur",
+            "heating_type_confirmed", "furnishing_confirmed",
+            "max_lease_months", "bills_estimate_eur",
             "agency_or_owner", "red_flags", "summary_en",
         ],
     },
@@ -139,6 +146,7 @@ def _parse_tool_call(response: Any) -> Extraction:
                 dishwasher=args.get("dishwasher"),
                 elevator_confirmed=args.get("elevator_confirmed"),
                 heating_type_confirmed=args.get("heating_type_confirmed"),
+                furnishing_confirmed=args.get("furnishing_confirmed"),
                 max_lease_months=args.get("max_lease_months"),
                 bills_estimate_eur=args.get("bills_estimate_eur"),
                 agency_or_owner=args.get("agency_or_owner"),

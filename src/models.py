@@ -26,6 +26,7 @@ class Extraction:
     dishwasher: bool | None = None
     elevator_confirmed: bool | None = None
     heating_type_confirmed: str | None = None    # "centralno" | "etazno" | "podno" | "TA" | "klima" | "..."
+    furnishing_confirmed: str | None = None      # "furnished" | "semi-furnished" | "unfurnished" | None
     max_lease_months: int | None = None
     bills_estimate_eur: int | None = None
     agency_or_owner: str | None = None           # "agency" | "owner" | "unknown"
