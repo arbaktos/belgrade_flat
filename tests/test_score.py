@@ -120,3 +120,31 @@ def test_rank_descending_orders_correctly():
     c = _l(id="c", price_eur=700, walk_min=20)
     ranked = score.rank_descending([b, a, c], price_cap_eur=CAP, freshness_days=DAYS)
     assert [l.id for l in ranked] == ["a", "c", "b"]
+
+
+def test_pet_friendly_always_outranks_non_pet_friendly():
+    # Even a terrible commute + bad floor — if pets are explicitly allowed,
+    # the listing tops anything that doesn't explicitly allow pets.
+    pet_bad = _l(id="pet_bad", walk_min=39, transit_min=29, pets_allowed=True)
+    nonpet_great = _l(id="nonpet_great", walk_min=5, transit_min=5, pets_allowed=None)
+    ranked = score.rank_descending([nonpet_great, pet_bad], price_cap_eur=CAP, freshness_days=DAYS)
+    assert [l.id for l in ranked] == ["pet_bad", "nonpet_great"]
+
+
+def test_pet_friendly_tier_sorts_by_score_within():
+    # Within the pet-friendly tier the composite score still tiebreaks.
+    pet_fast = _l(id="pet_fast", walk_min=10, pets_allowed=True)
+    pet_slow = _l(id="pet_slow", walk_min=30, pets_allowed=True)
+    ranked = score.rank_descending([pet_slow, pet_fast], price_cap_eur=CAP, freshness_days=DAYS)
+    assert [l.id for l in ranked] == ["pet_fast", "pet_slow"]
+
+
+def test_llm_pet_yes_also_qualifies_for_pet_tier():
+    # When structured pets_allowed is None/False but the LLM read "yes" from
+    # the description text, the listing still earns the pet-tier.
+    from src.models import Extraction
+    e = Extraction(pets_allowed="yes")
+    pet_llm = _l(id="pet_llm", walk_min=25, pets_allowed=None, extraction=e)
+    nonpet = _l(id="nonpet", walk_min=10, pets_allowed=None)
+    ranked = score.rank_descending([nonpet, pet_llm], price_cap_eur=CAP, freshness_days=DAYS)
+    assert [l.id for l in ranked] == ["pet_llm", "nonpet"]

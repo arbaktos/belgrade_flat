@@ -63,10 +63,27 @@ def score(l: Listing, *, price_cap_eur: float, freshness_days: int, now: datetim
     )
 
 
+def is_pet_friendly(l: Listing) -> bool:
+    """A listing is pet-friendly when *explicitly* confirmed.
+
+    Structured True wins. LLM "yes" counts. False/None do not, since most
+    Belgrade listings simply don't mention pets and silence is not consent.
+    """
+    if l.pets_allowed is True:
+        return True
+    if l.extraction is not None and l.extraction.pets_allowed == "yes":
+        return True
+    return False
+
+
 def rank_descending(listings: list[Listing], *, price_cap_eur: float, freshness_days: int) -> list[Listing]:
-    """Return listings sorted by composite score, highest first."""
-    return sorted(
-        listings,
-        key=lambda l: score(l, price_cap_eur=price_cap_eur, freshness_days=freshness_days),
-        reverse=True,
-    )
+    """Return listings sorted by composite score, highest first.
+
+    Pets-friendly listings form a priority tier — they always rank above any
+    non-pet-friendly listing, regardless of composite score. Within each tier
+    the composite score is the tiebreaker.
+    """
+    def sort_key(l: Listing) -> tuple[int, float]:
+        s = score(l, price_cap_eur=price_cap_eur, freshness_days=freshness_days)
+        return (1 if is_pet_friendly(l) else 0, s)
+    return sorted(listings, key=sort_key, reverse=True)

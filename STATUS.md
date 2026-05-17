@@ -41,7 +41,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | M5 | Commute filter + caching | ✅ done (Routes API, not legacy Directions API) |
 | M6 | Dedup + fingerprint cascade | ✅ done (pHash + coord + trigram; phone skipped — no source exposes it) |
 | M7 | Digest format complete | ✅ done + 🙈 Hide button (off-spec but better UX) |
-| M8 | Polling + perfect-match instant push | ⏳ pending |
+| M8 | Polling + perfect-match instant push | ✅ done (daily 04:30 cron = full digest; every-2h cron = silent unless new perfect match) |
 | M9 | Error routing + cold-start silent seed | ⏳ pending |
 | M10 | One-week production observation | ⏳ pending |
 
@@ -75,6 +75,9 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Halooglasi | scrape via plain httpx | via FlareSolverr sidecar | Their site is Cloudflare-Turnstile-protected, no other approach works without paid proxies |
 | Transit routing | spec doesn't specify | `FEWER_TRANSFERS` preference, transfer count surfaced | User: "minimum transport change" |
 | Directions API | spec says "Google Directions" | Routes API (new product) | Legacy Directions API isn't accepting new project enables; Google steered us to Routes |
+| Pets unclear | spec hard-requires pets | silent pass on "unknown"; only explicit "no" hard-rejects | Most Serbian listings don't mention pets at all — demoting "unknown" to near-miss left ~0 perfect matches |
+| Pet-friendly ranking | not in spec | listings with confirmed pets-allowed form a priority tier ABOVE non-pet-friendly, regardless of composite score | User: "if there IS info that the flat is pet friendly, push it on top always" |
+| Cron behaviour | spec only mentions a daily digest | 04:30 UTC = full digest; every-2h polls 02-16 UTC (08-22 KGT) = silent instant push of NEW perfect matches | M8; "new" = no `notified_at` yet; polls skip nighttime (KGT 23-08) per `config.yaml.quiet_hours_kgt`; poll runs commit nothing to git to avoid churning commits |
 
 ---
 

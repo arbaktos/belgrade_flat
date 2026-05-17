@@ -2,8 +2,10 @@ name: scrape
 
 on:
   schedule:
-    - cron: '30 4 * * *'    # 04:30 UTC = 10:30 Asia/Bishkek — daily digest
-    - cron: '0 */2 * * *'   # every 2h — perfect-match poll
+    - cron: '30 4 * * *'        # 04:30 UTC = 10:30 Asia/Bishkek — daily digest
+    # Every 2h, daytime only. KGT quiet hours are 23:00-08:00 (per config.yaml),
+    # i.e. 17:00-01:59 UTC. The window below = 02:00-16:00 UTC (08:00-22:00 KGT).
+    - cron: '0 2-16/2 * * *'    # 02,04,06,08,10,12,14,16 UTC = 8 polls/day
   workflow_dispatch: {}
 
 concurrency:
@@ -74,7 +76,9 @@ jobs:
           FLARESOLVERR_URL: http://localhost:8191/v1
 
       - name: Commit digest + debug artifacts if generated
-        if: github.event_name == 'workflow_dispatch'
+        # Commit on manual dispatch and on the daily digest cron only.
+        # The 2h poll cron skips commits to avoid 12 churning commits/day.
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 4 * * *'
         run: |
           if [ -z "$(git status --porcelain digests/ debug/)" ]; then
             echo "No digest or debug changes to commit."
@@ -83,7 +87,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add digests/ debug/
-          git commit -m "digest: test run ${GITHUB_RUN_ID}"
+          msg_kind="$([ "${GITHUB_EVENT_NAME}" = "schedule" ] && echo "daily" || echo "test")"
+          git commit -m "digest: ${msg_kind} run ${GITHUB_RUN_ID}"
           # Retry with a fresh rebase in case a human push raced us.
           for attempt in 1 2 3; do
             if git push; then

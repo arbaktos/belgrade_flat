@@ -92,6 +92,34 @@ def send(
                               disable_notification=True)
 
 
+def send_instant_push(
+    fresh_matches: list[Listing],
+    *,
+    notify_reasons: dict[str, str] | None,
+    office_lat: float,
+    office_lng: float,
+) -> None:
+    """Push newly-discovered perfect matches between scheduled digests.
+
+    Silent when there's nothing new — instant-push is a courtesy, not a
+    heartbeat. The standard per-listing card is reused; a one-line header
+    ("🔔 N new match…") precedes the cards so the burst is recognisable
+    against the daily digest.
+    """
+    if not fresh_matches:
+        log.info("instant-push: 0 new matches; staying quiet")
+        return
+    header = (
+        f"🔔 <b>{len(fresh_matches)} new perfect match"
+        f"{'es' if len(fresh_matches) != 1 else ''}</b> since the last run."
+    )
+    telegram.send_message(header, parse_mode="HTML")
+    for l in fresh_matches:
+        reason = (notify_reasons or {}).get(l.fingerprint_key)
+        _send_listing(l, near_miss_reasons=None, notify_reason=reason,
+                      office_lat=office_lat, office_lng=office_lng)
+
+
 # ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------

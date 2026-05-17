@@ -34,28 +34,33 @@ SOURCES: list[tuple[str, Callable[..., list[Listing]]]] = [
 ]
 
 
+# Cron expressions in .github/workflows/scrape.yml. Anything else maps to digest.
+DIGEST_CRON = "30 4 * * *"
+POLL_CRON = "0 */2 * * *"
+
+
 def main() -> int:
     load_dotenv()
 
     schedule = os.environ.get("GITHUB_EVENT_SCHEDULE", "")
     run_id = os.environ.get("GITHUB_RUN_ID", "local")
-    is_dispatch = not schedule
+    # Mode selection:
+    #   workflow_dispatch (no schedule)     → full digest (manual run)
+    #   schedule == DIGEST_CRON             → full digest
+    #   schedule == POLL_CRON               → instant push of NEW perfect matches only
+    #   any other cron value                → instant push (safe default)
+    if not schedule or schedule == DIGEST_CRON:
+        mode = "digest"
+    else:
+        mode = "instant"
+    log.info("main: mode=%s schedule=%r run=%s", mode, schedule, run_id)
 
     cfg = yaml.safe_load(Path("config.yaml").read_text())
-    pulled = state.pull()
+    state.pull()
     conn = state.ensure_schema()
 
     try:
-        if is_dispatch:
-            _run_pipeline(cfg, conn)
-        else:
-            stats = state.stats(conn)
-            telegram.send_message(
-                f"👋 Cron heartbeat ({schedule})\n"
-                f"R2: {'pulled' if pulled else 'seeded'} ({stats['size_bytes']} B, "
-                f"{stats['listings_tracked']} listings tracked)\n"
-                f"Run: {run_id}"
-            )
+        _run_pipeline(cfg, conn, mode=mode)
     finally:
         conn.close()
 
@@ -63,10 +68,16 @@ def main() -> int:
     return 0
 
 
-def _run_pipeline(cfg: dict, conn) -> dict:
-    log.info("dispatch: drain callbacks → scrape → structural → LLM → final → digest")
+def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
+    log.info("dispatch: drain callbacks → scrape → structural → LLM → final → %s",
+             "digest" if mode == "digest" else "instant push")
     freshness_days = int(cfg["filters"]["freshness_days"])
     cfg_obj = filt.from_dict(cfg)
+
+    # Snapshot "already-notified" before any pipeline mutation so instant-push
+    # can identify genuinely new matches even though dedup.mark_notified runs
+    # mid-pipeline (pre-Telegram delivery, a long-standing quirk).
+    previously_notified = state.notified_keys(conn) if mode == "instant" else set()
 
     # Stage 0: drain any 🙈 Skip button clicks the user made since the last run.
     # Has to happen BEFORE the new digest so new skips take effect immediately.
@@ -208,25 +219,38 @@ def _run_pipeline(cfg: dict, conn) -> dict:
     path = digest.write(content, today)
     log.info("digest written to %s", path)
 
-    # Spec §8 Telegram delivery — header summary + per-listing messages.
     stats_after = state.stats(conn)
+    office_lat = float(os.environ.get("OFFICE_LAT", 0))
+    office_lng = float(os.environ.get("OFFICE_LNG", 0))
     try:
-        telegram_digest.send(
-            full_result,
-            today=today,
-            source_stats=source_stats,
-            api_count=api_count,
-            dedup_stats=dedup_stats,
-            notify_reasons=notify_reasons,
-            commute_config_error=commute_config_error,
-            state_size_bytes=stats_after["size_bytes"],
-            listings_tracked=stats_after["listings_tracked"],
-            digest_path=f"digests/{today.strftime('%Y-%m-%d')}.md",
-            office_lat=float(os.environ.get("OFFICE_LAT", 0)),
-            office_lng=float(os.environ.get("OFFICE_LNG", 0)),
-        )
+        if mode == "instant":
+            fresh = [l for l in matched if l.fingerprint_key not in previously_notified]
+            log.info("instant-push: %d/%d matches are new (rest seen before)",
+                     len(fresh), len(matched))
+            telegram_digest.send_instant_push(
+                fresh,
+                notify_reasons=notify_reasons,
+                office_lat=office_lat,
+                office_lng=office_lng,
+            )
+        else:
+            # Spec §8 Telegram delivery — header summary + per-listing messages.
+            telegram_digest.send(
+                full_result,
+                today=today,
+                source_stats=source_stats,
+                api_count=api_count,
+                dedup_stats=dedup_stats,
+                notify_reasons=notify_reasons,
+                commute_config_error=commute_config_error,
+                state_size_bytes=stats_after["size_bytes"],
+                listings_tracked=stats_after["listings_tracked"],
+                digest_path=f"digests/{today.strftime('%Y-%m-%d')}.md",
+                office_lat=office_lat,
+                office_lng=office_lng,
+            )
     except Exception as e:  # noqa: BLE001 - delivery failure shouldn't lose state
-        log.error("telegram digest send failed: %s", e, exc_info=True)
+        log.error("telegram delivery failed (mode=%s): %s", mode, e, exc_info=True)
 
     return {
         "source_results": source_results,

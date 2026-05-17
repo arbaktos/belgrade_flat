@@ -207,3 +207,15 @@ def stats(conn: sqlite3.Connection) -> dict[str, int]:
     size_bytes = LOCAL_DB.stat().st_size if LOCAL_DB.exists() else 0
     n_listings = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
     return {"size_bytes": size_bytes, "listings_tracked": n_listings}
+
+
+def notified_keys(conn: sqlite3.Connection) -> set[str]:
+    """Snapshot of fingerprint_keys that have been notified before.
+
+    Used by instant-push mode to surface only listings that haven't reached
+    the user yet. Capture this BEFORE the pipeline runs so listings marked
+    notified during the current run are still considered new for delivery.
+    """
+    return {row[0] for row in conn.execute(
+        "SELECT fingerprint_key FROM listings WHERE notified_at IS NOT NULL"
+    )}

@@ -204,3 +204,31 @@ def test_overflow_line_when_too_many_matches():
         )
     assert len(sent_photos) == telegram_digest.MAX_PERFECT
     assert any("+2 more matches" in t for t in sent_texts)
+
+
+def test_instant_push_is_silent_when_no_fresh_matches():
+    sent_texts: list[str] = []
+    sent_photos: list[str] = []
+    with patch("src.telegram_digest.telegram.send_message", side_effect=lambda txt, **_: sent_texts.append(txt)), \
+         patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
+        telegram_digest.send_instant_push(
+            [], notify_reasons={},
+            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        )
+    assert sent_texts == [] and sent_photos == []
+
+
+def test_instant_push_sends_header_then_one_card_per_fresh_match():
+    sent_texts: list[str] = []
+    sent_photos: list[str] = []
+    fresh = [_l(id="a"), _l(id="b")]
+    with patch("src.telegram_digest.telegram.send_message", side_effect=lambda txt, **_: sent_texts.append(txt)), \
+         patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
+        telegram_digest.send_instant_push(
+            fresh, notify_reasons={},
+            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        )
+    # Exactly one header text, plus one photo card per listing.
+    assert len(sent_texts) == 1
+    assert "2 new perfect matches" in sent_texts[0]
+    assert len(sent_photos) == 2
