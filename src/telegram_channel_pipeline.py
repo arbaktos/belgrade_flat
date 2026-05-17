@@ -100,9 +100,11 @@ def run(
 
             accepted.append((post, facts))
 
-        # Pre-card status line. Silent when nothing happened (no fetches, no
-        # errors, no matches — the typical quiet poll).
-        if accepted or counts["errors"]:
+        # Pre-card status line. Fires whenever the channel page had ANY new
+        # posts (or we hit an error) — gives a per-poll heartbeat that the
+        # source is alive even when all posts get filtered. Silent only on
+        # genuinely empty polls (page exists but contained no unseen posts).
+        if posts or counts["errors"]:
             _send_status_header(channel, counts, accepted_count=len(accepted))
 
         for post, facts in accepted:
