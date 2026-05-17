@@ -68,6 +68,15 @@ def get_updates(offset: int = 0, *, timeout: int = 0) -> list[dict]:
     return _call("getUpdates", payload).get("result", [])
 
 
+def get_webhook_info() -> dict:
+    """Return Telegram's webhook configuration for this bot.
+
+    Useful for diagnosing why getUpdates returns empty even when callbacks
+    were tapped: a configured webhook intercepts every update silently.
+    """
+    return _call("getWebhookInfo", {}).get("result", {})
+
+
 def answer_callback_query(callback_id: str, text: str = "", show_alert: bool = False) -> None:
     _call("answerCallbackQuery", {
         "callback_query_id": callback_id,

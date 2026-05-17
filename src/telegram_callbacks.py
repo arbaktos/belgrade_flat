@@ -27,6 +27,17 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
     """
     counts = {"fetched": 0, "skipped": 0, "unknown": 0}
     offset = _read_offset(conn)
+    # Diagnostic: log webhook status — a set webhook silently steals callbacks
+    # before getUpdates can drain them.
+    try:
+        info = telegram.get_webhook_info()
+        url = info.get("url") or "(no webhook)"
+        last_err = info.get("last_error_message") or ""
+        log.info("webhook status: url=%s pending=%s last_error=%s",
+                 url, info.get("pending_update_count"), last_err)
+    except Exception as e:  # noqa: BLE001
+        log.warning("getWebhookInfo failed: %s", e)
+    log.info("drain start: offset=%d", offset)
     try:
         updates = telegram.get_updates(offset=offset)
     except Exception as e:  # noqa: BLE001 - polling failure mustn't break the run
@@ -35,6 +46,7 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
 
     counts["fetched"] = len(updates)
     if not updates:
+        log.info("callbacks drained: %s (no pending updates)", counts)
         return counts
 
     max_update_id = offset - 1 if offset > 0 else -1
