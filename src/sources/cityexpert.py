@@ -14,8 +14,12 @@ log = logging.getLogger(__name__)
 
 SOURCE_NAME = "cityexpert"
 API_URL = "https://cityexpert.rs/api/Search"
-LISTING_URL_BASE = "https://cityexpert.rs/en/rent"
-IMAGE_URL_BASE = "https://img.cityexpert.rs/properties/620"
+# Canonical paths now require /{propId}/{slug}; the server validates propId and
+# tolerates any non-empty slug, so we use a fixed "stan" placeholder.
+LISTING_URL_RENT = "https://cityexpert.rs/izdavanje-nekretnina/beograd"
+LISTING_URL_SALE = "https://cityexpert.rs/prodaja-nekretnina/beograd"
+IMAGE_CDN = "https://img.cityexpert.rs/properties"
+IMAGE_WIDTH = "720x"   # Telegram-friendly; CDN serves JPEG even when filename ends in .avif
 BELGRADE_CITY_ID = 1
 APARTMENT_PT_ID = 1
 USER_AGENT = (
@@ -91,10 +95,14 @@ def fetch(*, freshness_days: int = 7, client: httpx.Client | None = None) -> lis
 def _parse(prop: dict[str, Any]) -> Listing | None:
     try:
         unique_id = prop["uniqueID"]
+        prop_id = prop.get("propId")
+        if prop_id is None:
+            return None
         first_pub = prop.get("firstPublished") or prop.get("availableFrom")
         if not first_pub:
             return None
         created_at = datetime.fromisoformat(first_pub.replace("Z", "+00:00"))
+        base = LISTING_URL_SALE if prop.get("rentOrSale") == "s" else LISTING_URL_RENT
 
         lat, lng = _parse_location(prop.get("location"))
         # "floor" = "2_4" → floor 2, total 4. "PR"/"VPR"/"SU" = ground/high-ground/basement.
@@ -113,7 +121,7 @@ def _parse(prop: dict[str, Any]) -> Listing | None:
         return Listing(
             id=unique_id,
             source=SOURCE_NAME,
-            url=f"{LISTING_URL_BASE}/{unique_id}",
+            url=f"{base}/{int(prop_id)}/stan",
             price_eur=price,
             m2=size,
             rooms=rooms,
@@ -199,7 +207,20 @@ def _heating_label(heating_array: Any) -> str | None:
 
 
 def _image_url(prop: dict[str, Any]) -> str | None:
+    """Build CDN URL for coverPhoto.
+
+    CityExpert's image pipeline (2024+) uses
+    /properties/{width}x/{bucket}/{propId}/slike/{filename} where bucket is
+    propId rounded down to thousands. The legacy /properties/620/{filename}
+    path now 404s — which made Telegram fall back to text-only messages.
+    """
     photo = prop.get("coverPhoto")
-    if not photo:
+    prop_id = prop.get("propId")
+    if not photo or prop_id is None:
         return None
-    return f"{IMAGE_URL_BASE}/{photo}"
+    try:
+        pid = int(prop_id)
+    except (TypeError, ValueError):
+        return None
+    bucket = (pid // 1000) * 1000
+    return f"{IMAGE_CDN}/{IMAGE_WIDTH}/{bucket}/{pid}/slike/{photo}"

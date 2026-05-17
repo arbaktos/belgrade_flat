@@ -14,7 +14,8 @@ def test_parse_real_properties():
     assert listings
     for l in listings:
         assert l.source == "cityexpert"
-        assert l.url.startswith("https://cityexpert.rs/en/rent/")
+        assert l.url.startswith("https://cityexpert.rs/izdavanje-nekretnina/beograd/")
+        assert l.url.endswith("/stan")
         assert l.price_eur >= 0
         assert l.m2 >= 0
         assert isinstance(l.created_at, datetime)
@@ -27,6 +28,20 @@ def test_floor_parsing():
     assert cityexpert._parse_floor("SU") == (-1, None)
     assert cityexpert._parse_floor("10") == (10, None)
     assert cityexpert._parse_floor(None) == (None, None)
+
+
+def test_image_url_uses_new_cdn_path():
+    data = json.loads(FIXTURE.read_text())
+    prop = data["result"][0]
+    url = cityexpert._image_url(prop)
+    assert url is not None
+    assert url.startswith("https://img.cityexpert.rs/properties/720x/")
+    assert f"/{prop['propId']}/slike/" in url
+    assert url.endswith(prop["coverPhoto"])
+
+
+def test_image_url_none_without_cover_photo():
+    assert cityexpert._image_url({"propId": 1}) is None
 
 
 def test_no_elevator_but_low_implies_no_elevator():
