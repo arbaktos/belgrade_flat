@@ -1,12 +1,12 @@
 filters:
-  price_eur_max: 1000
+  price_eur_max: 1100
   rooms_min: 1.5
   rooms_max: 3.0
   surface_m2_min: 55
   heating_allowed: [centralno, etazno, podno]
   furnishing_allowed: [furnished, semi-furnished]
   floor_exclude: [ground, basement]
-  elevator_required: true
+  elevator_required: false  # soft preference now — scored in src/score.py, not hard-rejected
   photo_required: true
   # Soft preference: most Serbian listings don't mention dishwasher even when present.
   # We still annotate dishwasher presence in the digest when the LLM finds it.

@@ -1,18 +1,20 @@
 """Composite score used to rank listings within the digest (spec §8).
 
-User preference (May 2026): time-to-office matters more than price within the
-allowed range — anything ≤ €1000 is acceptable, what really differentiates is
-how long the commute is. Walking is preferred over transit, so the commute
-weight is split: walking dominates and transit only shapes the tail.
+User preference (May 2026): price is acceptable anywhere ≤ €1100 — what truly
+differentiates listings is commute. Walk and transit dominate the score; price
+contributes nothing (the hard cap in config.yaml does the gating). Elevator
+moved from hard-required to a soft 0.10 bonus so central pre-war buildings
+can enter the pool.
 
-    score = 0.30·(1 − walk_min/30)
-          + 0.15·(1 − transit_min/30)
-          + 0.25·(1 − price/cap)
-          + 0.20·(m²/80)
+    score = 0.45·(1 − walk_min/40)
+          + 0.25·(1 − transit_min/30)
+          + 0.10·(m²/80)
           + 0.10·freshness  (1.0 = just posted; 0.0 = older than freshness window)
+          + 0.10·elevator   (1.0 = has lift; 0.0 = unknown or none)
 
 The score is NEVER shown to the user — only used for digest ordering. Higher
-is better.
+is better. `price_cap_eur` is kept in the signature for call-site stability;
+it's unused.
 """
 from __future__ import annotations
 
@@ -21,14 +23,14 @@ from datetime import datetime, timezone
 from src.models import Listing
 
 
-WALK_WEIGHT = 0.30
-TRANSIT_WEIGHT = 0.15
-PRICE_WEIGHT = 0.25
-SURFACE_WEIGHT = 0.20
+WALK_WEIGHT = 0.45
+TRANSIT_WEIGHT = 0.25
+SURFACE_WEIGHT = 0.10
 FRESHNESS_WEIGHT = 0.10
+ELEVATOR_WEIGHT = 0.10
 
 SURFACE_CAP_M2 = 80      # diminishing returns above this
-WALK_CAP_MIN = 30
+WALK_CAP_MIN = 40        # 35-40 min walks still earn partial credit
 TRANSIT_CAP_MIN = 30
 
 
@@ -39,8 +41,8 @@ def _commute_term(minutes: int | None, cap: int) -> float:
 
 
 def score(l: Listing, *, price_cap_eur: float, freshness_days: int, now: datetime | None = None) -> float:
+    del price_cap_eur  # unused — price doesn't enter the score (hard-capped upstream)
     now = now or datetime.now(timezone.utc)
-    price_term = max(0.0, 1.0 - l.price_eur / max(price_cap_eur, 1))
 
     walk_term = _commute_term(l.walk_min, WALK_CAP_MIN)
     transit_term = _commute_term(l.transit_min, TRANSIT_CAP_MIN)
@@ -50,12 +52,14 @@ def score(l: Listing, *, price_cap_eur: float, freshness_days: int, now: datetim
     age_hours = (now - l.created_at).total_seconds() / 3600
     freshness_term = max(0.0, 1.0 - age_hours / (freshness_days * 24))
 
+    elevator_term = 1.0 if l.elevator else 0.0
+
     return (
-        PRICE_WEIGHT * price_term
-        + WALK_WEIGHT * walk_term
+        WALK_WEIGHT * walk_term
         + TRANSIT_WEIGHT * transit_term
         + SURFACE_WEIGHT * surface_term
         + FRESHNESS_WEIGHT * freshness_term
+        + ELEVATOR_WEIGHT * elevator_term
     )
 
 

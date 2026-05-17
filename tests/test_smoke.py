@@ -5,7 +5,7 @@ import yaml
 
 def test_config_loads():
     cfg = yaml.safe_load(pathlib.Path("config.yaml").read_text())
-    assert cfg["filters"]["price_eur_max"] == 1000
+    assert cfg["filters"]["price_eur_max"] == 1100
     assert cfg["filters"]["surface_m2_min"] == 55
     assert "centralno" in cfg["filters"]["heating_allowed"]
 

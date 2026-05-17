@@ -31,10 +31,13 @@ def test_score_in_unit_range():
     assert 0.0 <= s <= 1.0
 
 
-def test_cheaper_scores_higher():
+def test_price_does_not_affect_score():
+    # User: anything ≤ €1100 is acceptable; price is a hard cap, not a ranking signal.
     cheap = _l(price_eur=400)
-    pricey = _l(price_eur=900)
-    assert score.score(cheap, price_cap_eur=CAP, freshness_days=DAYS) > score.score(pricey, price_cap_eur=CAP, freshness_days=DAYS)
+    pricey = _l(price_eur=1099)
+    assert score.score(cheap, price_cap_eur=CAP, freshness_days=DAYS) == pytest.approx(
+        score.score(pricey, price_cap_eur=CAP, freshness_days=DAYS), abs=1e-6
+    )
 
 
 def test_faster_commute_scores_higher():
@@ -64,7 +67,7 @@ def test_no_commute_yields_zero_commute_term():
 
 def test_walking_outweighs_transit_when_both_short():
     # Same total commute (15 min) but one is all-walk, one is all-transit.
-    # Walking should win because WALK_WEIGHT (0.30) > TRANSIT_WEIGHT (0.15).
+    # Walking should win because WALK_WEIGHT (0.45) > TRANSIT_WEIGHT (0.25).
     walker = _l(walk_min=15, transit_min=30)
     rider = _l(walk_min=30, transit_min=15)
     assert score.score(walker, price_cap_eur=CAP, freshness_days=DAYS) > score.score(rider, price_cap_eur=CAP, freshness_days=DAYS)
@@ -83,6 +86,32 @@ def test_transit_breaks_tie_when_walk_is_equal():
     a = _l(id="a", walk_min=22, transit_min=10)
     b = _l(id="b", walk_min=22, transit_min=25)
     assert score.score(a, price_cap_eur=CAP, freshness_days=DAYS) > score.score(b, price_cap_eur=CAP, freshness_days=DAYS)
+
+
+def test_elevator_present_scores_higher_than_missing():
+    # Same everything else; only elevator differs. Lift earns +0.10.
+    with_lift = _l(elevator=True)
+    no_lift = _l(elevator=False)
+    unknown = _l(elevator=None)
+    s_lift = score.score(with_lift, price_cap_eur=CAP, freshness_days=DAYS)
+    s_no = score.score(no_lift, price_cap_eur=CAP, freshness_days=DAYS)
+    s_unknown = score.score(unknown, price_cap_eur=CAP, freshness_days=DAYS)
+    assert s_lift > s_no
+    assert s_lift > s_unknown
+    # Unknown and explicit "no" are treated the same (no bonus).
+    assert s_no == pytest.approx(s_unknown, abs=1e-6)
+
+
+def test_walk_credit_extends_to_new_cap():
+    # 35-min walk must earn some credit now that WALK_CAP_MIN = 40.
+    walks_35 = _l(walk_min=35, transit_min=None)
+    walks_45 = _l(walk_min=45, transit_min=None)
+    s_35 = score.score(walks_35, price_cap_eur=CAP, freshness_days=DAYS)
+    s_45 = score.score(walks_45, price_cap_eur=CAP, freshness_days=DAYS)
+    assert s_35 > s_45  # closer walk wins
+    # 45 min is past the cap → walk term zero.
+    walks_60 = _l(walk_min=60, transit_min=None)
+    assert s_45 == pytest.approx(score.score(walks_60, price_cap_eur=CAP, freshness_days=DAYS), abs=1e-6)
 
 
 def test_rank_descending_orders_correctly():
