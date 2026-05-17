@@ -2,9 +2,11 @@
 
 User preference (May 2026): time-to-office matters more than price within the
 allowed range — anything ≤ €1000 is acceptable, what really differentiates is
-how long the commute is. Weights diverge from spec §8 to reflect that:
+how long the commute is. Walking is preferred over transit, so the commute
+weight is split: walking dominates and transit only shapes the tail.
 
-    score = 0.45·(1 − best_commute/30)
+    score = 0.30·(1 − walk_min/30)
+          + 0.15·(1 − transit_min/30)
           + 0.25·(1 − price/cap)
           + 0.20·(m²/80)
           + 0.10·freshness  (1.0 = just posted; 0.0 = older than freshness window)
@@ -19,27 +21,29 @@ from datetime import datetime, timezone
 from src.models import Listing
 
 
-COMMUTE_WEIGHT = 0.45
+WALK_WEIGHT = 0.30
+TRANSIT_WEIGHT = 0.15
 PRICE_WEIGHT = 0.25
 SURFACE_WEIGHT = 0.20
 FRESHNESS_WEIGHT = 0.10
 
 SURFACE_CAP_M2 = 80      # diminishing returns above this
-COMMUTE_CAP_MIN = 30
+WALK_CAP_MIN = 30
+TRANSIT_CAP_MIN = 30
+
+
+def _commute_term(minutes: int | None, cap: int) -> float:
+    if minutes is None:
+        return 0.0
+    return max(0.0, 1.0 - minutes / cap)
 
 
 def score(l: Listing, *, price_cap_eur: float, freshness_days: int, now: datetime | None = None) -> float:
     now = now or datetime.now(timezone.utc)
     price_term = max(0.0, 1.0 - l.price_eur / max(price_cap_eur, 1))
 
-    best_commute = min(
-        l.walk_min if l.walk_min is not None else 10**9,
-        l.transit_min if l.transit_min is not None else 10**9,
-    )
-    if best_commute >= 10**9:
-        commute_term = 0.0
-    else:
-        commute_term = max(0.0, 1.0 - best_commute / COMMUTE_CAP_MIN)
+    walk_term = _commute_term(l.walk_min, WALK_CAP_MIN)
+    transit_term = _commute_term(l.transit_min, TRANSIT_CAP_MIN)
 
     surface_term = min(1.0, l.m2 / SURFACE_CAP_M2)
 
@@ -48,7 +52,8 @@ def score(l: Listing, *, price_cap_eur: float, freshness_days: int, now: datetim
 
     return (
         PRICE_WEIGHT * price_term
-        + COMMUTE_WEIGHT * commute_term
+        + WALK_WEIGHT * walk_term
+        + TRANSIT_WEIGHT * transit_term
         + SURFACE_WEIGHT * surface_term
         + FRESHNESS_WEIGHT * freshness_term
     )

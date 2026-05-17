@@ -24,7 +24,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 7. LLM-aware filter               →  src/filter.apply_with_extraction()  (pets / dishwasher / heating / max-lease)
 8. commute filter                 →  src/route.py + src/filter.apply_commute()  (Google Routes API + Haversine 10 km pre-filter + 90-day SQLite cache)
 9. dedup + cluster matches        →  src/dedup.py                 (image pHash workhorse + coord/m²/price + title trigram)
-10. composite-score order         →  src/score.py                 (commute 0.45 + price 0.25 + m² 0.20 + freshness 0.10)
+10. composite-score order         →  src/score.py                 (walk 0.30 + transit 0.15 + price 0.25 + m² 0.20 + freshness 0.10)
 11. write markdown digest         →  src/digest.py + git commit to digests/YYYY-MM-DD.md
 12. send Telegram digest          →  src/telegram_digest.py       (header + photo+caption per listing + follow-up link line + 🙈 Hide button)
 13. push state to R2              →  src/state.push()
@@ -68,7 +68,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Dishwasher | hard requirement | soft preference (annotated in digest) | Serbian listings rarely mention `mašina za sudove` even when present; hard reject lost ~50/51 candidates |
 | Ground floor | reject (`not ground`) | allowed | User explicitly opted in; relaxes the candidate pool |
 | Elevator on floor 0 | required | waived | No lift needed when you're on the ground floor |
-| Score weights | 0.4 price / 0.3 commute / 0.2 m² / 0.1 freshness | 0.45 commute / 0.25 price / 0.20 m² / 0.10 freshness | User: "anything ≤ €1000 is OK, time-to-office matters more" |
+| Score weights | 0.4 price / 0.3 commute / 0.2 m² / 0.1 freshness | 0.30 walk / 0.15 transit / 0.25 price / 0.20 m² / 0.10 freshness | User: "anything ≤ €1000 is OK, time-to-office matters more — and prefer short walk over short transit" |
 | Re-notify policy | suppress already-notified | always-surface mode (with 📌 seen-before badge) for now | Testing phase; flip `dedup.always_surface_matches: false` for production |
 | 🙈 Hide button | spec says interactive bot is non-goal | implemented as inline-keyboard callback | Better UX than implicit auto-suppression; user requested |
 | Halooglasi | scrape via plain httpx | via FlareSolverr sidecar | Their site is Cloudflare-Turnstile-protected, no other approach works without paid proxies |

@@ -62,6 +62,29 @@ def test_no_commute_yields_zero_commute_term():
     assert 0 < s < 1
 
 
+def test_walking_outweighs_transit_when_both_short():
+    # Same total commute (15 min) but one is all-walk, one is all-transit.
+    # Walking should win because WALK_WEIGHT (0.30) > TRANSIT_WEIGHT (0.15).
+    walker = _l(walk_min=15, transit_min=30)
+    rider = _l(walk_min=30, transit_min=15)
+    assert score.score(walker, price_cap_eur=CAP, freshness_days=DAYS) > score.score(rider, price_cap_eur=CAP, freshness_days=DAYS)
+
+
+def test_short_walk_beats_short_transit_when_other_term_missing():
+    # Pure walk credit (5 min walk, no transit data) vs pure transit credit
+    # (no walk data, 5 min transit). Walking weighted double.
+    walk_only = _l(walk_min=5, transit_min=None)
+    transit_only = _l(walk_min=None, transit_min=5)
+    assert score.score(walk_only, price_cap_eur=CAP, freshness_days=DAYS) > score.score(transit_only, price_cap_eur=CAP, freshness_days=DAYS)
+
+
+def test_transit_breaks_tie_when_walk_is_equal():
+    # Same walk_min, different transit_min — shorter transit wins.
+    a = _l(id="a", walk_min=22, transit_min=10)
+    b = _l(id="b", walk_min=22, transit_min=25)
+    assert score.score(a, price_cap_eur=CAP, freshness_days=DAYS) > score.score(b, price_cap_eur=CAP, freshness_days=DAYS)
+
+
 def test_rank_descending_orders_correctly():
     a = _l(id="a", price_eur=500, walk_min=15)
     b = _l(id="b", price_eur=900, walk_min=28)
