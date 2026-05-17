@@ -70,22 +70,58 @@ def run(
     own_http = http_client is None
     http_client = http_client or httpx.Client(timeout=15.0, follow_redirects=True)
 
+    # Two-pass design so we can emit one summary line BEFORE the per-match
+    # cards: pass 1 decides accept/reject and marks the rejects seen; pass 2
+    # delivers the accepted posts (commute + card + mark seen).
+    accepted: list[tuple] = []
     try:
         for post in posts:
             try:
-                _process_one(
-                    post, conn, counts,
-                    anthropic_client=anthropic_client,
-                    http_client=http_client,
-                    m2_min=m2_min,
-                    office_lat=office_lat,
-                    office_lng=office_lng,
-                )
+                facts = extract.extract_telegram_post(post.text, client=anthropic_client)
             except Exception as e:  # noqa: BLE001
-                log.warning("telegram-channel: post %s failed: %s",
-                            post.message_id, e, exc_info=True)
+                log.warning("telegram-channel extract failed for %s: %s", post.message_id, e)
                 counts["errors"] += 1
-                # Mark seen anyway — retrying a malformed post on every run is wasteful.
+                state.mark_telegram_message_seen(conn, post.message_id)
+                continue
+
+            if facts.pets_allowed != "yes" or facts.m2 is None or facts.m2 <= m2_min:
+                log.info("tg post %s rejected: pets=%s m2=%s",
+                         post.message_id, facts.pets_allowed, facts.m2)
+                counts["filtered_out"] += 1
+                state.mark_telegram_message_seen(conn, post.message_id)
+                continue
+
+            phash = _compute_phash(post.photo_urls[0], http_client) if post.photo_urls else None
+            if phash is not None and _is_known_listing_by_phash(conn, phash):
+                log.info("tg post %s is a duplicate of an existing portal listing", post.message_id)
+                counts["deduped"] += 1
+                state.mark_telegram_message_seen(conn, post.message_id)
+                continue
+
+            accepted.append((post, facts))
+
+        # Pre-card status line. Silent when nothing happened (no fetches, no
+        # errors, no matches — the typical quiet poll).
+        if accepted or counts["errors"]:
+            _send_status_header(channel, counts, accepted_count=len(accepted))
+
+        for post, facts in accepted:
+            try:
+                commute = None
+                if office_lat is not None and office_lng is not None and facts.address:
+                    shim = _commute_shim(post, facts)
+                    try:
+                        commute = route.compute_commute(
+                            shim, office_lat=office_lat, office_lng=office_lng, conn=conn,
+                        )
+                    except Exception as e:  # noqa: BLE001
+                        log.warning("tg post %s commute failed: %s", post.message_id, e)
+                _send_card(post, facts, commute)
+                counts["pushed"] += 1
+            except Exception as e:  # noqa: BLE001
+                log.warning("telegram-channel deliver failed for %s: %s", post.message_id, e)
+                counts["errors"] += 1
+            finally:
                 state.mark_telegram_message_seen(conn, post.message_id)
     finally:
         if own_http:
@@ -95,50 +131,28 @@ def run(
     return counts
 
 
-def _process_one(
-    post, conn, counts,
-    *, anthropic_client, http_client, m2_min, office_lat, office_lng,
-) -> None:
-    facts = extract.extract_telegram_post(post.text, client=anthropic_client)
+def _send_status_header(channel: str, counts: dict, *, accepted_count: int) -> None:
+    """Single-line summary preceding the per-match cards.
 
-    # Filter 1: pets must be explicitly allowed.
-    if facts.pets_allowed != "yes":
-        log.info("tg post %s rejected: pets=%s", post.message_id, facts.pets_allowed)
-        counts["filtered_out"] += 1
-        state.mark_telegram_message_seen(conn, post.message_id)
-        return
-
-    # Filter 2: m² must be > threshold. Unknown m² is treated as a reject —
-    # user's spec is strict on size.
-    if facts.m2 is None or facts.m2 <= m2_min:
-        log.info("tg post %s rejected: m2=%s", post.message_id, facts.m2)
-        counts["filtered_out"] += 1
-        state.mark_telegram_message_seen(conn, post.message_id)
-        return
-
-    # Dedup against portal listings via pHash of the cover photo.
-    phash = _compute_phash(post.photo_urls[0], http_client) if post.photo_urls else None
-    if phash is not None and _is_known_listing_by_phash(conn, phash):
-        log.info("tg post %s is a duplicate of an existing portal listing", post.message_id)
-        counts["deduped"] += 1
-        state.mark_telegram_message_seen(conn, post.message_id)
-        return
-
-    # Commute via the existing route module — build a minimal Listing shim
-    # because route.compute_commute reads .lat/.lng/.address/.fingerprint_key.
-    commute = None
-    if office_lat is not None and office_lng is not None and facts.address:
-        shim = _commute_shim(post, facts)
-        try:
-            commute = route.compute_commute(
-                shim, office_lat=office_lat, office_lng=office_lng, conn=conn,
-            )
-        except Exception as e:  # noqa: BLE001
-            log.warning("tg post %s: commute failed: %s", post.message_id, e)
-
-    _send_card(post, facts, commute)
-    counts["pushed"] += 1
-    state.mark_telegram_message_seen(conn, post.message_id)
+    Fires only when we have matches to push OR encountered errors.
+    Filter/dup counts are appended only when non-zero to keep the line tight.
+    """
+    bits = [f"📣 <b>{html.escape(channel)}</b>",
+            f"{accepted_count} new match{'es' if accepted_count != 1 else ''}"]
+    extras = []
+    if counts.get("filtered_out"):
+        extras.append(f"{counts['filtered_out']} filtered")
+    if counts.get("deduped"):
+        extras.append(f"{counts['deduped']} dup of portal")
+    if counts.get("errors"):
+        extras.append(f"{counts['errors']} error{'s' if counts['errors'] != 1 else ''}")
+    line = " · ".join(bits)
+    if extras:
+        line += f" ({', '.join(extras)})"
+    try:
+        telegram.send_message(line, parse_mode="HTML")
+    except Exception as e:  # noqa: BLE001
+        log.warning("telegram-channel status header failed: %s", e)
 
 
 def _compute_phash(url: str, http_client: httpx.Client) -> str | None:
