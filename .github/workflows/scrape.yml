@@ -76,15 +76,25 @@ jobs:
       - name: Commit digest + debug artifacts if generated
         if: github.event_name == 'workflow_dispatch'
         run: |
-          if [ -n "$(git status --porcelain digests/ debug/)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add digests/ debug/
-            git commit -m "digest: test run ${GITHUB_RUN_ID}"
-            git push
-          else
+          if [ -z "$(git status --porcelain digests/ debug/)" ]; then
             echo "No digest or debug changes to commit."
+            exit 0
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add digests/ debug/
+          git commit -m "digest: test run ${GITHUB_RUN_ID}"
+          # Retry with a fresh rebase in case a human push raced us.
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed on attempt ${attempt}."
+              exit 0
+            fi
+            echo "Push attempt ${attempt} rejected; rebasing on origin/main."
+            git pull --rebase origin main
+          done
+          echo "Failed to push after 3 attempts."
+          exit 1
 
       - name: Notify failure
         if: failure()
