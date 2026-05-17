@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_digest, winter_smog
+from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_channel_pipeline, telegram_digest, winter_smog
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -263,6 +263,26 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             )
     except Exception as e:  # noqa: BLE001 - delivery failure shouldn't lose state
         log.error("telegram delivery failed (mode=%s): %s", mode, e, exc_info=True)
+
+    # Standalone Telegram-channel pipeline. Independent of the portal pipeline;
+    # uses its own pets+m² filter, dedups against portal listings by pHash, and
+    # tracks processed posts in seen_telegram_posts. Errors here must not break
+    # state push for the main run.
+    tg_channels = cfg.get("telegram_channels") or []
+    for ch_cfg in tg_channels:
+        ch_name = ch_cfg.get("name")
+        if not ch_name:
+            continue
+        try:
+            telegram_channel_pipeline.run(
+                ch_name,
+                conn,
+                m2_min=float(ch_cfg.get("m2_min", telegram_channel_pipeline.DEFAULT_M2_MIN)),
+                office_lat=office_lat or None,
+                office_lng=office_lng or None,
+            )
+        except Exception as e:  # noqa: BLE001
+            log.error("telegram-channel pipeline (%s) crashed: %s", ch_name, e, exc_info=True)
 
     return {
         "source_results": source_results,

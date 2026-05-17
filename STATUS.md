@@ -28,6 +28,10 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 11. write markdown digest         →  src/digest.py + git commit to digests/YYYY-MM-DD.md
 12. send Telegram digest          →  src/telegram_digest.py       (header + photo+caption per listing + follow-up link line + 🙈 Hide button)
 13. push state to R2              →  src/state.push()
+14. (parallel) Telegram-channel pipeline → src/telegram_channel_pipeline.py + src/sources/telegram_channel.py
+    Standalone for `@beograd_stan`-style channels — pets=yes AND m²>55, pHash dedup
+    against portal listings, commute, push. seen_telegram_posts table tracks
+    processed posts across runs by message_id.
 ```
 
 ### Spec milestone status (§15)

@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 
 def _rclone_env() -> dict[str, str]:
@@ -172,6 +172,17 @@ def ensure_schema() -> sqlite3.Connection:
         )
         """
     )
+    # v10: dedicated table for the Telegram-channel source. message_id is the
+    # post number from the t.me URL; storing the bare int is enough to gate
+    # re-processing across runs without persisting full post content.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS seen_telegram_posts (
+            message_id INTEGER PRIMARY KEY,
+            seen_at    TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
     conn.execute(
         "INSERT INTO meta (key, value) VALUES ('schema_version', ?) "
         "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -207,6 +218,19 @@ def stats(conn: sqlite3.Connection) -> dict[str, int]:
     size_bytes = LOCAL_DB.stat().st_size if LOCAL_DB.exists() else 0
     n_listings = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
     return {"size_bytes": size_bytes, "listings_tracked": n_listings}
+
+
+def seen_telegram_message_ids(conn: sqlite3.Connection) -> set[int]:
+    """All channel-post ids we've already processed (any run, any outcome)."""
+    return {row[0] for row in conn.execute("SELECT message_id FROM seen_telegram_posts")}
+
+
+def mark_telegram_message_seen(conn: sqlite3.Connection, message_id: int) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO seen_telegram_posts (message_id) VALUES (?)",
+        (message_id,),
+    )
+    conn.commit()
 
 
 def notified_keys(conn: sqlite3.Connection) -> set[str]:

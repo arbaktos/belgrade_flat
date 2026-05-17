@@ -58,3 +58,12 @@ llm:
 
 state:
   r2_key: "state/db.sqlite"
+
+# Telegram-channel side pipeline (separate from the portal scrapers).
+# Each entry runs after the main pipeline with only two filters: pets must be
+# explicitly allowed AND m² must exceed the threshold. Posts are deduped
+# against the portal listings table via image pHash. message_id is persisted
+# in the seen_telegram_posts table so each post processes exactly once.
+telegram_channels:
+  - name: beograd_stan
+    m2_min: 55
