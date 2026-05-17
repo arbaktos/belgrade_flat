@@ -8,7 +8,7 @@ from src.models import Listing
 
 CFG = filt.FilterConfig(
     price_eur_max=1000, rooms_min=1.5, rooms_max=3.0, surface_m2_min=55,
-    elevator_required=True, freshness_days=7,
+    elevator_required=True, photo_required=True, freshness_days=7,
     heating_allowed=("centralno", "etazno", "podno"),
     dishwasher_required=False, pets_required=True, max_lease_months=12,
     walk_min_max=30, transit_min_max=30,

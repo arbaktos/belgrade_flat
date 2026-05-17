@@ -23,7 +23,7 @@ def _listing(**overrides) -> Listing:
         description="d",
         address=None,
         place_names=["Vračar"],
-        image_url=None,
+        image_url="https://example.com/p.jpg",
         is_agency=False,
         created_at=datetime.now(timezone.utc) - timedelta(days=1),
     )
@@ -37,6 +37,7 @@ CFG = filt.FilterConfig(
     rooms_max=3.0,
     surface_m2_min=55,
     elevator_required=True,
+    photo_required=True,
     freshness_days=7,
     heating_allowed=("centralno", "etazno", "podno"),
     dishwasher_required=True,
@@ -110,3 +111,20 @@ def test_stale_rejected():
     old = datetime.now(timezone.utc) - timedelta(days=14)
     result = filt.apply([_listing(created_at=old)], CFG)
     assert "older" in result.rejected[0][1]
+
+
+def test_no_photo_rejected():
+    result = filt.apply([_listing(image_url=None)], CFG)
+    assert not result.passed
+    assert result.rejected[0][1] == "no photo"
+
+
+def test_blank_photo_url_rejected():
+    result = filt.apply([_listing(image_url="   ")], CFG)
+    assert result.rejected[0][1] == "no photo"
+
+
+def test_photo_not_required_when_disabled():
+    cfg = filt.FilterConfig(**{**CFG.__dict__, "photo_required": False})
+    result = filt.apply([_listing(image_url=None)], cfg)
+    assert len(result.passed) == 1

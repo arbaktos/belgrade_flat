@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from src import telegram_digest
 from src.filter import FilterResult
-from src.models import Extraction, Listing
+from src.models import Extraction, Listing, WinterSmog
 
 
 OFFICE_LAT = 44.806
@@ -31,6 +31,27 @@ def _l(**over) -> Listing:
     return Listing(**base)
 
 
+def test_render_body_includes_winter_smog_line():
+    smog = WinterSmog(
+        band="moderate", pm25_winter_mean=40.0, pm25_best=20.0, pm25_worse=65.0,
+        smog_warning=False, motorway_m=None, score=0.5, cell_lat=44.8, cell_lng=20.5,
+    )
+    body = telegram_digest._render_body(_l(winter_smog=smog), near_miss_reasons=None, notify_reason=None)
+    assert "Winter smog" in body
+    assert "best ≈ 20" in body
+    assert "worse days ≈ 65" in body
+
+
+def test_render_body_includes_smog_warning_in_worst_third():
+    smog = WinterSmog(
+        band="worse", pm25_winter_mean=55.0, pm25_best=30.0, pm25_worse=90.0,
+        smog_warning=True, motorway_m=None, score=0.9, cell_lat=44.8, cell_lng=20.5,
+    )
+    body = telegram_digest._render_body(_l(winter_smog=smog), near_miss_reasons=None, notify_reason=None)
+    assert "Winter smog warning" in body
+    assert "worst third" in body
+
+
 def test_render_body_includes_listing_facts_and_summary():
     listing = _l()
     body = telegram_digest._render_body(
@@ -46,12 +67,41 @@ def test_render_body_includes_listing_facts_and_summary():
     assert "Two-bedroom flat" in body                       # LLM summary
 
 
-def test_render_links_carries_source_link():
-    """Address / walk / transit links live inside the body now;
-    follow-up _render_links only carries the source listing link."""
-    links = telegram_digest._render_links(_l(), office_lat=OFFICE_LAT, office_lng=OFFICE_LNG)
-    assert "https://www.4zida.rs/abc" in links
-    assert "View on 4zida" in links
+def test_listing_keyboard_has_view_and_hide():
+    kb = telegram_digest._listing_keyboard(_l())
+    row = kb["inline_keyboard"][0]
+    assert row[0]["url"] == "https://www.4zida.rs/abc"
+    assert "View on 4zida" in row[0]["text"]
+    assert row[1]["callback_data"] == "skip:4zida:x"
+
+
+def test_send_listing_text_fallback_has_keyboard_no_link_line():
+    listing = _l(image_url=None)
+    with patch("src.telegram_digest.telegram.send_photo") as photo_mock, \
+         patch("src.telegram_digest.telegram.send_message") as msg_mock:
+        telegram_digest._send_listing(
+            listing, near_miss_reasons=None, notify_reason=None,
+            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        )
+    photo_mock.assert_not_called()
+    msg_mock.assert_called_once()
+    body = msg_mock.call_args.args[0]
+    assert "View on 4zida" not in body
+    assert msg_mock.call_args.kwargs["reply_markup"]["inline_keyboard"][0][0]["url"] == listing.url
+
+
+def test_send_listing_puts_keyboard_on_photo_not_followup():
+    listing = _l()
+    with patch("src.telegram_digest.telegram.send_photo") as photo_mock, \
+         patch("src.telegram_digest.telegram.send_message") as msg_mock:
+        telegram_digest._send_listing(
+            listing, near_miss_reasons=None, notify_reason=None,
+            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        )
+    photo_mock.assert_called_once()
+    assert photo_mock.call_args.kwargs["reply_markup"] is not None
+    assert photo_mock.call_args.kwargs["reply_markup"]["inline_keyboard"][0][0]["url"] == listing.url
+    msg_mock.assert_not_called()
 
 
 def test_render_body_links_address_walk_transit_when_office_given():
@@ -133,10 +183,10 @@ def test_empty_day_sends_all_systems_green():
 def test_overflow_line_when_too_many_matches():
     """Beyond MAX_PERFECT, we send an overflow note pointing to the archive."""
     sent_texts: list[str] = []
-    sent_photos: list[tuple[str, str]] = []
+    sent_photos: list[str] = []
     listings = [_l(id=str(i)) for i in range(12)]
     with patch("src.telegram_digest.telegram.send_message", side_effect=lambda txt, **_: sent_texts.append(txt)), \
-         patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, caption=None, **_: sent_photos.append((url, caption))):
+         patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
         telegram_digest.send(
             FilterResult(passed=listings, near_misses=[], rejected=[]),
             today=datetime(2026, 5, 16, tzinfo=timezone.utc),

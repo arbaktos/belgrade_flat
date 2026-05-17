@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "bbox": {"lat_min": 44.80, "lat_max": 44.80, "lng_min": 20.45, "lng_max": 20.55},
+  "step": 0.05,
+  "sources": ["test-fixture"],
+  "bands": {"better_max": 0.33, "worse_min": 0.67},
+  "worse_warning_min": 70.0,
+  "cells": [
+    {
+      "lat": 44.80, "lng": 20.45,
+      "pm25_winter_mean": 25.0, "pm25_best": 12.0, "pm25_worse": 45.0,
+      "motorway_m": 1500.0, "score": 0.2
+    },
+    {
+      "lat": 44.80, "lng": 20.55,
+      "pm25_winter_mean": 55.0, "pm25_best": 30.0, "pm25_worse": 85.0,
+      "motorway_m": 200.0, "score": 0.85
+    }
+  ]
+}

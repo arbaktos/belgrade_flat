@@ -13,6 +13,7 @@ class FilterConfig:
     rooms_max: float
     surface_m2_min: float
     elevator_required: bool
+    photo_required: bool
     freshness_days: int
     heating_allowed: tuple[str, ...]
     dishwasher_required: bool
@@ -38,6 +39,7 @@ def from_dict(cfg: dict) -> FilterConfig:
         rooms_max=float(f["rooms_max"]),
         surface_m2_min=float(f["surface_m2_min"]),
         elevator_required=bool(f["elevator_required"]),
+        photo_required=bool(f.get("photo_required", True)),
         freshness_days=int(f["freshness_days"]),
         heating_allowed=tuple(f.get("heating_allowed", ())),
         dishwasher_required=bool(f.get("dishwasher_required", False)),
@@ -129,7 +131,13 @@ def _check_structural(l: Listing, cfg: FilterConfig, cutoff: datetime) -> str | 
         return "no elevator"
     if l.created_at < cutoff:
         return f"older than {cfg.freshness_days}d"
+    if cfg.photo_required and not _has_photo(l):
+        return "no photo"
     return None
+
+
+def _has_photo(l: Listing) -> bool:
+    return bool(l.image_url and str(l.image_url).strip())
 
 
 def _check_extraction(l: Listing, cfg: FilterConfig) -> tuple[list[str], list[str]]:

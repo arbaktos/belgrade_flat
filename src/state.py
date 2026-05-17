@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 
 def _rclone_env() -> dict[str, str]:
@@ -105,7 +105,18 @@ def ensure_schema() -> sqlite3.Connection:
         conn.execute("DROP TABLE IF EXISTS commute_cache")
 
     # v8 adds the skipped table (user-clicked 'hide this listing forever').
-    # No migration needed beyond the CREATE TABLE below.
+    # v9 adds geocode_cache for Nominatim results (winter smog enrichment).
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS geocode_cache (
+            cache_key   TEXT PRIMARY KEY,
+            lat         REAL NOT NULL,
+            lng         REAL NOT NULL,
+            fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS commute_cache (

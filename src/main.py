@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_digest
+from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_digest, winter_smog
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -110,6 +110,9 @@ def _run_pipeline(cfg: dict, conn) -> dict:
     # near-miss candidates (so even near-misses get the commute info surfaced),
     # then hard-filter the matches by walk≤30m OR transit≤30m.
     candidates_for_commute = llm_filtered.passed + [l for l, _ in llm_filtered.near_misses]
+    if candidates_for_commute:
+        winter_smog.enrich_many(candidates_for_commute, conn)
+
     commute_rejected: list[tuple[Listing, str]] = []
     commute_config_error: str | None = None
     if "GOOGLE_DIRECTIONS_API_KEY" in os.environ and candidates_for_commute:

@@ -7,6 +7,7 @@ filters:
   furnishing_allowed: [furnished, semi-furnished]
   floor_exclude: [ground, basement]
   elevator_required: true
+  photo_required: true
   # Soft preference: most Serbian listings don't mention dishwasher even when present.
   # We still annotate dishwasher presence in the digest when the LLM finds it.
   dishwasher_required: false

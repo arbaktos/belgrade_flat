@@ -5,6 +5,20 @@ from datetime import datetime
 from typing import Any
 
 
+@dataclass(frozen=True)
+class WinterSmog:
+    """Winter smog exposure from the offline Belgrade grid (annotate only)."""
+    band: str                    # better | moderate | worse
+    pm25_winter_mean: float
+    pm25_best: float             # winter P10 — cleaner spells in this cell
+    pm25_worse: float            # winter P90 — bad inversion days in this cell
+    smog_warning: bool           # True when cell pm25_worse is in city worst third
+    motorway_m: float | None
+    score: float
+    cell_lat: float
+    cell_lng: float
+
+
 @dataclass
 class Extraction:
     """LLM-derived fields per spec §5. None = LLM hasn't seen this listing yet."""
@@ -49,6 +63,7 @@ class Listing:
     transit_transfers: int | None = None  # # of vehicle changes; 0 means direct
     image_phash: str | None = None       # populated by dedup.compute_phashes (hex string)
     extraction: Extraction | None = None
+    winter_smog: WinterSmog | None = None   # from data/belgrade_winter_smog.json + geocode
 
     @property
     def fingerprint_key(self) -> str:
@@ -62,6 +77,6 @@ class Listing:
         d["fingerprint_key"] = self.fingerprint_key
         # extraction + commute live in their own columns / are computed at runtime;
         # strip them from the row we send to the listings table.
-        for k in ("extraction", "walk_min", "transit_min", "transit_transfers"):
+        for k in ("extraction", "winter_smog", "walk_min", "transit_min", "transit_transfers"):
             d.pop(k, None)
         return d

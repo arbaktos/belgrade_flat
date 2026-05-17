@@ -23,6 +23,7 @@ from typing import Iterable
 from urllib.parse import quote
 
 from src import telegram
+from src.winter_smog import format_digest_line, format_smog_warning
 from src.filter import FilterResult
 from src.models import Listing
 
@@ -130,6 +131,17 @@ def _render_header(
     return "\n".join(lines)
 
 
+def _listing_keyboard(l: Listing) -> dict:
+    """Inline buttons: open portal listing + hide from future digests."""
+    source_label = l.source
+    return {
+        "inline_keyboard": [[
+            {"text": f"🔗 View on {source_label}", "url": l.url},
+            {"text": "🙈 Hide", "callback_data": f"skip:{l.fingerprint_key}"},
+        ]]
+    }
+
+
 def _send_listing(
     l: Listing,
     *,
@@ -138,45 +150,27 @@ def _send_listing(
     office_lat: float,
     office_lng: float,
 ) -> None:
-    """Send a listing as photo (with body caption) + follow-up text (links).
+    """Send one listing: photo caption (or text) with inline View / Hide buttons.
 
-    Captions max 1024 *bytes* effectively (emoji + diacritics count multi-byte),
-    so we keep the caption to listing facts + LLM summary and put the four
-    HTML link labels in a separate follow-up message which has more room.
+    Map and commute links stay in the caption body; the portal URL is only on
+  the View button — no separate follow-up message with a redundant link line.
     """
     body = _render_body(
         l, near_miss_reasons=near_miss_reasons, notify_reason=notify_reason,
         office_lat=office_lat, office_lng=office_lng,
     )
-    link_line = _render_links(l, office_lat=office_lat, office_lng=office_lng)
+    keyboard = _listing_keyboard(l)
 
-    # 🙈 Skip button lives on the follow-up link message so it sits at the
-    # bottom of the listing block (easier to thumb-tap after reading).
-    skip_keyboard = {
-        "inline_keyboard": [[
-            {"text": "🙈 Hide this listing", "callback_data": f"skip:{l.fingerprint_key}"}
-        ]]
-    }
-
-    sent_photo = False
     if l.image_url:
         try:
-            telegram.send_photo(l.image_url, caption=body, parse_mode="HTML")
-            sent_photo = True
+            telegram.send_photo(
+                l.image_url, caption=body, parse_mode="HTML", reply_markup=keyboard,
+            )
+            return
         except Exception as e:  # noqa: BLE001
             log.warning("telegram sendPhoto failed for %s (%s); falling back to text",
                         l.fingerprint_key, e)
-    if not sent_photo:
-        # No photo → fold body, links, and Hide button into one text message.
-        telegram.send_message(
-            f"{body}\n\n{link_line}", parse_mode="HTML", reply_markup=skip_keyboard,
-        )
-        return
-    # Photo went through; follow-up carries the link line and the Hide button.
-    telegram.send_message(
-        link_line, parse_mode="HTML",
-        reply_markup=skip_keyboard, disable_notification=True,
-    )
+    telegram.send_message(body, parse_mode="HTML", reply_markup=keyboard)
 
 
 def _render_body(
@@ -275,6 +269,11 @@ def _render_body(
         lines.append(f"🚩 {red_flags_esc}")
     if bills_line:
         lines.append(bills_line)
+    if l.winter_smog:
+        lines.append(html.escape(format_digest_line(l.winter_smog)))
+        warning = format_smog_warning(l.winter_smog)
+        if warning:
+            lines.append(html.escape(warning))
     body = "\n".join(lines)
 
     # Append the summary last, clipped to fit the remaining caption budget so
@@ -293,12 +292,6 @@ def _render_body(
             body += f"\n\n<i>{clipped_esc}</i>"
 
     return body
-
-
-def _render_links(l: Listing, *, office_lat: float, office_lng: float) -> str:
-    """Just the source listing link now — address/walk/transit are embedded in the body."""
-    source_label = html.escape(l.source)
-    return f'🔗 <a href="{html.escape(l.url, quote=True)}">View on {source_label}</a>'
 
 
 def _byte_clip(s: str, *, max_bytes: int) -> str:
