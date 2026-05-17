@@ -101,6 +101,36 @@ def test_structured_data_prefers_over_llm():
     assert len(r.passed) == 1
 
 
+def test_canonicalize_furnishing():
+    assert filt.canonicalize_furnishing("yes") == "furnished"
+    assert filt.canonicalize_furnishing("Namešten") == "furnished"
+    assert filt.canonicalize_furnishing("polunamesten") == "semi-furnished"
+    assert filt.canonicalize_furnishing("semi") == "semi-furnished"
+    assert filt.canonicalize_furnishing("no") == "unfurnished"
+    assert filt.canonicalize_furnishing("prazan") == "unfurnished"
+    assert filt.canonicalize_furnishing(None) is None
+    assert filt.canonicalize_furnishing("") is None
+    assert filt.canonicalize_furnishing("???") is None
+
+
+def test_unfurnished_hard_reject_when_required():
+    # Build a config that requires furnished/semi-furnished, just like config.yaml.
+    cfg = filt.FilterConfig(**{**CFG.__dict__, "furnishing_allowed": ("furnished", "semi-furnished")})
+    l = _listing(Extraction(pets_allowed="yes", dishwasher=True, heating_type_confirmed="centralno"))
+    l.furnished = "no"
+    r = filt.apply_with_extraction([l], cfg)
+    assert not r.passed and r.rejected and "furnishing" in r.rejected[0][1]
+
+
+def test_unknown_furnishing_lands_in_near_miss():
+    cfg = filt.FilterConfig(**{**CFG.__dict__, "furnishing_allowed": ("furnished", "semi-furnished")})
+    l = _listing(Extraction(pets_allowed="yes", dishwasher=True, heating_type_confirmed="centralno"))
+    l.furnished = None  # halooglasi never exposes furnishing
+    r = filt.apply_with_extraction([l], cfg)
+    assert not r.passed and not r.rejected
+    assert r.near_misses and any("furnishing" in reason for reason in r.near_misses[0][1])
+
+
 def test_canonicalize_heating():
     assert filt.canonicalize_heating("district") == "centralno"
     assert filt.canonicalize_heating("gas") == "etazno"

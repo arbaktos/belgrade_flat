@@ -23,7 +23,7 @@ from typing import Iterable
 from urllib.parse import quote
 
 from src import telegram
-from src.winter_smog import format_digest_line, format_smog_warning
+from src.winter_smog import format_digest_line
 from src.filter import FilterResult
 from src.models import Listing
 
@@ -271,9 +271,6 @@ def _render_body(
         lines.append(bills_line)
     if l.winter_smog:
         lines.append(html.escape(format_digest_line(l.winter_smog)))
-        warning = format_smog_warning(l.winter_smog)
-        if warning:
-            lines.append(html.escape(warning))
     body = "\n".join(lines)
 
     # Append the summary last, clipped to fit the remaining caption budget so

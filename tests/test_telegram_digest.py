@@ -42,14 +42,19 @@ def test_render_body_includes_winter_smog_line():
     assert "worse days ≈ 65" in body
 
 
-def test_render_body_includes_smog_warning_in_worst_third():
+def test_render_body_omits_smog_warning_line():
+    # The "worst third" warning fired on ~87% of central listings, so it
+    # stopped being a signal. We still render the neutral smog data line.
     smog = WinterSmog(
         band="worse", pm25_winter_mean=55.0, pm25_best=30.0, pm25_worse=90.0,
         smog_warning=True, motorway_m=None, score=0.9, cell_lat=44.8, cell_lng=20.5,
     )
     body = telegram_digest._render_body(_l(winter_smog=smog), near_miss_reasons=None, notify_reason=None)
-    assert "Winter smog warning" in body
-    assert "worst third" in body
+    assert "Winter smog warning" not in body
+    assert "worst third" not in body
+    # Sanity: the neutral data line is still present.
+    assert "Winter smog" in body
+    assert "worse days ≈ 90" in body
 
 
 def test_render_body_includes_listing_facts_and_summary():

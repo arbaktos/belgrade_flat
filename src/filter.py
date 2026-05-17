@@ -19,6 +19,7 @@ class FilterConfig:
     dishwasher_required: bool
     pets_required: bool
     max_lease_months: int
+    furnishing_allowed: tuple[str, ...] = ()
     walk_min_max: int = 30
     transit_min_max: int = 30
 
@@ -42,6 +43,7 @@ def from_dict(cfg: dict) -> FilterConfig:
         photo_required=bool(f.get("photo_required", True)),
         freshness_days=int(f["freshness_days"]),
         heating_allowed=tuple(f.get("heating_allowed", ())),
+        furnishing_allowed=tuple(f.get("furnishing_allowed", ())),
         dishwasher_required=bool(f.get("dishwasher_required", False)),
         pets_required=bool(f.get("pets_required", False)),
         max_lease_months=int(f.get("max_lease_months", 12)),
@@ -182,6 +184,16 @@ def _check_extraction(l: Listing, cfg: FilterConfig) -> tuple[list[str], list[st
         elif canonical not in cfg.heating_allowed:
             hard.append(f"heating={canonical} not in {list(cfg.heating_allowed)}")
 
+    # ---- furnishing ---------------------------------------------------------
+    # Structured field on 4zida/nekretnine/cityexpert; halooglasi never exposes
+    # it (detail-page only) so those listings fall to near-miss on unknown.
+    if cfg.furnishing_allowed:
+        canonical = canonicalize_furnishing(l.furnished)
+        if canonical is None:
+            soft.append("furnishing unclear")
+        elif canonical not in cfg.furnishing_allowed:
+            hard.append(f"furnishing={canonical} not in {list(cfg.furnishing_allowed)}")
+
     # ---- lease length (LLM-only — sources don't expose this) ---------------
     if cfg.max_lease_months and e is not None and e.max_lease_months is not None:
         if e.max_lease_months > cfg.max_lease_months:
@@ -213,6 +225,47 @@ _HEATING_MAP: dict[str, str] = {
     "etažno grejanje": "etazno",
     "etazno grejanje": "etazno",
 }
+
+
+# Source-specific furnishing terms → canonical {furnished, semi-furnished, unfurnished}.
+# Each source uses its own vocabulary: 4zida 'yes'/'no'/'semi', cityexpert
+# 'yes'/'semi'/'no' (via _furnished_label), nekretnine Serbian labels from
+# the "Opremljenost" field.
+_FURNISHING_MAP: dict[str, str] = {
+    # 4zida / cityexpert
+    "yes": "furnished",
+    "furnished": "furnished",
+    "semi": "semi-furnished",
+    "semi-furnished": "semi-furnished",
+    "partially furnished": "semi-furnished",
+    "no": "unfurnished",
+    "empty": "unfurnished",
+    "unfurnished": "unfurnished",
+    # nekretnine Serbian labels (both with and without diacritics)
+    "namešten": "furnished",
+    "namesten": "furnished",
+    "polunamešten": "semi-furnished",
+    "polunamesten": "semi-furnished",
+    "prazan": "unfurnished",
+    "nenamešten": "unfurnished",
+    "nenamesten": "unfurnished",
+}
+
+
+def canonicalize_furnishing(raw: str | None) -> str | None:
+    """Map a source-specific furnishing string to the spec vocabulary.
+
+    Returns one of {furnished, semi-furnished, unfurnished}, or None if the
+    input is empty/unknown (caller routes None to near-miss).
+    """
+    if not raw:
+        return None
+    key = raw.strip().lower()
+    if key in _FURNISHING_MAP:
+        return _FURNISHING_MAP[key]
+    if key in {"furnished", "semi-furnished", "unfurnished"}:
+        return key
+    return None
 
 
 def canonicalize_heating(raw: str | None) -> str | None:

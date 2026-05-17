@@ -139,12 +139,9 @@ def _listing_block(
     if near_miss_reasons:
         block.append("- ⚠️ Unconfirmed: " + "; ".join(near_miss_reasons))
     if l.winter_smog:
-        from src.winter_smog import format_digest_line, format_smog_warning
+        from src.winter_smog import format_digest_line
 
         block.append(f"- {format_digest_line(l.winter_smog)}")
-        warning = format_smog_warning(l.winter_smog)
-        if warning:
-            block.append(f"- {warning}")
     if l.extraction:
         e = l.extraction
         extras: list[str] = []
