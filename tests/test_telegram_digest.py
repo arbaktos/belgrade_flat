@@ -72,12 +72,17 @@ def test_render_body_includes_listing_facts_and_summary():
     assert "Two-bedroom flat" in body                       # LLM summary
 
 
-def test_listing_keyboard_has_view_and_hide():
+def test_listing_keyboard_has_view_favorite_hide():
     kb = telegram_digest._listing_keyboard(_l())
-    row = kb["inline_keyboard"][0]
-    assert row[0]["url"] == "https://www.4zida.rs/abc"
-    assert "View on 4zida" in row[0]["text"]
-    assert row[1]["callback_data"] == "skip:4zida:x"
+    rows = kb["inline_keyboard"]
+    # Row 1: View link on its own.
+    assert rows[0][0]["url"] == "https://www.4zida.rs/abc"
+    assert "View on 4zida" in rows[0][0]["text"]
+    # Row 2: Favorite + Hide callbacks.
+    assert rows[1][0]["callback_data"] == "fav:4zida:x"
+    assert "Favorite" in rows[1][0]["text"]
+    assert rows[1][1]["callback_data"] == "skip:4zida:x"
+    assert "Hide" in rows[1][1]["text"]
 
 
 def test_send_listing_text_fallback_has_keyboard_no_link_line():

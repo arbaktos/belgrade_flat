@@ -1,14 +1,18 @@
-"""Process Telegram callback_queries (Skip-this-listing button clicks).
+"""Process Telegram callback_queries (Skip / Favorite button clicks).
 
 GH Actions can't host a webhook, so we drain pending callbacks via getUpdates
 at the start of every workflow run, *before* the new digest is generated.
 That way clicks on yesterday's digest take effect today.
 
-callback_data format: 'skip:<fingerprint_key>' (max 64 bytes per Telegram).
+callback_data formats (max 64 bytes per Telegram):
+- 'skip:<fingerprint_key>'  — 🙈 Hide: persist to `skipped` and drop from future digests.
+- 'fav:<fingerprint_key>'   — ⭐ Favorite: persist to `favorites` and copy the original
+   card to TELEGRAM_FAVORITES_CHAT_ID (if configured).
 """
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 from typing import Any
 
@@ -18,6 +22,7 @@ log = logging.getLogger(__name__)
 
 OFFSET_META_KEY = "telegram_update_offset"
 SKIP_PREFIX = "skip:"
+FAV_PREFIX = "fav:"
 
 
 def drain(conn: sqlite3.Connection) -> dict[str, int]:
@@ -25,7 +30,7 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
 
     Returns a counter dict: {'fetched': N, 'skipped': M, 'unknown': K}.
     """
-    counts = {"fetched": 0, "skipped": 0, "unknown": 0}
+    counts = {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
     offset = _read_offset(conn)
     # Diagnostic: log webhook status — a set webhook silently steals callbacks
     # before getUpdates can drain them.
@@ -63,6 +68,12 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
             _mark_skipped(conn, fp)
             counts["skipped"] += 1
             _ack(cq_id, "🙈 Hidden from future digests")
+        elif data.startswith(FAV_PREFIX):
+            fp = data[len(FAV_PREFIX):]
+            _mark_favorited(conn, fp)
+            counts["favorited"] += 1
+            ack_text = _forward_to_favorites(cq)
+            _ack(cq_id, ack_text)
         else:
             counts["unknown"] += 1
             _ack(cq_id, "Unknown action")
@@ -77,12 +88,59 @@ def skipped_keys(conn: sqlite3.Connection) -> set[str]:
     return {row[0] for row in conn.execute("SELECT fingerprint_key FROM skipped")}
 
 
+def favorited_keys(conn: sqlite3.Connection) -> set[str]:
+    """Return the full set of fingerprint_keys the user has starred."""
+    return {row[0] for row in conn.execute("SELECT fingerprint_key FROM favorites")}
+
+
 def _mark_skipped(conn: sqlite3.Connection, fingerprint_key: str) -> None:
     conn.execute(
         "INSERT OR IGNORE INTO skipped (fingerprint_key) VALUES (?)",
         (fingerprint_key,),
     )
     conn.commit()
+
+
+def _mark_favorited(conn: sqlite3.Connection, fingerprint_key: str) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO favorites (fingerprint_key) VALUES (?)",
+        (fingerprint_key,),
+    )
+    conn.commit()
+
+
+def _forward_to_favorites(cq: dict[str, Any]) -> str:
+    """Copy the message that owns this callback to the favorites chat.
+
+    Returns the ack text to show in the Telegram toast. Soft-fails: if the
+    destination isn't configured or the API call errors out, the listing is
+    still persisted in `favorites` (the caller already did that) — we just
+    surface the reason to the user via the toast.
+    """
+    dest = os.environ.get("TELEGRAM_FAVORITES_CHAT_ID")
+    if not dest:
+        log.info("favorite: TELEGRAM_FAVORITES_CHAT_ID unset; saved to DB only")
+        return "⭐ Saved (no favorites chat configured)"
+    msg = cq.get("message") or {}
+    chat = msg.get("chat") or {}
+    from_chat_id = chat.get("id")
+    message_id = msg.get("message_id")
+    if not from_chat_id or not message_id:
+        log.warning("favorite: callback missing message ids; cq=%s", cq)
+        return "⭐ Saved (couldn't locate source message)"
+    thread_id_raw = os.environ.get("TELEGRAM_FAVORITES_THREAD_ID")
+    thread_id = int(thread_id_raw) if thread_id_raw else None
+    try:
+        telegram.copy_message(
+            from_chat_id=from_chat_id,
+            message_id=int(message_id),
+            to_chat_id=dest,
+            message_thread_id=thread_id,
+        )
+    except Exception as e:  # noqa: BLE001 - delivery failure stays soft
+        log.warning("favorite: copyMessage failed: %s", e)
+        return "⭐ Saved (forwarding failed — see logs)"
+    return "⭐ Saved to favorites"
 
 
 def _ack(callback_id: str | None, text: str) -> None:

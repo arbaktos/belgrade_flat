@@ -173,13 +173,20 @@ def _render_header(
 
 
 def _listing_keyboard(l: Listing) -> dict:
-    """Inline buttons: open portal listing + hide from future digests."""
+    """Inline buttons: open portal, save to favorites, or hide.
+
+    Two rows so the labels stay readable on narrow screens — Telegram
+    lays out three inline buttons in one row by squashing the text.
+    """
     source_label = l.source
     return {
-        "inline_keyboard": [[
-            {"text": f"🔗 View on {source_label}", "url": l.url},
-            {"text": "🙈 Hide", "callback_data": f"skip:{l.fingerprint_key}"},
-        ]]
+        "inline_keyboard": [
+            [{"text": f"🔗 View on {source_label}", "url": l.url}],
+            [
+                {"text": "⭐ Favorite", "callback_data": f"fav:{l.fingerprint_key}"},
+                {"text": "🙈 Hide", "callback_data": f"skip:{l.fingerprint_key}"},
+            ],
+        ]
     }
 
 

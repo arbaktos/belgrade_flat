@@ -9,7 +9,7 @@ from src.models import Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 11
 
 
 def _rclone_env() -> dict[str, str]:
@@ -180,6 +180,17 @@ def ensure_schema() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS seen_telegram_posts (
             message_id INTEGER PRIMARY KEY,
             seen_at    TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    # v11: user-clicked ⭐ Favorite. Parallel to `skipped`; presence here means
+    # the card has been forwarded to the favorites destination (or queued if
+    # the env var is unset).
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS favorites (
+            fingerprint_key TEXT PRIMARY KEY,
+            favorited_at    TEXT NOT NULL DEFAULT (datetime('now'))
         )
         """
     )

@@ -76,6 +76,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Elevator | hard requirement (waived on floor 0) | soft preference — 0.10 score bonus instead of reject | User: central pre-war buildings rarely have lifts; we'd rather see them and let the score rank lift-equipped ones higher |
 | Re-notify policy | suppress already-notified | always-surface mode (with 📌 seen-before badge) for now | Testing phase; flip `dedup.always_surface_matches: false` for production |
 | 🙈 Hide button | spec says interactive bot is non-goal | implemented as inline-keyboard callback | Better UX than implicit auto-suppression; user requested |
+| ⭐ Favorite button | not in spec | inline-keyboard callback; copies the card to `TELEGRAM_FAVORITES_CHAT_ID` (or a forum topic via `TELEGRAM_FAVORITES_THREAD_ID`) and persists to `favorites` table | User wanted a way to bookmark good leads without polluting the main digest stream |
 | Halooglasi | scrape via plain httpx | via FlareSolverr sidecar | Their site is Cloudflare-Turnstile-protected, no other approach works without paid proxies |
 | Transit routing | spec doesn't specify | `FEWER_TRANSFERS` preference, transfer count surfaced | User: "minimum transport change" |
 | Directions API | spec says "Google Directions" | Routes API (new product) | Legacy Directions API isn't accepting new project enables; Google steered us to Routes |
@@ -94,8 +95,9 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | `listings(fingerprint_key, …, image_phash, notified_at, notified_price)` | Every listing we've seen, with timestamps and dedup hash |
 | `commute_cache(bucket_key, walk_min, transit_min, transit_transfers, fetched_at)` | 90-day TTL per spatial bucket (3-decimal lat/lng or addr hash) |
 | `skipped(fingerprint_key, skipped_at)` | User-clicked 🙈 Hide; suppresses listings before LLM/Routes |
+| `favorites(fingerprint_key, favorited_at)` | User-clicked ⭐ Favorite; card is also copied to `TELEGRAM_FAVORITES_CHAT_ID` when set |
 
-Schema version is at **v8**. Migrations are forward-only and idempotent
+Schema version is at **v11**. Migrations are forward-only and idempotent
 (`ALTER TABLE` for adds, `DROP TABLE` for invalidations).
 
 ---
@@ -109,6 +111,8 @@ Schema version is at **v8**. Migrations are forward-only and idempotent
 - **Secrets** (in GH Actions Secrets, never in repo):
   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `GOOGLE_DIRECTIONS_API_KEY`, `ANTHROPIC_API_KEY`,
   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`, `OFFICE_LAT`, `OFFICE_LNG`
+  Optional: `TELEGRAM_FAVORITES_CHAT_ID` (destination for ⭐ Favorite forwards),
+  `TELEGRAM_FAVORITES_THREAD_ID` (forum-topic id when the favorites destination is a topic).
 
 ### Cost ceiling (actual)
 

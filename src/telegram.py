@@ -18,9 +18,11 @@ def send_message(
     disable_notification: bool = False,
     parse_mode: str | None = None,
     reply_markup: dict | None = None,
+    chat_id: str | int | None = None,
+    message_thread_id: int | None = None,
 ) -> None:
     payload = {
-        "chat_id": _chat_id(),
+        "chat_id": chat_id if chat_id is not None else _chat_id(),
         "text": text,
         "disable_notification": disable_notification,
         **({"parse_mode": parse_mode} if parse_mode else {}),
@@ -28,6 +30,8 @@ def send_message(
     }
     if reply_markup is not None:
         payload["reply_markup"] = reply_markup
+    if message_thread_id is not None:
+        payload["message_thread_id"] = message_thread_id
     _call("sendMessage", payload)
 
 
@@ -38,12 +42,14 @@ def send_photo(
     disable_notification: bool = False,
     parse_mode: str | None = None,
     reply_markup: dict | None = None,
+    chat_id: str | int | None = None,
+    message_thread_id: int | None = None,
 ) -> None:
     """Send a single photo with caption. Caption max 1024 chars."""
     if caption and len(caption) > 1024:
         caption = caption[:1020] + "…"
     payload = {
-        "chat_id": _chat_id(),
+        "chat_id": chat_id if chat_id is not None else _chat_id(),
         "photo": photo_url,
         "caption": caption or "",
         "disable_notification": disable_notification,
@@ -51,7 +57,31 @@ def send_photo(
     }
     if reply_markup is not None:
         payload["reply_markup"] = reply_markup
+    if message_thread_id is not None:
+        payload["message_thread_id"] = message_thread_id
     _call("sendPhoto", payload)
+
+
+def copy_message(
+    *,
+    from_chat_id: str | int,
+    message_id: int,
+    to_chat_id: str | int,
+    message_thread_id: int | None = None,
+) -> None:
+    """Copy a message (photo+caption+buttons preserved) to another chat.
+
+    Used by the ⭐ Favorite callback to re-deliver a listing card to the
+    favorites destination without re-rendering it from the DB.
+    """
+    payload = {
+        "chat_id": to_chat_id,
+        "from_chat_id": from_chat_id,
+        "message_id": message_id,
+    }
+    if message_thread_id is not None:
+        payload["message_thread_id"] = message_thread_id
+    _call("copyMessage", payload)
 
 
 def get_updates(offset: int = 0, *, timeout: int = 0) -> list[dict]:

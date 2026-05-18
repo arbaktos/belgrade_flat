@@ -13,13 +13,14 @@ def conn():
     db = sqlite3.connect(":memory:")
     db.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     db.execute("CREATE TABLE skipped (fingerprint_key TEXT PRIMARY KEY, skipped_at TEXT DEFAULT (datetime('now')))")
+    db.execute("CREATE TABLE favorites (fingerprint_key TEXT PRIMARY KEY, favorited_at TEXT DEFAULT (datetime('now')))")
     return db
 
 
 def test_drain_no_updates_returns_zero(conn):
     with patch("src.telegram_callbacks.telegram.get_updates", return_value=[]):
         counts = telegram_callbacks.drain(conn)
-    assert counts == {"fetched": 0, "skipped": 0, "unknown": 0}
+    assert counts == {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
 
 
 def test_drain_records_skip_click_and_acks(conn):
@@ -35,7 +36,7 @@ def test_drain_records_skip_click_and_acks(conn):
          patch("src.telegram_callbacks.telegram.answer_callback_query") as ack_mock:
         counts = telegram_callbacks.drain(conn)
 
-    assert counts == {"fetched": 1, "skipped": 1, "unknown": 0}
+    assert counts == {"fetched": 1, "skipped": 1, "favorited": 0, "unknown": 0}
     get_mock.assert_called_once_with(offset=0)
     ack_mock.assert_called_once()
     # DB has the skip
@@ -63,7 +64,7 @@ def test_drain_ignores_unrelated_callbacks(conn):
     with patch("src.telegram_callbacks.telegram.get_updates", return_value=[update]), \
          patch("src.telegram_callbacks.telegram.answer_callback_query"):
         counts = telegram_callbacks.drain(conn)
-    assert counts == {"fetched": 1, "skipped": 0, "unknown": 1}
+    assert counts == {"fetched": 1, "skipped": 0, "favorited": 0, "unknown": 1}
 
 
 def test_skipped_keys_returns_set(conn):
@@ -76,4 +77,61 @@ def test_skipped_keys_returns_set(conn):
 def test_drain_swallows_get_updates_failure(conn):
     with patch("src.telegram_callbacks.telegram.get_updates", side_effect=RuntimeError("net")):
         counts = telegram_callbacks.drain(conn)
-    assert counts == {"fetched": 0, "skipped": 0, "unknown": 0}
+    assert counts == {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
+
+
+def test_drain_records_favorite_and_copies_to_favorites_chat(conn, monkeypatch):
+    monkeypatch.setenv("TELEGRAM_FAVORITES_CHAT_ID", "-5057252591")
+    monkeypatch.delenv("TELEGRAM_FAVORITES_THREAD_ID", raising=False)
+    update = {
+        "update_id": 55,
+        "callback_query": {
+            "id": "cb2",
+            "data": "fav:4zida:xyz789",
+            "message": {"message_id": 1234, "chat": {"id": -100200300}},
+        },
+    }
+    with patch("src.telegram_callbacks.telegram.get_updates", return_value=[update]), \
+         patch("src.telegram_callbacks.telegram.copy_message") as copy_mock, \
+         patch("src.telegram_callbacks.telegram.answer_callback_query") as ack_mock:
+        counts = telegram_callbacks.drain(conn)
+
+    assert counts == {"fetched": 1, "skipped": 0, "favorited": 1, "unknown": 0}
+    copy_mock.assert_called_once_with(
+        from_chat_id=-100200300, message_id=1234,
+        to_chat_id="-5057252591", message_thread_id=None,
+    )
+    # Toast text confirms the save.
+    args, kwargs = ack_mock.call_args
+    assert "Saved to favorites" in kwargs.get("text", args[1] if len(args) > 1 else "")
+    # DB persisted the favorite.
+    rows = list(conn.execute("SELECT fingerprint_key FROM favorites"))
+    assert rows == [("4zida:xyz789",)]
+
+
+def test_drain_favorite_without_chat_env_still_persists(conn, monkeypatch):
+    monkeypatch.delenv("TELEGRAM_FAVORITES_CHAT_ID", raising=False)
+    update = {
+        "update_id": 88,
+        "callback_query": {
+            "id": "cb3",
+            "data": "fav:halo:111",
+            "message": {"message_id": 5, "chat": {"id": -1}},
+        },
+    }
+    with patch("src.telegram_callbacks.telegram.get_updates", return_value=[update]), \
+         patch("src.telegram_callbacks.telegram.copy_message") as copy_mock, \
+         patch("src.telegram_callbacks.telegram.answer_callback_query"):
+        counts = telegram_callbacks.drain(conn)
+
+    assert counts["favorited"] == 1
+    copy_mock.assert_not_called()
+    rows = list(conn.execute("SELECT fingerprint_key FROM favorites"))
+    assert rows == [("halo:111",)]
+
+
+def test_favorited_keys_returns_set(conn):
+    conn.executemany("INSERT INTO favorites (fingerprint_key) VALUES (?)",
+                     [("4zida:a",), ("city:b",)])
+    keys = telegram_callbacks.favorited_keys(conn)
+    assert keys == {"4zida:a", "city:b"}
