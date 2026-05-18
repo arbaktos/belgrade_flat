@@ -95,28 +95,41 @@ def send(
 def send_instant_push(
     fresh_matches: list[Listing],
     *,
+    fresh_near_misses: list[tuple[Listing, list[str]]] | None = None,
     notify_reasons: dict[str, str] | None,
     office_lat: float,
     office_lng: float,
 ) -> None:
-    """Push newly-discovered perfect matches between scheduled digests.
+    """Push newly-discovered perfect matches and near-misses between digests.
 
     Silent when there's nothing new — instant-push is a courtesy, not a
     heartbeat. The standard per-listing card is reused; a one-line header
-    ("🔔 N new match…") precedes the cards so the burst is recognisable
-    against the daily digest.
+    ("🔔 N new match… + M near-miss…") precedes the cards so the burst is
+    recognisable against the daily digest.
     """
-    if not fresh_matches:
-        log.info("instant-push: 0 new matches; staying quiet")
+    fresh_near_misses = fresh_near_misses or []
+    if not fresh_matches and not fresh_near_misses:
+        log.info("instant-push: nothing new; staying quiet")
         return
-    header = (
-        f"🔔 <b>{len(fresh_matches)} new perfect match"
-        f"{'es' if len(fresh_matches) != 1 else ''}</b> since the last run."
-    )
+    parts: list[str] = []
+    if fresh_matches:
+        parts.append(
+            f"{len(fresh_matches)} new perfect match"
+            f"{'es' if len(fresh_matches) != 1 else ''}"
+        )
+    if fresh_near_misses:
+        parts.append(
+            f"{len(fresh_near_misses)} near-miss"
+            f"{'es' if len(fresh_near_misses) != 1 else ''}"
+        )
+    header = f"🔔 <b>{' + '.join(parts)}</b> since the last run."
     telegram.send_message(header, parse_mode="HTML")
     for l in fresh_matches:
         reason = (notify_reasons or {}).get(l.fingerprint_key)
         _send_listing(l, near_miss_reasons=None, notify_reason=reason,
+                      office_lat=office_lat, office_lng=office_lng)
+    for l, reasons in fresh_near_misses:
+        _send_listing(l, near_miss_reasons=reasons, notify_reason=None,
                       office_lat=office_lat, office_lng=office_lng)
 
 

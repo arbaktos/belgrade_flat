@@ -232,3 +232,39 @@ def test_instant_push_sends_header_then_one_card_per_fresh_match():
     assert len(sent_texts) == 1
     assert "2 new perfect matches" in sent_texts[0]
     assert len(sent_photos) == 2
+
+
+def test_instant_push_sends_near_misses_with_header_split():
+    sent_texts: list[str] = []
+    sent_photos: list[str] = []
+    matches = [_l(id="m1")]
+    near = [(_l(id="n1"), ["pets unknown"]), (_l(id="n2"), ["dishwasher unknown"])]
+    with patch("src.telegram_digest.telegram.send_message", side_effect=lambda txt, **_: sent_texts.append(txt)), \
+         patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
+        telegram_digest.send_instant_push(
+            matches, fresh_near_misses=near, notify_reasons={},
+            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        )
+    assert len(sent_texts) == 1
+    header = sent_texts[0]
+    assert "1 new perfect match" in header
+    assert "2 near-misses" in header
+    # One photo card per listing: 1 match + 2 near-misses.
+    assert len(sent_photos) == 3
+
+
+def test_instant_push_sends_only_near_misses_when_no_matches():
+    sent_texts: list[str] = []
+    sent_photos: list[str] = []
+    near = [(_l(id="n1"), ["pets unknown"])]
+    with patch("src.telegram_digest.telegram.send_message", side_effect=lambda txt, **_: sent_texts.append(txt)), \
+         patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
+        telegram_digest.send_instant_push(
+            [], fresh_near_misses=near, notify_reasons={},
+            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        )
+    assert len(sent_texts) == 1
+    header = sent_texts[0]
+    assert "perfect match" not in header
+    assert "1 near-miss" in header
+    assert len(sent_photos) == 1

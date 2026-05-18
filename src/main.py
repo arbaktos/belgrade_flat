@@ -237,14 +237,44 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
                     log.warning("source-error alert failed: %s", e)
 
             fresh = [l for l in matched if l.fingerprint_key not in previously_notified]
-            log.info("instant-push: %d/%d matches are new (rest seen before)",
-                     len(fresh), len(matched))
+
+            # Near-misses also get instant-pushed, gated on the same commute
+            # requirement as matches (walk≤30m OR transit≤30m) so we don't
+            # spam listings that fail the non-negotiable axis. If the Routes
+            # API errored out this run, we surface near-misses ungated —
+            # matching the digest's degradation behaviour above.
+            near_with_reasons = llm_filtered.near_misses
+            if commute_config_error:
+                commute_ok_keys = {l.fingerprint_key for l, _ in near_with_reasons}
+            else:
+                near_commute = filt.apply_commute(
+                    [l for l, _ in near_with_reasons], cfg_obj,
+                )
+                commute_ok_keys = {l.fingerprint_key for l in near_commute.passed}
+            fresh_near = [
+                (l, reasons) for l, reasons in near_with_reasons
+                if l.fingerprint_key in commute_ok_keys
+                and l.fingerprint_key not in previously_notified
+            ]
+
+            log.info(
+                "instant-push: %d/%d matches new, %d/%d near-misses new",
+                len(fresh), len(matched),
+                len(fresh_near), len(near_with_reasons),
+            )
             telegram_digest.send_instant_push(
                 fresh,
+                fresh_near_misses=fresh_near,
                 notify_reasons=notify_reasons,
                 office_lat=office_lat,
                 office_lng=office_lng,
             )
+
+            # Matches were stamped notified inside the dedup stage; near-misses
+            # were not (they bypass dedup). Stamp them here so the next poll
+            # doesn't re-send the same near-miss listing every 2 hours.
+            for l, _ in fresh_near:
+                dedup.mark_notified(l, conn)
         else:
             # Spec §8 Telegram delivery — header summary + per-listing messages.
             telegram_digest.send(
