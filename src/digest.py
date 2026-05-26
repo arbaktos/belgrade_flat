@@ -161,7 +161,12 @@ def _listing_block(
             block.append(f"\n  _{e.summary_en}_")
     if l.image_url:
         block.append(f"- ![photo]({l.image_url})")
-    if l.description and not (l.extraction and l.extraction.summary_en):
+    # Prefer the LLM's English translation as the prose body; fall back to the
+    # raw Serbian description only when there's no translation and no summary.
+    translation = l.extraction.description_en if l.extraction else None
+    if translation:
+        block.append(f"\n  > {translation}")
+    elif l.description and not (l.extraction and l.extraction.summary_en):
         block.append(f"\n  > {l.description}")
     return "\n".join(block) + "\n"
 

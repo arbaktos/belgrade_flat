@@ -20,7 +20,6 @@ import os
 import sqlite3
 from io import BytesIO
 
-import anthropic
 import httpx
 import imagehash
 from PIL import Image
@@ -45,7 +44,7 @@ def run(
     m2_min: float = DEFAULT_M2_MIN,
     office_lat: float | None = None,
     office_lng: float | None = None,
-    anthropic_client: anthropic.Anthropic | None = None,
+    llm_client: object | None = None,
     http_client: httpx.Client | None = None,
 ) -> dict:
     """Drive the pipeline once. Returns a counter dict for log/telemetry."""
@@ -62,10 +61,11 @@ def run(
     if not posts:
         return counts
 
-    if "ANTHROPIC_API_KEY" not in os.environ:
-        log.warning("telegram-channel: ANTHROPIC_API_KEY missing; skipping")
+    if not extract.llm_api_key_present():
+        log.warning("telegram-channel: LLM API key missing for provider=%s; skipping",
+                    extract._provider())
         return counts
-    anthropic_client = anthropic_client or anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    llm_client = llm_client or extract.make_client()
 
     own_http = http_client is None
     http_client = http_client or httpx.Client(timeout=15.0, follow_redirects=True)
@@ -77,7 +77,7 @@ def run(
     try:
         for post in posts:
             try:
-                facts = extract.extract_telegram_post(post.text, client=anthropic_client)
+                facts = extract.extract_telegram_post(post.text, client=llm_client)
             except Exception as e:  # noqa: BLE001
                 log.warning("telegram-channel extract failed for %s: %s", post.message_id, e)
                 counts["errors"] += 1

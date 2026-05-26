@@ -32,6 +32,7 @@ class Extraction:
     agency_or_owner: str | None = None           # "agency" | "owner" | "unknown"
     red_flags: list[str] = field(default_factory=list)
     summary_en: str | None = None
+    description_en: str | None = None            # full English translation of the listing body
 
 
 @dataclass

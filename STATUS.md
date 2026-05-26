@@ -112,7 +112,9 @@ Schema version is at **v11**. Migrations are forward-only and idempotent
   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `GOOGLE_DIRECTIONS_API_KEY`, `ANTHROPIC_API_KEY`,
   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`, `OFFICE_LAT`, `OFFICE_LNG`
   Optional: `TELEGRAM_FAVORITES_CHAT_ID` (destination for ⭐ Favorite forwards),
-  `TELEGRAM_FAVORITES_THREAD_ID` (forum-topic id when the favorites destination is a topic).
+  `TELEGRAM_FAVORITES_THREAD_ID` (forum-topic id when the favorites destination is a topic),
+  `LLM_PROVIDER` (`anthropic` default, set to `gemini` to swap in Gemini 2.0 Flash via
+  free tier; requires `GEMINI_API_KEY` in secrets when used).
 
 ### Cost ceiling (actual)
 

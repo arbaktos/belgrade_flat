@@ -40,6 +40,7 @@ def test_parse_tool_call_happy_path():
         "agency_or_owner": "agency",
         "red_flags": [],
         "summary_en": "Two-room flat in Vračar, fully furnished, agency-listed.",
+        "description_en": "Two-bedroom flat in central Vračar, fully furnished, balcony, district heating, pet-friendly owner.",
     })
     ex = extract._parse_tool_call(response)
     assert ex.pets_allowed == "yes"
@@ -48,6 +49,20 @@ def test_parse_tool_call_happy_path():
     assert ex.max_lease_months == 12
     assert ex.red_flags == []
     assert "Vračar" in ex.summary_en
+    assert ex.description_en is not None and "balcony" in ex.description_en
+
+
+def test_parse_tool_call_accepts_null_description_en():
+    response = _mock_response({
+        "pets_allowed": "unknown", "dishwasher": None, "elevator_confirmed": None,
+        "heating_type_confirmed": None, "furnishing_confirmed": None,
+        "max_lease_months": None, "bills_estimate_eur": None,
+        "agency_or_owner": "unknown", "red_flags": [],
+        "summary_en": "Short ad with no body.",
+        "description_en": None,
+    })
+    ex = extract._parse_tool_call(response)
+    assert ex.description_en is None
 
 
 def test_parse_tool_call_raises_when_no_tool_use():
@@ -85,6 +100,82 @@ def test_extract_skips_when_no_text():
     ex = extract.extract(listing, client=fake_client)
     assert isinstance(ex, extract.Extraction)
     fake_client.messages.create.assert_not_called()
+
+
+def _mock_gemini_response(args: dict, name: str = "record_listing_facts") -> SimpleNamespace:
+    """Mimic google-genai's GenerateContentResponse exposing function_calls."""
+    fc = SimpleNamespace(name=name, args=args)
+    return SimpleNamespace(function_calls=[fc], candidates=[])
+
+
+def test_gemini_provider_routes_through_gemini_client(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+
+    fake_client = MagicMock()
+    fake_client.models.generate_content.return_value = _mock_gemini_response({
+        "pets_allowed": "yes", "dishwasher": True, "elevator_confirmed": True,
+        "heating_type_confirmed": "centralno", "furnishing_confirmed": "furnished",
+        "max_lease_months": 12, "bills_estimate_eur": 120,
+        "agency_or_owner": "owner", "red_flags": [],
+        "summary_en": "Furnished 2BR in Vračar, pets ok.",
+        "description_en": "Spacious furnished two-bedroom in Vračar with balcony and dishwasher.",
+    })
+
+    ex = extract.extract(_listing(), client=fake_client)
+
+    assert ex.pets_allowed == "yes"
+    assert ex.heating_type_confirmed == "centralno"
+    assert ex.description_en is not None and "balcony" in ex.description_en
+    # Verify Gemini-shaped call, not Anthropic's messages.create
+    fake_client.models.generate_content.assert_called_once()
+    kw = fake_client.models.generate_content.call_args.kwargs
+    assert kw["model"] == extract.GEMINI_MODEL
+    cfg = kw["config"]
+    assert cfg["tools"][0]["function_declarations"][0]["name"] == "record_listing_facts"
+    assert cfg["tool_config"]["function_calling_config"]["mode"] == "ANY"
+
+
+def test_gemini_telegram_post_extraction(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+
+    fake_client = MagicMock()
+    fake_client.models.generate_content.return_value = _mock_gemini_response(
+        {"m2": 65, "pets_allowed": "yes", "address": "Krunska 35, Vračar",
+         "summary_en": "Two-room flat near Slavija."},
+        name="record_telegram_post_facts",
+    )
+
+    facts = extract.extract_telegram_post("Izdajem stan, 65m2 ...", client=fake_client)
+    assert facts.m2 == 65.0
+    assert facts.pets_allowed == "yes"
+    assert facts.address == "Krunska 35, Vračar"
+
+
+def test_gemini_parse_raises_when_no_function_call():
+    response = SimpleNamespace(function_calls=[], candidates=[])
+    with pytest.raises(RuntimeError, match="did not call"):
+        extract._parse_gemini_function_call(response, "record_listing_facts")
+
+
+def test_provider_dispatch_defaults_to_anthropic(monkeypatch):
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    assert extract._provider() == "anthropic"
+    monkeypatch.setenv("LLM_PROVIDER", "GEMINI")
+    assert extract._provider() == "gemini"
+
+
+def test_llm_api_key_present_follows_provider(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert extract.llm_api_key_present()
+
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    assert not extract.llm_api_key_present()
+    monkeypatch.setenv("GEMINI_API_KEY", "y")
+    assert extract.llm_api_key_present()
 
 
 def test_extract_many_isolates_individual_failures():

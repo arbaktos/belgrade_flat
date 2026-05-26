@@ -104,13 +104,15 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
 
     # Stage 2: LLM extraction on structural survivors. Skip if no API key (e.g. local dev).
     extraction_failures = 0
-    if "ANTHROPIC_API_KEY" in os.environ and structural.passed:
-        log.info("extracting LLM facts for %d listings", len(structural.passed))
+    if extract.llm_api_key_present() and structural.passed:
+        log.info("extracting LLM facts for %d listings via %s",
+                 len(structural.passed), extract._provider())
         _, extraction_failures = extract.extract_many(structural.passed)
     elif not structural.passed:
         log.info("no structural survivors — skipping LLM extraction")
     else:
-        log.warning("ANTHROPIC_API_KEY not set — skipping LLM extraction")
+        log.warning("LLM API key not set for provider=%s — skipping extraction",
+                    extract._provider())
 
     # Stage 3: post-LLM filter — pets, dishwasher, heating, max-lease + near-miss split.
     llm_filtered = filt.apply_with_extraction(structural.passed, cfg_obj)

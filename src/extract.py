@@ -1,15 +1,18 @@
 """LLM extraction layer (spec §5).
 
-Given a listing whose title and description are in Serbian, ask Claude Haiku 4.5
-to extract structured fields (pets, dishwasher, heating, max-lease, bills,
+Given a listing whose title and description are in Serbian, call an LLM to
+extract structured fields (pets, dishwasher, heating, max-lease, bills,
 agency/owner, red flags) plus a 2-3 sentence English summary, then attach the
 result to the listing for downstream filtering and rendering.
 
-We use tool-use for the structured output (more reliable than free-form JSON
-for small models) and prompt caching on the system prompt so repeat calls in
-the same scrape don't re-bill those tokens.
+Provider switch: `LLM_PROVIDER=anthropic` (default) uses Claude Haiku 4.5 with
+prompt caching on the system block. `LLM_PROVIDER=gemini` routes the same
+tool-call shape through Gemini 2.0 Flash on the free tier. Both providers
+return the same `Extraction` / `TelegramPostFacts` records — the rest of the
+pipeline is provider-agnostic.
 
-Cost: per spec §5, 50–200 calls/day × ~500 tokens ≈ $3–6/month for Haiku 4.5.
+Cost: per spec §5, 50-200 calls/day. Anthropic Haiku ≈ $3-6/month. Gemini free
+tier (1500/day) absorbs the load at zero cost.
 """
 from __future__ import annotations
 
@@ -26,6 +29,27 @@ log = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5"
 MAX_TOKENS = 600
+GEMINI_MODEL = "gemini-2.0-flash"
+
+
+def _provider() -> str:
+    return (os.environ.get("LLM_PROVIDER") or "anthropic").strip().lower()
+
+
+def llm_api_key_present() -> bool:
+    """Whether the currently selected provider has its API key configured."""
+    if _provider() == "gemini":
+        return "GEMINI_API_KEY" in os.environ
+    return "ANTHROPIC_API_KEY" in os.environ
+
+
+def make_client() -> Any:
+    """Build a provider-appropriate client. Lazy-imports the Gemini SDK so the
+    Anthropic-only path doesn't require google-genai to be installed."""
+    if _provider() == "gemini":
+        from google import genai  # type: ignore[import-not-found]
+        return genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    return anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 SYSTEM_PROMPT = """You analyze Serbian-language Belgrade apartment rental listings for a renter who applies strict filters. Your job: read the title and description, and call the `record_listing_facts` tool exactly once with what the listing actually says.
 
@@ -40,6 +64,7 @@ Rules:
 - `agency_or_owner`: "agency" if the listing is posted by a real-estate agency, "owner" if posted by a private owner, otherwise "unknown".
 - `red_flags`: short English strings for any concerning constraint (e.g. "students only", "no smoking", "shared bathroom", "deposit > 2 months", "long-term lease required"). Empty list if none.
 - `summary_en`: 2-3 sentences in English describing the apartment and any unusual conditions. Tone: dry, factual, what a relocating professional would want to know.
+- `description_en`: a full English translation of the listing description text. Translate, do not summarize: preserve every concrete claim, room name, address detail, price/utility figure, and condition. Strip boilerplate marketing fluff ("dream apartment!", agency contact spam, repeated calls to action) but keep all factual content the renter would care about. Use plain natural English. If the listing has no usable description (empty, just a phone number, just a price line), return `null`.
 """
 
 # Tool schema — the model must call this tool exactly once.
@@ -93,24 +118,31 @@ TOOL_DEF = {
                 "type": "string",
                 "description": "2-3 sentence English summary of the listing.",
             },
+            "description_en": {
+                "type": ["string", "null"],
+                "description": "Full English translation of the listing body, or null if the listing has no usable description.",
+            },
         },
         "required": [
             "pets_allowed", "dishwasher", "elevator_confirmed",
             "heating_type_confirmed", "furnishing_confirmed",
             "max_lease_months", "bills_estimate_eur",
-            "agency_or_owner", "red_flags", "summary_en",
+            "agency_or_owner", "red_flags", "summary_en", "description_en",
         ],
     },
 }
 
 
-def extract(listing: Listing, *, client: anthropic.Anthropic | None = None) -> Extraction:
-    """Run LLM extraction on one listing. Raises on API/parse failure."""
+def extract(listing: Listing, *, client: Any | None = None) -> Extraction:
+    """Run LLM extraction on one listing. Raises on API/parse failure.
+
+    Dispatches to the Anthropic or Gemini backend per `LLM_PROVIDER`. The
+    `client` arg is optional and only used to inject a fake in tests; in
+    production we lazy-build the right one via `make_client()`.
+    """
     if not listing.description and not listing.title:
         log.info("extract: empty text for %s — skipping LLM call", listing.fingerprint_key)
         return Extraction()
-
-    client = client or anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     user_text = (
         f"Source: {listing.source}\n"
@@ -118,6 +150,13 @@ def extract(listing: Listing, *, client: anthropic.Anthropic | None = None) -> E
         f"Description (Serbian):\n{listing.description}"
     )
 
+    if _provider() == "gemini":
+        return _extract_gemini_listing(user_text, client)
+    return _extract_anthropic_listing(user_text, client)
+
+
+def _extract_anthropic_listing(user_text: str, client: Any | None) -> Extraction:
+    client = client or anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
@@ -134,8 +173,42 @@ def extract(listing: Listing, *, client: anthropic.Anthropic | None = None) -> E
         tool_choice={"type": "tool", "name": "record_listing_facts"},
         messages=[{"role": "user", "content": user_text}],
     )
-
     return _parse_tool_call(response)
+
+
+def _extract_gemini_listing(user_text: str, client: Any | None) -> Extraction:
+    if client is None:
+        from google import genai  # type: ignore[import-not-found]
+        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=user_text,
+        config={
+            "system_instruction": SYSTEM_PROMPT,
+            "tools": [{"function_declarations": [GEMINI_TOOL_DEF]}],
+            "tool_config": {
+                "function_calling_config": {
+                    "mode": "ANY",
+                    "allowed_function_names": ["record_listing_facts"],
+                }
+            },
+            "temperature": 0.0,
+        },
+    )
+    args = _parse_gemini_function_call(response, "record_listing_facts")
+    return Extraction(
+        pets_allowed=args.get("pets_allowed"),
+        dishwasher=args.get("dishwasher"),
+        elevator_confirmed=args.get("elevator_confirmed"),
+        heating_type_confirmed=args.get("heating_type_confirmed"),
+        furnishing_confirmed=args.get("furnishing_confirmed"),
+        max_lease_months=args.get("max_lease_months"),
+        bills_estimate_eur=args.get("bills_estimate_eur"),
+        agency_or_owner=args.get("agency_or_owner"),
+        red_flags=list(args.get("red_flags") or []),
+        summary_en=args.get("summary_en"),
+        description_en=args.get("description_en"),
+    )
 
 
 def _parse_tool_call(response: Any) -> Extraction:
@@ -153,6 +226,7 @@ def _parse_tool_call(response: Any) -> Extraction:
                 agency_or_owner=args.get("agency_or_owner"),
                 red_flags=list(args.get("red_flags") or []),
                 summary_en=args.get("summary_en"),
+                description_en=args.get("description_en"),
             )
     raise RuntimeError(f"LLM did not call record_listing_facts tool; got: {response.content!r}")
 
@@ -204,12 +278,18 @@ class TelegramPostFacts:
 
 
 def extract_telegram_post(
-    text: str, *, client: anthropic.Anthropic | None = None
+    text: str, *, client: Any | None = None
 ) -> TelegramPostFacts:
     """Run LLM extraction on a single Telegram-channel post body."""
     if not text.strip():
         return TelegramPostFacts(m2=None, pets_allowed="unknown", address=None, summary_en=None)
 
+    if _provider() == "gemini":
+        return _extract_telegram_post_gemini(text, client)
+    return _extract_telegram_post_anthropic(text, client)
+
+
+def _extract_telegram_post_anthropic(text: str, client: Any | None) -> TelegramPostFacts:
     client = client or anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     response = client.messages.create(
         model=MODEL,
@@ -236,10 +316,39 @@ def extract_telegram_post(
     raise RuntimeError(f"LLM did not call record_telegram_post_facts tool; got: {response.content!r}")
 
 
+def _extract_telegram_post_gemini(text: str, client: Any | None) -> TelegramPostFacts:
+    if client is None:
+        from google import genai  # type: ignore[import-not-found]
+        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=text,
+        config={
+            "system_instruction": _TG_SYSTEM_PROMPT,
+            "tools": [{"function_declarations": [_GEMINI_TG_TOOL_DEF]}],
+            "tool_config": {
+                "function_calling_config": {
+                    "mode": "ANY",
+                    "allowed_function_names": ["record_telegram_post_facts"],
+                }
+            },
+            "temperature": 0.0,
+        },
+    )
+    args = _parse_gemini_function_call(response, "record_telegram_post_facts")
+    m2 = args.get("m2")
+    return TelegramPostFacts(
+        m2=float(m2) if m2 is not None else None,
+        pets_allowed=args.get("pets_allowed") or "unknown",
+        address=args.get("address"),
+        summary_en=args.get("summary_en"),
+    )
+
+
 def extract_many(
     listings: list[Listing],
     *,
-    client: anthropic.Anthropic | None = None,
+    client: Any | None = None,
 ) -> tuple[list[Listing], int]:
     """Attach extraction to each listing; return (updated_listings, failure_count).
 
@@ -247,7 +356,7 @@ def extract_many(
     flows through to the filter as "data unknown" and lands the listing in the
     near-miss bucket rather than aborting the whole run.
     """
-    client = client or anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    client = client or make_client()
     failures = 0
     for l in listings:
         try:
@@ -256,3 +365,89 @@ def extract_many(
             log.warning("extract: failed for %s: %s", l.fingerprint_key, e)
             failures += 1
     return listings, failures
+
+
+# Gemini tool schemas mirror the Anthropic tool defs above. Gemini's Schema
+# uses uppercase type names and `nullable: True` instead of union types — but
+# the field set, enum values, and required list are identical so the two
+# providers produce interchangeable Extraction / TelegramPostFacts records.
+GEMINI_TOOL_DEF = {
+    "name": "record_listing_facts",
+    "description": "Record structured facts extracted from a rental listing.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "pets_allowed": {
+                "type": "STRING",
+                "enum": ["yes", "no", "unknown"],
+            },
+            "dishwasher": {"type": "BOOLEAN", "nullable": True},
+            "elevator_confirmed": {"type": "BOOLEAN", "nullable": True},
+            "heating_type_confirmed": {
+                "type": "STRING",
+                "enum": ["centralno", "etazno", "podno", "TA", "klima", "elektricni"],
+                "nullable": True,
+            },
+            "furnishing_confirmed": {
+                "type": "STRING",
+                "enum": ["furnished", "semi-furnished", "unfurnished"],
+                "nullable": True,
+            },
+            "max_lease_months": {"type": "INTEGER", "nullable": True},
+            "bills_estimate_eur": {"type": "INTEGER", "nullable": True},
+            "agency_or_owner": {
+                "type": "STRING",
+                "enum": ["agency", "owner", "unknown"],
+            },
+            "red_flags": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "summary_en": {"type": "STRING"},
+            "description_en": {"type": "STRING", "nullable": True},
+        },
+        "required": [
+            "pets_allowed", "dishwasher", "elevator_confirmed",
+            "heating_type_confirmed", "furnishing_confirmed",
+            "max_lease_months", "bills_estimate_eur",
+            "agency_or_owner", "red_flags", "summary_en", "description_en",
+        ],
+    },
+}
+
+_GEMINI_TG_TOOL_DEF = {
+    "name": "record_telegram_post_facts",
+    "description": "Record structured facts extracted from a Telegram-channel apartment post.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "m2": {"type": "NUMBER", "nullable": True},
+            "pets_allowed": {
+                "type": "STRING",
+                "enum": ["yes", "no", "unknown"],
+            },
+            "address": {"type": "STRING", "nullable": True},
+            "summary_en": {"type": "STRING"},
+        },
+        "required": ["m2", "pets_allowed", "address", "summary_en"],
+    },
+}
+
+
+def _parse_gemini_function_call(response: Any, name: str) -> dict:
+    """Return the args dict of the first function call matching `name`.
+
+    google-genai exposes function calls both as a `response.function_calls`
+    convenience list and as `function_call` parts on the candidate content.
+    We try the convenience accessor first, then fall back to walking parts,
+    so mocked test responses can populate whichever shape is simpler.
+    """
+    fcs = getattr(response, "function_calls", None)
+    if fcs:
+        for fc in fcs:
+            if getattr(fc, "name", None) == name:
+                return dict(fc.args or {})
+    for cand in (getattr(response, "candidates", None) or []):
+        parts = getattr(getattr(cand, "content", None), "parts", None) or []
+        for part in parts:
+            fc = getattr(part, "function_call", None)
+            if fc and getattr(fc, "name", None) == name:
+                return dict(getattr(fc, "args", None) or {})
+    raise RuntimeError(f"Gemini did not call {name} tool; got: {response!r}")
