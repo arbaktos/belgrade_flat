@@ -67,6 +67,17 @@ def test_heating_empty_or_unknown_returns_none():
     assert cityexpert._heating_label(["bogus"]) is None
 
 
+def test_pets_allowed_from_petsarray():
+    # Real API returns integer codes (1=cats, etc.) — any code means pets are allowed.
+    # Regression: the old check was `"petAllowed" in petsArray`, which always
+    # evaluated False and mislabeled cat-friendly listings as no-pets.
+    assert cityexpert._pets_allowed([1, 2]) is True
+    assert cityexpert._pets_allowed([1]) is True
+    assert cityexpert._pets_allowed([1, 2, 3, 4, 5]) is True
+    assert cityexpert._pets_allowed([]) is None
+    assert cityexpert._pets_allowed(None) is None
+
+
 def test_no_elevator_but_low_implies_no_elevator():
     data = json.loads(FIXTURE.read_text())
     sample = dict(data["result"][0])

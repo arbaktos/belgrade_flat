@@ -40,17 +40,16 @@ def test_pets_no_is_hard_reject():
     assert not r.passed and r.rejected and "pets" in r.rejected[0][1]
 
 
-def test_structured_pets_false_treated_as_unknown_not_no():
-    """4zida's petsAllowed=False often means 'not specified' rather than a ban —
-    the LLM still has to find an explicit prohibition in the description text."""
+def test_structured_pets_false_is_hard_reject():
+    """Sources expose pets_allowed=False only when the owner explicitly opts out
+    (4zida checkbox; cityexpert empty array is mapped to None, not False).
+    Trust that as definitive — don't leak the listing into near-misses."""
     e = Extraction(pets_allowed="unknown", dishwasher=True, heating_type_confirmed="centralno")
     listing = _listing(e)
-    listing.pets_allowed = False    # structured 'no checkbox ticked'
+    listing.pets_allowed = False
     r = filt.apply_with_extraction([listing], CFG)
-    # Should NOT be a hard reject. With the relaxed pets rule, "unclear" passes
-    # silently — only explicit "no" rejects.
-    assert not r.rejected
-    assert r.passed and not r.near_misses
+    assert not r.passed and not r.near_misses
+    assert r.rejected and "pets" in r.rejected[0][1]
 
 
 def test_pets_unknown_passes_silently():

@@ -131,7 +131,7 @@ def _parse(prop: dict[str, Any]) -> Listing | None:
             elevator=elevator,
             furnished=_furnished_label(prop.get("furnished")),
             heating_type=_heating_label(prop.get("heatingArray")),
-            pets_allowed=("petAllowed" in (prop.get("petsArray") or [])) if prop.get("petsArray") else None,
+            pets_allowed=_pets_allowed(prop.get("petsArray")),
             title=f"{prop.get('structure', '')} apartment, {prop.get('street', '')}".strip(", "),
             description=f"{prop.get('municipality', '')} · {', '.join(prop.get('polygons') or [])}",
             address=prop.get("street"),
@@ -235,6 +235,17 @@ def _heating_label(heating_array: Any) -> str | None:
         if k in mapped:
             return k
     return next(iter(mapped))
+
+
+def _pets_allowed(pets_array: Any) -> bool | None:
+    """cityexpert's petsArray holds integer codes for each allowed pet type
+    (1 = cats, 2/3 = dogs by size, 4/5 = small/other pets, per the site's filter
+    sidebar). A non-empty array means at least one pet category is allowed;
+    an empty/missing array is "not specified", not "no pets".
+    """
+    if not pets_array:
+        return None
+    return True
 
 
 def _image_url(prop: dict[str, Any]) -> str | None:

@@ -290,15 +290,18 @@ def canonicalize_heating(raw: str | None) -> str | None:
 
 
 def _resolve_pets(l: Listing, e) -> bool | None:
-    """Prefer structured Listing.pets_allowed when *positive*; otherwise consult the LLM.
+    """Resolve pets_allowed from the structured field, falling back to the LLM.
 
-    Sources expose pets as a boolean checkbox, and `False` in 4zida/cityexpert
-    typically means "owner didn't tick yes" — not a definitive prohibition. We
-    only trust structured True as a positive signal; for structured False we
-    still let the LLM read the description text to find an explicit ban.
+    Sources that expose pets as a tri-state (4zida, post-fix cityexpert) only
+    surface a definitive value when the owner ticked yes or no on the listing
+    form — None means "not specified" and we defer to the LLM. We trust the
+    structured False as a hard signal so explicit "no pets" listings don't
+    silently leak into matches or near-misses.
     """
     if l.pets_allowed is True:
         return True
+    if l.pets_allowed is False:
+        return False
     if e is None:
         return None
     if e.pets_allowed == "yes":
