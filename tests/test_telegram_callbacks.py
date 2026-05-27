@@ -88,7 +88,19 @@ def test_drain_records_favorite_and_copies_to_favorites_chat(conn, monkeypatch):
         "callback_query": {
             "id": "cb2",
             "data": "fav:4zida:xyz789",
-            "message": {"message_id": 1234, "chat": {"id": -100200300}},
+            "message": {
+                "message_id": 1234,
+                "chat": {"id": -100200300},
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "🔗 View on 4zida", "url": "https://4zida.rs/123"}],
+                        [
+                            {"text": "⭐ Favorite", "callback_data": "fav:4zida:xyz789"},
+                            {"text": "🙈 Hide", "callback_data": "skip:4zida:xyz789"},
+                        ],
+                    ]
+                },
+            },
         },
     }
     with patch("src.telegram_callbacks.telegram.get_updates", return_value=[update]), \
@@ -97,9 +109,14 @@ def test_drain_records_favorite_and_copies_to_favorites_chat(conn, monkeypatch):
         counts = telegram_callbacks.drain(conn)
 
     assert counts == {"fetched": 1, "skipped": 0, "favorited": 1, "unknown": 0}
+    # Forwarded with only the portal-link button re-attached; the Favorite/Hide
+    # callback buttons are stripped.
     copy_mock.assert_called_once_with(
         from_chat_id=-100200300, message_id=1234,
         to_chat_id="-5057252591", message_thread_id=None,
+        reply_markup={"inline_keyboard": [
+            [{"text": "🔗 View on 4zida", "url": "https://4zida.rs/123"}],
+        ]},
     )
     # Toast text confirms the save.
     args, kwargs = ack_mock.call_args
@@ -128,6 +145,30 @@ def test_drain_favorite_without_chat_env_still_persists(conn, monkeypatch):
     copy_mock.assert_not_called()
     rows = list(conn.execute("SELECT fingerprint_key FROM favorites"))
     assert rows == [("halo:111",)]
+
+
+def test_url_buttons_only_keeps_link_drops_callbacks():
+    markup = {
+        "inline_keyboard": [
+            [{"text": "🔗 View on halo", "url": "https://halooglasi.com/5"}],
+            [
+                {"text": "⭐ Favorite", "callback_data": "fav:halo:5"},
+                {"text": "🙈 Hide", "callback_data": "skip:halo:5"},
+            ],
+        ]
+    }
+    assert telegram_callbacks._url_buttons_only(markup) == {
+        "inline_keyboard": [
+            [{"text": "🔗 View on halo", "url": "https://halooglasi.com/5"}],
+        ]
+    }
+
+
+def test_url_buttons_only_none_when_no_url_button():
+    callbacks_only = {"inline_keyboard": [[{"text": "🙈 Hide", "callback_data": "skip:x"}]]}
+    assert telegram_callbacks._url_buttons_only(callbacks_only) is None
+    assert telegram_callbacks._url_buttons_only(None) is None
+    assert telegram_callbacks._url_buttons_only({}) is None
 
 
 def test_favorited_keys_returns_set(conn):

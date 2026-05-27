@@ -130,17 +130,38 @@ def _forward_to_favorites(cq: dict[str, Any]) -> str:
         return "⭐ Saved (couldn't locate source message)"
     thread_id_raw = os.environ.get("TELEGRAM_FAVORITES_THREAD_ID")
     thread_id = int(thread_id_raw) if thread_id_raw else None
+    # copyMessage drops the source keyboard, and the listing URL lives only on
+    # the 'View on portal' button — re-attach it so the favorite stays clickable.
+    keyboard = _url_buttons_only(msg.get("reply_markup"))
     try:
         telegram.copy_message(
             from_chat_id=from_chat_id,
             message_id=int(message_id),
             to_chat_id=dest,
             message_thread_id=thread_id,
+            reply_markup=keyboard,
         )
     except Exception as e:  # noqa: BLE001 - delivery failure stays soft
         log.warning("favorite: copyMessage failed: %s", e)
         return "⭐ Saved (forwarding failed — see logs)"
     return "⭐ Saved to favorites"
+
+
+def _url_buttons_only(reply_markup: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Strip a card's keyboard down to its URL buttons (the portal link).
+
+    The Favorite/Hide callback buttons are dropped: in the favorites chat they
+    are meaningless and would carry stale callback_data. Returns None when the
+    card had no URL button, so copyMessage is called without a keyboard.
+    """
+    if not reply_markup:
+        return None
+    rows = []
+    for row in reply_markup.get("inline_keyboard", []):
+        kept = [btn for btn in row if btn.get("url")]
+        if kept:
+            rows.append(kept)
+    return {"inline_keyboard": rows} if rows else None
 
 
 def _ack(callback_id: str | None, text: str) -> None:
