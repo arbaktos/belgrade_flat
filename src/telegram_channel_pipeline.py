@@ -17,6 +17,7 @@ from __future__ import annotations
 import html
 import logging
 import os
+import re
 import sqlite3
 from io import BytesIO
 
@@ -42,12 +43,19 @@ def run(
     conn: sqlite3.Connection,
     *,
     m2_min: float = DEFAULT_M2_MIN,
+    require_hashtag: str | None = None,
     office_lat: float | None = None,
     office_lng: float | None = None,
     llm_client: object | None = None,
     http_client: httpx.Client | None = None,
 ) -> dict:
-    """Drive the pipeline once. Returns a counter dict for log/telemetry."""
+    """Drive the pipeline once. Returns a counter dict for log/telemetry.
+
+    `require_hashtag` (e.g. "#аренда") restricts processing to posts carrying
+    that tag — for general-interest channels where most posts aren't rentals.
+    Non-matching posts are marked seen and never reach the LLM, so the filter
+    costs no tokens and produces no status-header noise.
+    """
     counts = {"fetched": 0, "filtered_out": 0, "deduped": 0, "pushed": 0, "errors": 0}
     seen = state.seen_telegram_message_ids(conn)
 
@@ -60,6 +68,21 @@ def run(
     counts["fetched"] = len(posts)
     if not posts:
         return counts
+
+    if require_hashtag:
+        relevant = []
+        for p in posts:
+            if _post_has_hashtag(p.text, require_hashtag):
+                relevant.append(p)
+            else:
+                # Irrelevant for good — mark seen so we never re-evaluate it,
+                # and don't count it as "filtered" (that's for rentals we reject).
+                state.mark_telegram_message_seen(conn, p.message_id)
+        log.info("telegram-channel %s: %d/%d posts carry %s",
+                 channel, len(relevant), len(posts), require_hashtag)
+        posts = relevant
+        if not posts:
+            return counts
 
     if not extract.llm_api_key_present():
         log.warning("telegram-channel: LLM API key missing for provider=%s; skipping",
@@ -155,6 +178,19 @@ def _send_status_header(channel: str, counts: dict, *, accepted_count: int) -> N
         telegram.send_message(line, parse_mode="HTML")
     except Exception as e:  # noqa: BLE001
         log.warning("telegram-channel status header failed: %s", e)
+
+
+def _post_has_hashtag(text: str, hashtag: str) -> bool:
+    """Whether `text` contains `hashtag` as a whole tag, case-insensitive.
+
+    The trailing `(?!\\w)` keeps "#аренда" from matching inside a longer tag
+    like "#арендаквартиры" — `\\w` is Unicode-aware for str patterns, so it
+    covers Cyrillic. A leading boundary isn't needed: the literal "#" already
+    anchors the tag start.
+    """
+    if not text:
+        return False
+    return re.search(re.escape(hashtag) + r"(?!\w)", text, re.IGNORECASE) is not None
 
 
 def _compute_phash(url: str, http_client: httpx.Client) -> str | None:

@@ -310,6 +310,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
                 ch_name,
                 conn,
                 m2_min=float(ch_cfg.get("m2_min", telegram_channel_pipeline.DEFAULT_M2_MIN)),
+                require_hashtag=ch_cfg.get("require_hashtag"),
                 office_lat=office_lat or None,
                 office_lng=office_lng or None,
             )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timezone
 
 from src.sources import telegram_channel as tc
+from src.telegram_channel_pipeline import _post_has_hashtag
 
 
 # Trimmed shape of a real t.me/s/<channel> response. The selectors we depend
@@ -97,3 +98,29 @@ def test_br_tags_become_newlines():
     )
     parsed = tc._parse(body, "beograd_stan")
     assert "line a\nline b" in parsed[0].text
+
+
+def test_post_has_hashtag_matches_rent_tag():
+    assert _post_has_hashtag("#аренда Врачар 50 м2", "#аренда") is True
+
+
+def test_post_has_hashtag_rejects_other_tags():
+    # Sale post in the same mixed channel must not match the rent filter.
+    assert _post_has_hashtag("#продажа Waterfront 77 м2", "#аренда") is False
+
+
+def test_post_has_hashtag_is_case_insensitive():
+    assert _post_has_hashtag("Сдается #Аренда срочно", "#аренда") is True
+
+
+def test_post_has_hashtag_does_not_match_longer_tag():
+    # "#аренда" must not fire inside "#арендаквартиры" (Unicode word boundary).
+    assert _post_has_hashtag("ищу #арендаквартиры", "#аренда") is False
+
+
+def test_post_has_hashtag_allows_trailing_punctuation():
+    assert _post_has_hashtag("квартира #аренда.", "#аренда") is True
+
+
+def test_post_has_hashtag_empty_text():
+    assert _post_has_hashtag("", "#аренда") is False

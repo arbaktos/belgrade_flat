@@ -67,3 +67,9 @@ state:
 telegram_channels:
   - name: beograd_stan
     m2_min: 55
+  # General-interest channel — most posts aren't rentals, so only consider
+  # posts tagged #аренда (Russian "rent"). The hashtag pre-filter runs before
+  # the LLM call, so noise costs no tokens.
+  - name: russian_in_serbia
+    m2_min: 55
+    require_hashtag: "#аренда"
