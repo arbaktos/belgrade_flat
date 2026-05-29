@@ -202,3 +202,64 @@ def test_extract_many_isolates_individual_failures():
     assert updated[0].extraction.pets_allowed == "yes"
     assert updated[1].extraction is None        # failed
     assert updated[2].extraction.heating_type_confirmed == "TA"
+
+
+# --- Gemini free-tier throttle + retry -------------------------------------
+
+def _gemini_client(side_effect):
+    """A fake google-genai client whose models.generate_content is scripted."""
+    client = MagicMock()
+    client.models.generate_content.side_effect = side_effect
+    return client
+
+
+def test_gemini_generate_retries_then_succeeds(monkeypatch):
+    monkeypatch.delenv("GEMINI_MIN_INTERVAL_S", raising=False)
+    monkeypatch.setattr(extract.time, "sleep", lambda _s: None)
+    client = _gemini_client([
+        RuntimeError("429 RESOURCE_EXHAUSTED ... Please retry in 2.5s"),
+        "OK",
+    ])
+    assert extract._gemini_generate(client, model="m", contents="c") == "OK"
+    assert client.models.generate_content.call_count == 2
+
+
+def test_gemini_generate_does_not_retry_non_transient(monkeypatch):
+    monkeypatch.delenv("GEMINI_MIN_INTERVAL_S", raising=False)
+    monkeypatch.setattr(extract.time, "sleep", lambda _s: None)
+    client = _gemini_client(ValueError("400 invalid argument"))
+    with pytest.raises(ValueError):
+        extract._gemini_generate(client, model="m", contents="c")
+    assert client.models.generate_content.call_count == 1
+
+
+def test_gemini_generate_gives_up_after_max_attempts(monkeypatch):
+    monkeypatch.delenv("GEMINI_MIN_INTERVAL_S", raising=False)
+    monkeypatch.setattr(extract.time, "sleep", lambda _s: None)
+    client = _gemini_client(RuntimeError("503 UNAVAILABLE"))
+    with pytest.raises(RuntimeError):
+        extract._gemini_generate(client, model="m", contents="c")
+    assert client.models.generate_content.call_count == extract._GEMINI_MAX_ATTEMPTS
+
+
+def test_gemini_generate_throttles_when_interval_set(monkeypatch):
+    monkeypatch.setenv("GEMINI_MIN_INTERVAL_S", "13")
+    slept: list[float] = []
+    monkeypatch.setattr(extract.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(extract.time, "monotonic", lambda: 1000.0)
+    monkeypatch.setattr(extract, "_gemini_last_call", 1000.0)  # 0s since "last" call
+    extract._gemini_generate(_gemini_client(["OK"]), model="m", contents="c")
+    assert slept and slept[0] == pytest.approx(13.0, abs=0.5)
+
+
+def test_gemini_retry_delay_honors_server_hint():
+    assert extract._gemini_retry_delay("Please retry in 9.5s.", 0) == pytest.approx(10.5)
+
+
+def test_gemini_retry_delay_caps_long_hint():
+    assert extract._gemini_retry_delay("retry in 120s", 0) == 65.0
+
+
+def test_gemini_retry_delay_backoff_without_hint():
+    assert extract._gemini_retry_delay("boom", 0) == 5.0
+    assert extract._gemini_retry_delay("boom", 1) == 10.0

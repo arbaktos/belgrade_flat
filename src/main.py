@@ -103,11 +103,27 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
     log.info("structural: %d passed, %d rejected", len(structural.passed), len(structural.rejected))
 
     # Stage 2: LLM extraction on structural survivors. Skip if no API key (e.g. local dev).
+    # Cached extractions are reused so each listing hits the LLM exactly once
+    # across runs — keeps us under the Gemini free-tier caps and cuts cost.
     extraction_failures = 0
     if extract.llm_api_key_present() and structural.passed:
-        log.info("extracting LLM facts for %d listings via %s",
-                 len(structural.passed), extract._provider())
-        _, extraction_failures = extract.extract_many(structural.passed)
+        cached = state.load_extractions(
+            conn, [l.fingerprint_key for l in structural.passed]
+        )
+        to_extract = []
+        for l in structural.passed:
+            hit = cached.get(l.fingerprint_key)
+            if hit is not None:
+                l.extraction = hit
+            else:
+                to_extract.append(l)
+        log.info("extraction: %d cached, %d to fetch via %s",
+                 len(structural.passed) - len(to_extract), len(to_extract),
+                 extract._provider())
+        if to_extract:
+            _, extraction_failures = extract.extract_many(to_extract)
+            # Persist only successes; failed (extraction=None) listings retry next run.
+            state.save_extractions(conn, to_extract)
     elif not structural.passed:
         log.info("no structural survivors — skipping LLM extraction")
     else:

@@ -1,15 +1,18 @@
+import dataclasses
+import json
 import logging
 import os
 import sqlite3
 import subprocess
 from pathlib import Path
+from typing import Iterable
 
-from src.models import Listing
+from src.models import Extraction, Listing
 
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 11
+SCHEMA_VERSION = 12
 
 
 def _rclone_env() -> dict[str, str]:
@@ -194,6 +197,19 @@ def ensure_schema() -> sqlite3.Connection:
         )
         """
     )
+    # v12: cache LLM extraction results keyed by fingerprint_key so each
+    # listing is sent to the LLM exactly once across runs. Keeps us under the
+    # Gemini free-tier rate/day caps and cuts cost on any provider. Forward-only
+    # CREATE — a cache miss just re-extracts, so no data migration is needed.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS extraction_cache (
+            fingerprint_key TEXT PRIMARY KEY,
+            payload         TEXT NOT NULL,
+            extracted_at    TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
     conn.execute(
         "INSERT INTO meta (key, value) VALUES ('schema_version', ?) "
         "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -201,6 +217,60 @@ def ensure_schema() -> sqlite3.Connection:
     )
     conn.commit()
     return conn
+
+
+def load_extractions(
+    conn: sqlite3.Connection, keys: Iterable[str]
+) -> dict[str, Extraction]:
+    """Return {fingerprint_key: Extraction} for any of `keys` already cached.
+
+    Missing or corrupt rows are simply absent from the result, so the caller
+    re-extracts them — the cache is an optimization, never a correctness gate.
+    """
+    keys = list(keys)
+    out: dict[str, Extraction] = {}
+    chunk = 500  # stay well under SQLite's 999-variable limit
+    for i in range(0, len(keys), chunk):
+        batch = keys[i:i + chunk]
+        placeholders = ",".join("?" * len(batch))
+        rows = conn.execute(
+            f"SELECT fingerprint_key, payload FROM extraction_cache "
+            f"WHERE fingerprint_key IN ({placeholders})",
+            batch,
+        )
+        for fk, payload in rows:
+            try:
+                out[fk] = _extraction_from_payload(payload)
+            except Exception as e:  # noqa: BLE001 — corrupt row → treat as miss
+                log.warning("extraction_cache: dropping corrupt row %s: %s", fk, e)
+    return out
+
+
+def save_extractions(conn: sqlite3.Connection, listings: list[Listing]) -> int:
+    """Persist the extraction of each listing that has one. Idempotent upsert."""
+    rows = [
+        (l.fingerprint_key, json.dumps(dataclasses.asdict(l.extraction)))
+        for l in listings
+        if l.extraction is not None
+    ]
+    if not rows:
+        return 0
+    conn.executemany(
+        "INSERT INTO extraction_cache (fingerprint_key, payload) VALUES (?, ?) "
+        "ON CONFLICT(fingerprint_key) DO UPDATE SET "
+        "payload=excluded.payload, extracted_at=datetime('now')",
+        rows,
+    )
+    conn.commit()
+    return len(rows)
+
+
+def _extraction_from_payload(payload: str) -> Extraction:
+    """Rebuild an Extraction from cached JSON, ignoring fields it no longer has
+    (so a schema that adds/removes a field stays backward-compatible)."""
+    data = json.loads(payload)
+    known = {f.name for f in dataclasses.fields(Extraction)}
+    return Extraction(**{k: v for k, v in data.items() if k in known})
 
 
 def upsert_listings(conn: sqlite3.Connection, listings: list[Listing]) -> int:

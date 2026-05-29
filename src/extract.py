@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,6 +29,55 @@ import anthropic
 from src.models import Extraction, Listing
 
 log = logging.getLogger(__name__)
+
+# Gemini free-tier pacing. gemini-2.5-flash free tier allows 5 requests/minute;
+# GEMINI_MIN_INTERVAL_S spaces calls so we stay under it (set to ~13 in CI;
+# defaults to 0 = no throttle for local/tests where the client is mocked).
+_GEMINI_MAX_ATTEMPTS = 3
+_RETRY_HINT_RE = re.compile(r"retry in ([0-9.]+)s")
+_gemini_last_call = 0.0
+
+
+def _gemini_generate(client: Any, **kwargs: Any) -> Any:
+    """Call Gemini with free-tier-friendly pacing + retry on transient errors.
+
+    Paces successive calls at least GEMINI_MIN_INTERVAL_S apart so a backfill
+    burst stays under the 5 req/min cap, and retries 429 RESOURCE_EXHAUSTED /
+    503 UNAVAILABLE (honouring the server's "retry in Ns" hint) with backoff.
+    Any other error propagates to the per-listing handler in extract_many.
+    """
+    global _gemini_last_call
+    try:
+        interval = float(os.environ.get("GEMINI_MIN_INTERVAL_S", "0"))
+    except ValueError:
+        interval = 0.0
+    last_exc: Exception | None = None
+    for attempt in range(_GEMINI_MAX_ATTEMPTS):
+        if interval > 0:
+            wait = interval - (time.monotonic() - _gemini_last_call)
+            if wait > 0:
+                time.sleep(wait)
+        _gemini_last_call = time.monotonic()
+        try:
+            return client.models.generate_content(**kwargs)
+        except Exception as e:  # noqa: BLE001
+            msg = str(e)
+            transient = any(s in msg for s in
+                            ("RESOURCE_EXHAUSTED", "429", "UNAVAILABLE", "503"))
+            if not transient or attempt == _GEMINI_MAX_ATTEMPTS - 1:
+                raise
+            last_exc = e
+            time.sleep(_gemini_retry_delay(msg, attempt))
+    raise last_exc  # pragma: no cover — loop either returns or raises above
+
+
+def _gemini_retry_delay(msg: str, attempt: int) -> float:
+    """Seconds to wait before retrying: the server's hint if present (capped),
+    else exponential backoff."""
+    m = _RETRY_HINT_RE.search(msg)
+    if m:
+        return min(float(m.group(1)) + 1.0, 65.0)
+    return min(5.0 * (2 ** attempt), 65.0)
 
 MODEL = "claude-haiku-4-5"
 MAX_TOKENS = 600
@@ -183,7 +234,8 @@ def _extract_gemini_listing(user_text: str, client: Any | None) -> Extraction:
     if client is None:
         from google import genai  # type: ignore[import-not-found]
         client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-    response = client.models.generate_content(
+    response = _gemini_generate(
+        client,
         model=GEMINI_MODEL,
         contents=user_text,
         config={
@@ -323,7 +375,8 @@ def _extract_telegram_post_gemini(text: str, client: Any | None) -> TelegramPost
     if client is None:
         from google import genai  # type: ignore[import-not-found]
         client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-    response = client.models.generate_content(
+    response = _gemini_generate(
+        client,
         model=GEMINI_MODEL,
         contents=text,
         config={
