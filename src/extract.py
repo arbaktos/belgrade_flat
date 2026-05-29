@@ -7,12 +7,13 @@ result to the listing for downstream filtering and rendering.
 
 Provider switch: `LLM_PROVIDER=anthropic` (default) uses Claude Haiku 4.5 with
 prompt caching on the system block. `LLM_PROVIDER=gemini` routes the same
-tool-call shape through Gemini 2.0 Flash on the free tier. Both providers
+tool-call shape through Gemini 2.5 Flash on the free tier. Both providers
 return the same `Extraction` / `TelegramPostFacts` records — the rest of the
 pipeline is provider-agnostic.
 
 Cost: per spec §5, 50-200 calls/day. Anthropic Haiku ≈ $3-6/month. Gemini free
-tier (1500/day) absorbs the load at zero cost.
+tier absorbs the load at zero cost (2.5-flash; 2.0-flash has no free quota in
+our region).
 """
 from __future__ import annotations
 
@@ -29,7 +30,9 @@ log = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5"
 MAX_TOKENS = 600
-GEMINI_MODEL = "gemini-2.0-flash"
+# gemini-2.0-flash has no free-tier quota for our project's region (every call
+# 429s with `limit: 0`); 2.5-flash does. See STATUS.md provider notes.
+GEMINI_MODEL = "gemini-2.5-flash"
 
 
 def _provider() -> str:
