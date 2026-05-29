@@ -1,6 +1,6 @@
 # Belgrade Rental Notifier — Project State
 
-_Last updated: 2026-05-17 (snapshot after 🙈 Hide button feature)_
+_Last updated: 2026-05-29 (LLM provider → Gemini 2.5 Flash + extraction cache)_
 
 A personal Belgrade-rentals scraper that delivers filtered Telegram messages
 from four portals, behind LLM extraction, commute time, and dedup. Runs as a
@@ -84,6 +84,8 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Pet-friendly ranking | not in spec | listings with confirmed pets-allowed form a priority tier ABOVE non-pet-friendly, regardless of composite score | User: "if there IS info that the flat is pet friendly, push it on top always" |
 | Cron behaviour | spec only mentions a daily digest | 04:30 UTC = full digest; every-2h polls 02-16 UTC (08-22 KGT) = silent instant push of NEW perfect matches | M8; "new" = no `notified_at` yet; polls skip nighttime (KGT 23-08) per `config.yaml.quiet_hours_kgt`; poll runs commit nothing to git to avoid churning commits |
 | Source-error visibility in instant-push | M9 only spec'd "error routing" abstractly | every poll sends a brief `⚠️ Sources failed: <names>` if any portal returned an error | Instant-push has no digest header, so portal failures would otherwise be silent; alert fires every run a source is failing (no rate-limit yet) |
+| LLM provider | spec assumes Anthropic Haiku | `LLM_PROVIDER=gemini` → **gemini-2.5-flash** (free tier) | Anthropic credits ran out; Gemini free tier covers the load. NB: gemini-2.0-flash 429s with `limit: 0` (no free quota in our region) — must use 2.5-flash |
+| LLM call volume | spec: call per structural survivor each run | extraction cached by `fingerprint_key`; each listing hits the LLM once, ever | Gemini free tier is 5 req/min; re-extracting ~110 survivors/run blew the cap. Cache + a `GEMINI_MIN_INTERVAL_S` pacing (~13s) + 429/503 retry keep us under it. First run backfills (~24 min), then runs are small |
 
 ---
 
@@ -96,8 +98,9 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | `commute_cache(bucket_key, walk_min, transit_min, transit_transfers, fetched_at)` | 90-day TTL per spatial bucket (3-decimal lat/lng or addr hash) |
 | `skipped(fingerprint_key, skipped_at)` | User-clicked 🙈 Hide; suppresses listings before LLM/Routes |
 | `favorites(fingerprint_key, favorited_at)` | User-clicked ⭐ Favorite; card is also copied to `TELEGRAM_FAVORITES_CHAT_ID` when set |
+| `extraction_cache(fingerprint_key, payload, extracted_at)` | Cached LLM extraction (JSON) so each listing is sent to the LLM once across runs; a miss just re-extracts |
 
-Schema version is at **v11**. Migrations are forward-only and idempotent
+Schema version is at **v12**. Migrations are forward-only and idempotent
 (`ALTER TABLE` for adds, `DROP TABLE` for invalidations).
 
 ---
@@ -113,8 +116,9 @@ Schema version is at **v11**. Migrations are forward-only and idempotent
   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`, `OFFICE_LAT`, `OFFICE_LNG`
   Optional: `TELEGRAM_FAVORITES_CHAT_ID` (destination for ⭐ Favorite forwards),
   `TELEGRAM_FAVORITES_THREAD_ID` (forum-topic id when the favorites destination is a topic),
-  `LLM_PROVIDER` (`anthropic` default, set to `gemini` to swap in Gemini 2.0 Flash via
-  free tier; requires `GEMINI_API_KEY` in secrets when used).
+  `LLM_PROVIDER` (`anthropic` default; set to `gemini` to swap in **gemini-2.5-flash**
+  via free tier — requires `GEMINI_API_KEY` in secrets, and `GEMINI_MIN_INTERVAL_S`
+  in the job env to pace under the 5 req/min cap). Currently set to `gemini`.
 
 ### Cost ceiling (actual)
 
