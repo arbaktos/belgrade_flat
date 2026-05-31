@@ -43,6 +43,50 @@ def test_handle_callback_query_dispatches_skip(conn):
     assert list(conn.execute("SELECT fingerprint_key FROM skipped")) == [("4zida:zzz",)]
 
 
+def test_hide_deletes_owning_message(conn):
+    counts = {"skipped": 0, "favorited": 0, "unknown": 0}
+    cq = {
+        "id": "c1", "data": "skip:4zida:zzz",
+        "message": {"message_id": 555, "chat": {"id": -100777}},
+    }
+    with patch("src.telegram_callbacks.telegram.answer_callback_query"), \
+         patch("src.telegram_callbacks.telegram.delete_message") as del_mock:
+        telegram_callbacks.handle_callback_query(conn, cq, counts)
+    del_mock.assert_called_once_with(-100777, 555)
+    assert counts["skipped"] == 1
+    assert list(conn.execute("SELECT fingerprint_key FROM skipped")) == [("4zida:zzz",)]
+
+
+def test_hide_soft_fails_when_delete_errors(conn):
+    # A >48h-old message can't be deleted; the hide must still persist.
+    counts = {"skipped": 0, "favorited": 0, "unknown": 0}
+    cq = {
+        "id": "c1", "data": "skip:4zida:zzz",
+        "message": {"message_id": 5, "chat": {"id": 1}},
+    }
+    with patch("src.telegram_callbacks.telegram.answer_callback_query"), \
+         patch("src.telegram_callbacks.telegram.delete_message",
+               side_effect=RuntimeError("message to delete not found")):
+        telegram_callbacks.handle_callback_query(conn, cq, counts)
+    assert counts["skipped"] == 1
+    assert list(conn.execute("SELECT fingerprint_key FROM skipped")) == [("4zida:zzz",)]
+
+
+def test_favorite_does_not_delete_message(conn):
+    # ⭐ Favorite keeps the card visible in the main feed — only 🙈 deletes.
+    counts = {"skipped": 0, "favorited": 0, "unknown": 0}
+    cq = {
+        "id": "c1", "data": "fav:4zida:zzz",
+        "message": {"message_id": 5, "chat": {"id": 1}},
+    }
+    with patch("src.telegram_callbacks.telegram.answer_callback_query"), \
+         patch("src.telegram_callbacks._forward_to_favorites", return_value="⭐ Saved"), \
+         patch("src.telegram_callbacks.telegram.delete_message") as del_mock:
+        telegram_callbacks.handle_callback_query(conn, cq, counts)
+    del_mock.assert_not_called()
+    assert counts["favorited"] == 1
+
+
 def test_drain_records_skip_click_and_acks(conn):
     update = {
         "update_id": 42,

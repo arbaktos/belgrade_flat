@@ -114,6 +114,12 @@ def get_webhook_info() -> dict:
     return _call("getWebhookInfo", {}).get("result", {})
 
 
+def delete_message(chat_id: str | int, message_id: int) -> None:
+    """Delete a message the bot sent. Telegram only allows this within 48h of
+    sending; older messages raise (callers soft-fail)."""
+    _call("deleteMessage", {"chat_id": chat_id, "message_id": message_id})
+
+
 def answer_callback_query(callback_id: str, text: str = "", show_alert: bool = False) -> None:
     _call("answerCallbackQuery", {
         "callback_query_id": callback_id,

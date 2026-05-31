@@ -87,7 +87,8 @@ def handle_callback_query(
         fp = data[len(SKIP_PREFIX):]
         _mark_skipped(conn, fp)
         counts["skipped"] = counts.get("skipped", 0) + 1
-        _ack(cq_id, "🙈 Hidden from future digests")
+        _delete_owning_message(cq)
+        _ack(cq_id, "🙈 Hidden")
     elif data.startswith(FAV_PREFIX):
         fp = data[len(FAV_PREFIX):]
         _mark_favorited(conn, fp)
@@ -115,6 +116,26 @@ def _mark_skipped(conn: sqlite3.Connection, fingerprint_key: str) -> None:
         (fingerprint_key,),
     )
     conn.commit()
+
+
+def _delete_owning_message(cq: dict[str, Any]) -> None:
+    """Remove the listing card that owns this 🙈 button from the chat.
+
+    Soft-fails: the listing is already persisted to `skipped`, so a failed
+    delete (message > 48 h old, already gone, or missing ids) just leaves the
+    card on screen — the hide still takes effect on future digests. Only the
+    card message is deleted; a separate translation follow-up, if any, isn't
+    referenced by the callback and stays.
+    """
+    msg = cq.get("message") or {}
+    chat_id = (msg.get("chat") or {}).get("id")
+    message_id = msg.get("message_id")
+    if not chat_id or not message_id:
+        return
+    try:
+        telegram.delete_message(chat_id, int(message_id))
+    except Exception as e:  # noqa: BLE001 — hide already persisted; deletion is best-effort
+        log.info("hide: could not delete message %s/%s: %s", chat_id, message_id, e)
 
 
 def _mark_favorited(conn: sqlite3.Connection, fingerprint_key: str) -> None:
