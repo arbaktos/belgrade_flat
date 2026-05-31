@@ -213,15 +213,29 @@ def _gemini_client(side_effect):
     return client
 
 
-def test_gemini_generate_retries_then_succeeds(monkeypatch):
+def test_gemini_generate_retries_503_then_succeeds(monkeypatch):
+    # 503 UNAVAILABLE is genuinely transient ("high demand"), so we retry it.
     monkeypatch.delenv("GEMINI_MIN_INTERVAL_S", raising=False)
     monkeypatch.setattr(extract.time, "sleep", lambda _s: None)
     client = _gemini_client([
-        RuntimeError("429 RESOURCE_EXHAUSTED ... Please retry in 2.5s"),
+        RuntimeError("503 UNAVAILABLE ... Please retry in 2.5s"),
         "OK",
     ])
     assert extract._gemini_generate(client, model="m", contents="c") == "OK"
     assert client.models.generate_content.call_count == 2
+
+
+def test_gemini_generate_does_not_retry_resource_exhausted(monkeypatch):
+    # 429 RESOURCE_EXHAUSTED won't clear within a single run — retrying just
+    # burns the job timeout waiting for a 60s "retry in" hint that won't help.
+    monkeypatch.delenv("GEMINI_MIN_INTERVAL_S", raising=False)
+    monkeypatch.setattr(extract.time, "sleep", lambda _s: None)
+    client = _gemini_client(
+        RuntimeError("429 RESOURCE_EXHAUSTED ... PerDay ... retry in 58s")
+    )
+    with pytest.raises(RuntimeError):
+        extract._gemini_generate(client, model="m", contents="c")
+    assert client.models.generate_content.call_count == 1
 
 
 def test_gemini_generate_does_not_retry_non_transient(monkeypatch):
@@ -263,3 +277,80 @@ def test_gemini_retry_delay_caps_long_hint():
 def test_gemini_retry_delay_backoff_without_hint():
     assert extract._gemini_retry_delay("boom", 0) == 5.0
     assert extract._gemini_retry_delay("boom", 1) == 10.0
+
+
+# --- Daily-cap classifier + extract_many circuit breaker --------------------
+
+_DAILY_CAP_MSG = (
+    "429 RESOURCE_EXHAUSTED. quotaId: "
+    "GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit: 20"
+)
+_PER_MINUTE_MSG = (
+    "429 RESOURCE_EXHAUSTED. quotaId: "
+    "GenerateRequestsPerMinutePerProjectPerModel-FreeTier, limit: 5"
+)
+
+
+def test_is_daily_cap_error_recognises_perday_quota():
+    assert extract.is_daily_cap_error(RuntimeError(_DAILY_CAP_MSG)) is True
+
+
+def test_is_daily_cap_error_rejects_per_minute_quota():
+    # PerMinute caps can clear within a run, so they're not the circuit signal.
+    assert extract.is_daily_cap_error(RuntimeError(_PER_MINUTE_MSG)) is False
+
+
+def test_is_daily_cap_error_rejects_non_429():
+    assert extract.is_daily_cap_error(ValueError("400 invalid argument")) is False
+    assert extract.is_daily_cap_error(RuntimeError("503 UNAVAILABLE")) is False
+
+
+def test_extract_many_circuit_breaks_after_daily_cap(monkeypatch):
+    # Two successes, then a daily-cap error — the 4th listing must not call
+    # the LLM at all so the run can finish and push state in time.
+    fake_client = MagicMock()
+    fake_client.messages.create.side_effect = [
+        _mock_response({
+            "pets_allowed": "yes", "dishwasher": True, "elevator_confirmed": None,
+            "heating_type_confirmed": "centralno", "max_lease_months": None,
+            "bills_estimate_eur": None, "agency_or_owner": "agency",
+            "red_flags": [], "summary_en": "ok 1.",
+        }),
+        _mock_response({
+            "pets_allowed": "no", "dishwasher": None, "elevator_confirmed": None,
+            "heating_type_confirmed": None, "max_lease_months": None,
+            "bills_estimate_eur": None, "agency_or_owner": "owner",
+            "red_flags": [], "summary_en": "ok 2.",
+        }),
+        RuntimeError(_DAILY_CAP_MSG),
+        # No fourth response — the 4th listing must be skipped, not requested.
+    ]
+
+    listings = [_listing(f"desc {i}") for i in range(4)]
+    updated, failures = extract.extract_many(listings, client=fake_client)
+    assert fake_client.messages.create.call_count == 3
+    assert failures == 2                               # the cap-hit + the skipped one
+    assert updated[0].extraction.pets_allowed == "yes"
+    assert updated[1].extraction.pets_allowed == "no"
+    assert updated[2].extraction is None               # raised
+    assert updated[3].extraction is None               # circuit-broken, never tried
+
+
+def test_extract_many_per_minute_error_does_not_circuit_break(monkeypatch):
+    # A PerMinute 429 (or any non-PerDay failure) must NOT trip the breaker —
+    # only daily-cap exhaustion does. Subsequent listings keep extracting.
+    fake_client = MagicMock()
+    fake_client.messages.create.side_effect = [
+        RuntimeError(_PER_MINUTE_MSG),
+        _mock_response({
+            "pets_allowed": "yes", "dishwasher": False, "elevator_confirmed": True,
+            "heating_type_confirmed": "etazno", "max_lease_months": 12,
+            "bills_estimate_eur": None, "agency_or_owner": "owner",
+            "red_flags": [], "summary_en": "ok.",
+        }),
+    ]
+    listings = [_listing(f"desc {i}") for i in range(2)]
+    updated, failures = extract.extract_many(listings, client=fake_client)
+    assert fake_client.messages.create.call_count == 2
+    assert failures == 1
+    assert updated[1].extraction.pets_allowed == "yes"

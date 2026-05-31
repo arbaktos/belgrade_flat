@@ -42,9 +42,11 @@ def _gemini_generate(client: Any, **kwargs: Any) -> Any:
     """Call Gemini with free-tier-friendly pacing + retry on transient errors.
 
     Paces successive calls at least GEMINI_MIN_INTERVAL_S apart so a backfill
-    burst stays under the 5 req/min cap, and retries 429 RESOURCE_EXHAUSTED /
-    503 UNAVAILABLE (honouring the server's "retry in Ns" hint) with backoff.
-    Any other error propagates to the per-listing handler in extract_many.
+    burst stays under the per-minute cap, and retries 503 UNAVAILABLE with
+    backoff. 429 RESOURCE_EXHAUSTED is NOT retried — daily-cap exhaustion
+    won't clear within a single CI run, and the server's "retry in 58s" hint
+    blows the job timeout fast. The caller (extract_many) circuit-breaks on
+    the first daily-cap error so the rest of the run completes quickly.
     """
     global _gemini_last_call
     try:
@@ -62,13 +64,27 @@ def _gemini_generate(client: Any, **kwargs: Any) -> Any:
             return client.models.generate_content(**kwargs)
         except Exception as e:  # noqa: BLE001
             msg = str(e)
-            transient = any(s in msg for s in
-                            ("RESOURCE_EXHAUSTED", "429", "UNAVAILABLE", "503"))
+            # Only retry genuinely transient errors. Daily-cap 429s and any
+            # other status surface immediately to extract_many.
+            transient = ("UNAVAILABLE" in msg or "503" in msg)
             if not transient or attempt == _GEMINI_MAX_ATTEMPTS - 1:
                 raise
             last_exc = e
             time.sleep(_gemini_retry_delay(msg, attempt))
     raise last_exc  # pragma: no cover — loop either returns or raises above
+
+
+def is_daily_cap_error(exc: BaseException) -> bool:
+    """Detect a Gemini per-day quota exhaustion (vs. per-minute or transient).
+
+    The per-minute cap can clear within a run; the per-day cap can't, and
+    that's the signal extract_many uses to circuit-break and let the run
+    finish so state can still be pushed.
+    """
+    msg = str(exc)
+    if "RESOURCE_EXHAUSTED" not in msg and "429" not in msg:
+        return False
+    return "PerDay" in msg or "RequestsPerDay" in msg
 
 
 def _gemini_retry_delay(msg: str, attempt: int) -> float:
@@ -411,15 +427,34 @@ def extract_many(
     A single LLM error is logged and the listing keeps `extraction=None` — that
     flows through to the filter as "data unknown" and lands the listing in the
     near-miss bucket rather than aborting the whole run.
+
+    Circuit breaker: the first daily-cap quota error stops all further LLM
+    calls for this run (remaining listings count as failures with no API call).
+    Without this, every leftover listing would wait the server's ~60s "retry
+    in" hint and the job would time out before state could be pushed. The
+    skipped listings are not cached, so they retry naturally on the next run
+    once the per-day budget resets.
     """
     client = client or make_client()
     failures = 0
+    daily_cap_hit = False
     for l in listings:
+        if daily_cap_hit:
+            failures += 1
+            continue
         try:
             l.extraction = extract(l, client=client)
         except Exception as e:  # noqa: BLE001 - one LLM failure must not kill the run
             log.warning("extract: failed for %s: %s", l.fingerprint_key, e)
             failures += 1
+            if is_daily_cap_error(e):
+                log.warning(
+                    "extract: Gemini daily cap reached after %d successes; "
+                    "skipping %d remaining listings to let state push",
+                    sum(1 for x in listings if x.extraction is not None),
+                    sum(1 for x in listings if x.extraction is None) - 1,
+                )
+                daily_cap_hit = True
     return listings, failures
 
 
