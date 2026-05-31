@@ -32,14 +32,18 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
     """
     counts = {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
     offset = _read_offset(conn)
-    # Diagnostic: log webhook status — a set webhook silently steals callbacks
-    # before getUpdates can drain them.
+    # A configured webhook (the VM real-time handler) owns callbacks: Telegram
+    # delivers updates there and getUpdates returns empty. Detect it and no-op
+    # so this stays an intentional skip rather than a mysterious silent drain.
     try:
         info = telegram.get_webhook_info()
-        url = info.get("url") or "(no webhook)"
+        url = info.get("url") or ""
         last_err = info.get("last_error_message") or ""
         log.info("webhook status: url=%s pending=%s last_error=%s",
-                 url, info.get("pending_update_count"), last_err)
+                 url or "(no webhook)", info.get("pending_update_count"), last_err)
+        if url:
+            log.info("callbacks handled by webhook %s — skipping getUpdates drain", url)
+            return counts
     except Exception as e:  # noqa: BLE001
         log.warning("getWebhookInfo failed: %s", e)
     log.info("drain start: offset=%d", offset)
@@ -61,26 +65,38 @@ def drain(conn: sqlite3.Connection) -> dict[str, int]:
         if not cq:
             counts["unknown"] += 1
             continue
-        data = cq.get("data") or ""
-        cq_id = cq.get("id")
-        if data.startswith(SKIP_PREFIX):
-            fp = data[len(SKIP_PREFIX):]
-            _mark_skipped(conn, fp)
-            counts["skipped"] += 1
-            _ack(cq_id, "🙈 Hidden from future digests")
-        elif data.startswith(FAV_PREFIX):
-            fp = data[len(FAV_PREFIX):]
-            _mark_favorited(conn, fp)
-            counts["favorited"] += 1
-            ack_text = _forward_to_favorites(cq)
-            _ack(cq_id, ack_text)
-        else:
-            counts["unknown"] += 1
-            _ack(cq_id, "Unknown action")
+        handle_callback_query(conn, cq, counts)
 
     _write_offset(conn, max_update_id + 1)
     log.info("callbacks drained: %s", counts)
     return counts
+
+
+def handle_callback_query(
+    conn: sqlite3.Connection, cq: dict[str, Any], counts: dict[str, int],
+) -> None:
+    """Apply one Telegram callback_query (🙈 Skip / ⭐ Favorite), updating
+    `counts` in place and sending the toast ack.
+
+    Shared by the CI getUpdates drain and the VM webhook server, so a click
+    has identical effect whichever path delivered it.
+    """
+    data = cq.get("data") or ""
+    cq_id = cq.get("id")
+    if data.startswith(SKIP_PREFIX):
+        fp = data[len(SKIP_PREFIX):]
+        _mark_skipped(conn, fp)
+        counts["skipped"] = counts.get("skipped", 0) + 1
+        _ack(cq_id, "🙈 Hidden from future digests")
+    elif data.startswith(FAV_PREFIX):
+        fp = data[len(FAV_PREFIX):]
+        _mark_favorited(conn, fp)
+        counts["favorited"] = counts.get("favorited", 0) + 1
+        ack_text = _forward_to_favorites(cq)
+        _ack(cq_id, ack_text)
+    else:
+        counts["unknown"] = counts.get("unknown", 0) + 1
+        _ack(cq_id, "Unknown action")
 
 
 def skipped_keys(conn: sqlite3.Connection) -> set[str]:

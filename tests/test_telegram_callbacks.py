@@ -23,6 +23,26 @@ def test_drain_no_updates_returns_zero(conn):
     assert counts == {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
 
 
+def test_drain_noops_when_webhook_is_set(conn):
+    # When the VM webhook owns callbacks, drain must skip getUpdates entirely.
+    with patch("src.telegram_callbacks.telegram.get_webhook_info",
+               return_value={"url": "https://x.trycloudflare.com/tg/s"}), \
+         patch("src.telegram_callbacks.telegram.get_updates") as get_mock:
+        counts = telegram_callbacks.drain(conn)
+    get_mock.assert_not_called()
+    assert counts == {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
+
+
+def test_handle_callback_query_dispatches_skip(conn):
+    counts = {"fetched": 0, "skipped": 0, "favorited": 0, "unknown": 0}
+    with patch("src.telegram_callbacks.telegram.answer_callback_query"):
+        telegram_callbacks.handle_callback_query(
+            conn, {"id": "c1", "data": "skip:4zida:zzz"}, counts,
+        )
+    assert counts["skipped"] == 1
+    assert list(conn.execute("SELECT fingerprint_key FROM skipped")) == [("4zida:zzz",)]
+
+
 def test_drain_records_skip_click_and_acks(conn):
     update = {
         "update_id": 42,

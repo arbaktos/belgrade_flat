@@ -1,0 +1,4 @@
+# VM webhook service deps — installed ON TOP of the project's requirements.txt.
+# Keep this separate so the CI scraper image doesn't pull a web framework.
+fastapi==0.115.5
+uvicorn[standard]==0.32.1

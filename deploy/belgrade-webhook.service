@@ -1,0 +1,30 @@
+[Unit]
+Description=Belgrade flat notifier — real-time Telegram callback webhook
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=belgrade
+Group=belgrade
+WorkingDirectory=/home/belgrade/belgrade_flat
+# Secrets + config: TELEGRAM_BOT_TOKEN, WEBHOOK_PATH_SECRET,
+# WEBHOOK_SECRET_TOKEN, R2_* (chmod 600, owned by belgrade).
+EnvironmentFile=/etc/belgrade-webhook.env
+ExecStart=/usr/bin/env bash vm/bootstrap.sh
+Restart=always
+RestartSec=5
+# Give cloudflared + uvicorn time to come up before counting a start as failed.
+TimeoutStartSec=90
+StandardOutput=journal
+StandardError=journal
+
+# Light hardening — the service only needs its workdir, /tmp, and outbound net.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/belgrade/belgrade_flat
+
+[Install]
+WantedBy=multi-user.target
