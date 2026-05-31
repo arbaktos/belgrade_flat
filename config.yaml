@@ -15,9 +15,24 @@ filters:
   max_lease_months: 12
   freshness_days: 7
   commute:
-    walk_min_max: 30
-    transit_min_max: 30
+    walk_min_max: 40          # office gating threshold (walking minutes)
     haversine_prefilter_km: 10
+    # Named walking destinations. Coords are resolved from env vars (kept in
+    # GitHub Secrets — never commit real locations to this public repo).
+    #   gates: true  → this destination's walk gates the commute filter
+    #   score_weight → contribution to digest ordering (walk closeness)
+    # office(0.45) + Sadik(0.25) + m²(0.10) + fresh(0.10) + lift(0.10) = 1.0
+    destinations:
+      - name: office
+        lat_env: OFFICE_LAT
+        lng_env: OFFICE_LNG
+        gates: true
+        score_weight: 0.45
+      - name: Sadik Enter
+        lat_env: SADIK_LAT
+        lng_env: SADIK_LNG
+        gates: false
+        score_weight: 0.25
 
 office:
   address: "Kneza Miloša 88A, Beograd, Serbia"

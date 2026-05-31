@@ -24,6 +24,7 @@ from urllib.parse import quote
 
 from src import telegram
 from src.winter_smog import format_digest_line
+from src.destinations import Destination
 from src.filter import FilterResult
 from src.models import Listing
 
@@ -49,8 +50,7 @@ def send(
     state_size_bytes: int,
     listings_tracked: int,
     digest_path: str,
-    office_lat: float,
-    office_lng: float,
+    destinations: list[Destination],
 ) -> None:
     """Send the full digest. Idempotent at the Telegram level — call once per run."""
     perfect = list(result.passed)[:MAX_PERFECT]
@@ -77,7 +77,7 @@ def send(
     for l in perfect:
         reason = (notify_reasons or {}).get(l.fingerprint_key)
         _send_listing(l, near_miss_reasons=None, notify_reason=reason,
-                      office_lat=office_lat, office_lng=office_lng)
+                      destinations=destinations)
 
     if perfect_overflow:
         telegram.send_message(f"(+{perfect_overflow} more matches — see {digest_path})",
@@ -85,7 +85,7 @@ def send(
 
     for l, reasons in near:
         _send_listing(l, near_miss_reasons=reasons, notify_reason=None,
-                      office_lat=office_lat, office_lng=office_lng)
+                      destinations=destinations)
 
     if near_overflow:
         telegram.send_message(f"(+{near_overflow} more near-misses — see {digest_path})",
@@ -97,8 +97,7 @@ def send_instant_push(
     *,
     fresh_near_misses: list[tuple[Listing, list[str]]] | None = None,
     notify_reasons: dict[str, str] | None,
-    office_lat: float,
-    office_lng: float,
+    destinations: list[Destination],
 ) -> None:
     """Push newly-discovered perfect matches and near-misses between digests.
 
@@ -127,10 +126,10 @@ def send_instant_push(
     for l in fresh_matches:
         reason = (notify_reasons or {}).get(l.fingerprint_key)
         _send_listing(l, near_miss_reasons=None, notify_reason=reason,
-                      office_lat=office_lat, office_lng=office_lng)
+                      destinations=destinations)
     for l, reasons in fresh_near_misses:
         _send_listing(l, near_miss_reasons=reasons, notify_reason=None,
-                      office_lat=office_lat, office_lng=office_lng)
+                      destinations=destinations)
 
 
 # ---------------------------------------------------------------------------
@@ -195,8 +194,7 @@ def _send_listing(
     *,
     near_miss_reasons: list[str] | None,
     notify_reason: str | None,
-    office_lat: float,
-    office_lng: float,
+    destinations: list[Destination],
 ) -> None:
     """Send one listing: photo caption (or text) with inline View / Hide buttons.
 
@@ -205,7 +203,7 @@ def _send_listing(
     """
     body = _render_body(
         l, near_miss_reasons=near_miss_reasons, notify_reason=notify_reason,
-        office_lat=office_lat, office_lng=office_lng,
+        destinations=destinations,
     )
     keyboard = _listing_keyboard(l)
 
@@ -252,14 +250,14 @@ def _render_body(
     *,
     near_miss_reasons: list[str] | None,
     notify_reason: str | None,
-    office_lat: float | None = None,
-    office_lng: float | None = None,
+    destinations: list[Destination] | None = None,
 ) -> str:
     """Listing details + LLM summary — fits in a 1024-byte caption.
 
-    When office coords are given, the address / walk / transit lines become
-    clickable links (Google Maps, walk directions, transit directions).
+    When destinations are given, the address line and each per-destination
+    walking line become clickable Google Maps links (map pin + walk directions).
     """
+    destinations = destinations or []
     head_emoji = "⚠️" if near_miss_reasons else "✅"
     notify_badge = " · 📉 price drop" if notify_reason == "price_drop" else ""
 
@@ -304,8 +302,8 @@ def _render_body(
     address_esc = html.escape(l.address or "?")
     red_flags_esc = html.escape(red_flags)
 
-    # Address + commute lines become clickable when we know the office location.
-    if office_lat is not None and office_lng is not None:
+    # Address + walking lines become clickable when destinations are known.
+    if destinations:
         addr_line = f'📍 <a href="{html.escape(_maps_link(l), quote=True)}">{address_esc}</a>'
     else:
         addr_line = f"📍 {address_esc}"
@@ -315,23 +313,18 @@ def _render_body(
         f"{head_emoji} €{l.price_eur:.0f}{notify_badge} · {l.rooms} rooms · {l.m2:.0f} m² · {place_esc}",
         addr_line,
     ]
-    if l.walk_min is not None:
-        text = f"🚶 {l.walk_min} min walk"
-        if office_lat is not None and office_lng is not None:
-            walk_url = _route_link(l, office_lat, office_lng, "walking")
-            text = f'<a href="{html.escape(walk_url, quote=True)}">{text}</a>'
+    any_walk = False
+    for d in destinations:
+        mins = l.commute.get(d.name)
+        if mins is None:
+            continue
+        any_walk = True
+        text = f"🚶 {mins} min to {html.escape(d.name)}"
+        walk_url = _route_link(l, d.lat, d.lng, "walking")
+        text = f'<a href="{html.escape(walk_url, quote=True)}">{text}</a>'
         lines.append(text)
-    if l.transit_min is not None:
-        transfers_str = ""
-        if l.transit_transfers is not None:
-            transfers_str = " (direct)" if l.transit_transfers == 0 else f" ({l.transit_transfers} transfer{'s' if l.transit_transfers != 1 else ''})"
-        text = f"🚌 {l.transit_min} min transit{transfers_str}"
-        if office_lat is not None and office_lng is not None:
-            transit_url = _route_link(l, office_lat, office_lng, "transit")
-            text = f'<a href="{html.escape(transit_url, quote=True)}">{text}</a>'
-        lines.append(text)
-    if l.walk_min is None and l.transit_min is None:
-        lines.append("🚶 no commute data")
+    if destinations and not any_walk:
+        lines.append("🚶 no walking data")
     for fact in (heat, pets, dish, lift, floor_str):
         if fact:
             lines.append(html.escape(fact))
@@ -414,14 +407,14 @@ def _maps_link(l: Listing) -> str:
     return f"https://www.google.com/maps?q={q}"
 
 
-def _route_link(l: Listing, office_lat: float, office_lng: float, mode: str) -> str:
+def _route_link(l: Listing, dest_lat: float, dest_lng: float, mode: str) -> str:
     if l.lat is not None and l.lng is not None:
         origin = f"{l.lat},{l.lng}"
     else:
         origin = quote(_short_address_for_url(l))
     return (
         "https://www.google.com/maps/dir/?api=1"
-        f"&origin={origin}&destination={office_lat},{office_lng}&travelmode={mode}"
+        f"&origin={origin}&destination={dest_lat},{dest_lng}&travelmode={mode}"
     )
 
 

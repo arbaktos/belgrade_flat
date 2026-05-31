@@ -1,16 +1,18 @@
-"""Commute filter (spec §4).
+"""Commute filter (spec §4) — walking-only, multi-destination.
 
-Given a listing and the office anchor (`OFFICE_LAT`, `OFFICE_LNG`), compute
-walk and transit time from the listing to the office via Google Directions
-API. Returns the minutes, or None if Google couldn't find a route.
+Given a listing and a named destination (see src/destinations.py), compute the
+walking time from the listing to that destination via the Google Routes API.
+Returns the minutes, or None if Google couldn't find a walking route. Transit
+was removed 2026-05-31; the model is now "minutes on foot to each destination".
 
-Cost control per spec:
-- A 10 km Haversine pre-filter discards listings clearly too far for a 30 min
-  walk before hitting the API.
+Cost control:
+- A 10 km Haversine pre-filter discards listings clearly too far for a walk
+  before hitting the API.
 - Results are cached in SQLite for 90 days, keyed by a 3-decimal lat/lng
-  bucket (~110 m grid) so listings in the same building share the cache.
+  bucket (~110 m grid) PLUS the destination name, so each (building, dest)
+  pair caches once and listings in the same building share it.
 - Listings without coordinates fall back to address-string lookup (Google
-  geocodes internally); cache key is then "addr:<sha1-of-address>".
+  geocodes internally); cache key is then "addr:<sha1-of-address>@<dest>".
 - Caller is responsible for choosing when to call this (after LLM filters
   pass) so we never spend an API call on a listing already rejected.
 """
@@ -27,6 +29,7 @@ from typing import Any
 
 import httpx
 
+from src.destinations import Destination
 from src.models import Listing
 
 log = logging.getLogger(__name__)
@@ -40,8 +43,6 @@ BUCKET_DECIMALS = 3
 @dataclass
 class CommuteResult:
     walk_min: int | None
-    transit_min: int | None
-    transit_transfers: int | None
     source: str   # "cache", "api", "haversine_skipped"
 
 
@@ -55,85 +56,81 @@ def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return r * 2 * math.asin(math.sqrt(a))
 
 
-def bucket_key(listing: Listing) -> str:
-    """Stable cache key — building-grid bucket for coords, hashed address otherwise."""
+def bucket_key(listing: Listing, destination: str) -> str:
+    """Stable per-(location, destination) cache key.
+
+    Building-grid bucket for coords, hashed address otherwise, suffixed with
+    the destination name so walking times to different destinations don't
+    collide in the cache.
+    """
     if listing.lat is not None and listing.lng is not None:
-        return f"{round(listing.lat, BUCKET_DECIMALS)},{round(listing.lng, BUCKET_DECIMALS)}"
-    parts = [listing.address or "", *(listing.place_names or [])]
-    addr = " ".join(p for p in parts if p).lower().strip()
-    if not addr:
-        return f"id:{listing.fingerprint_key}"     # fallback — won't share cache, but cheap to compute
-    return "addr:" + hashlib.sha1(addr.encode()).hexdigest()[:16]
+        geo = f"{round(listing.lat, BUCKET_DECIMALS)},{round(listing.lng, BUCKET_DECIMALS)}"
+    else:
+        parts = [listing.address or "", *(listing.place_names or [])]
+        addr = " ".join(p for p in parts if p).lower().strip()
+        geo = ("addr:" + hashlib.sha1(addr.encode()).hexdigest()[:16]) if addr else f"id:{listing.fingerprint_key}"
+    return f"{geo}@{destination}"
 
 
 def get_cached(conn: sqlite3.Connection, key: str) -> CommuteResult | None:
     cutoff = (datetime.utcnow() - timedelta(days=CACHE_TTL_DAYS)).isoformat(" ", "seconds")
     row = conn.execute(
-        "SELECT walk_min, transit_min, transit_transfers FROM commute_cache "
-        "WHERE bucket_key=? AND fetched_at > ?",
+        "SELECT walk_min FROM commute_cache WHERE bucket_key=? AND fetched_at > ?",
         (key, cutoff),
     ).fetchone()
     if row is None:
         return None
-    return CommuteResult(walk_min=row[0], transit_min=row[1], transit_transfers=row[2], source="cache")
+    return CommuteResult(walk_min=row[0], source="cache")
 
 
-def put_cached(
-    conn: sqlite3.Connection, key: str,
-    walk_min: int | None, transit_min: int | None, transit_transfers: int | None,
-) -> None:
+def put_cached(conn: sqlite3.Connection, key: str, walk_min: int | None) -> None:
     conn.execute(
-        "INSERT INTO commute_cache (bucket_key, walk_min, transit_min, transit_transfers, fetched_at) "
-        "VALUES (?, ?, ?, ?, datetime('now')) "
+        "INSERT INTO commute_cache (bucket_key, walk_min, fetched_at) "
+        "VALUES (?, ?, datetime('now')) "
         "ON CONFLICT(bucket_key) DO UPDATE SET "
-        "walk_min=excluded.walk_min, transit_min=excluded.transit_min, "
-        "transit_transfers=excluded.transit_transfers, fetched_at=excluded.fetched_at",
-        (key, walk_min, transit_min, transit_transfers),
+        "walk_min=excluded.walk_min, fetched_at=excluded.fetched_at",
+        (key, walk_min),
     )
     conn.commit()
 
 
-def compute_commute(
+def compute_walk(
     listing: Listing,
+    destination: Destination,
     *,
-    office_lat: float,
-    office_lng: float,
     conn: sqlite3.Connection,
     api_key: str | None = None,
     client: httpx.Client | None = None,
 ) -> CommuteResult:
-    """Compute (or recall) walk + transit minutes from listing to office.
+    """Compute (or recall) walking minutes from listing to one destination.
 
-    Returns a CommuteResult with walk_min/transit_min in minutes, both possibly
-    None if Google returned no route. `source` tells whether we hit the API or
-    the cache (or skipped due to haversine pre-filter).
+    Returns a CommuteResult whose walk_min is the minutes on foot (None if
+    Google found no walking route, or the haversine pre-filter skipped it).
+    `source` tells whether we hit the API, the cache, or the pre-filter.
     """
-    key = bucket_key(listing)
+    key = bucket_key(listing, destination.name)
     cached = get_cached(conn, key)
     if cached is not None:
         return cached
 
     # Haversine pre-filter — only useful when we have coords.
     if listing.lat is not None and listing.lng is not None:
-        d_km = haversine_km(listing.lat, listing.lng, office_lat, office_lng)
+        d_km = haversine_km(listing.lat, listing.lng, destination.lat, destination.lng)
         if d_km > HAVERSINE_KM_MAX:
-            log.info("commute %s: haversine=%.1fkm > %skm — skipping Directions",
-                     listing.fingerprint_key, d_km, HAVERSINE_KM_MAX)
-            result = CommuteResult(walk_min=None, transit_min=None, transit_transfers=None,
-                                   source="haversine_skipped")
-            put_cached(conn, key, None, None, None)
-            return result
+            log.info("commute %s→%s: haversine=%.1fkm > %skm — skipping Routes",
+                     listing.fingerprint_key, destination.name, d_km, HAVERSINE_KM_MAX)
+            put_cached(conn, key, None)
+            return CommuteResult(walk_min=None, source="haversine_skipped")
 
     api_key = api_key or os.environ["GOOGLE_DIRECTIONS_API_KEY"]
     own_client = client is None
     client = client or httpx.Client(timeout=15.0)
     try:
         origin_payload = _waypoint(listing.lat, listing.lng, _address_string(listing))
-        destination_payload = _waypoint(office_lat, office_lng, None)
+        destination_payload = _waypoint(destination.lat, destination.lng, None)
         walk, _ = _query(client, origin_payload, destination_payload, "WALK", api_key)
-        transit, transfers = _query(client, origin_payload, destination_payload, "TRANSIT", api_key)
-        put_cached(conn, key, walk, transit, transfers)
-        return CommuteResult(walk_min=walk, transit_min=transit, transit_transfers=transfers, source="api")
+        put_cached(conn, key, walk)
+        return CommuteResult(walk_min=walk, source="api")
     finally:
         if own_client:
             client.close()
@@ -157,11 +154,11 @@ class DirectionsConfigError(RuntimeError):
 
 def _query(
     client: httpx.Client, origin: dict, destination: dict, travel_mode: str, api_key: str,
-) -> tuple[int | None, int | None]:
-    """One Routes API call. Returns (minutes, transit_transfers_or_None).
+) -> tuple[int | None, None]:
+    """One Routes API call. Returns (minutes, None).
 
-    For WALK, the transfers value is always None. For TRANSIT, we request
-    FEWER_TRANSFERS routing and count transit-mode legs to derive transfer count.
+    The second tuple element is always None — kept so existing callers that
+    unpack `walk, _ = _query(...)` stay valid after transit removal.
 
     Raises DirectionsConfigError on 401/403/429 — config or quota problems
     that don't get better by retrying within this run.
@@ -172,16 +169,10 @@ def _query(
         "travelMode": travel_mode,
         "computeAlternativeRoutes": False,
     }
-    field_mask = "routes.duration,routes.distanceMeters"
-    if travel_mode == "TRANSIT":
-        body["transitPreferences"] = {"routingPreference": "FEWER_TRANSFERS"}
-        # Steps required so we can count transfers (transit-mode steps - 1).
-        field_mask += ",routes.legs.steps.travelMode"
-
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": field_mask,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters",
     }
     r = client.post(ROUTES_URL, json=body, headers=headers)
     if r.status_code in {401, 403}:
@@ -203,22 +194,7 @@ def _query(
         seconds = int(str(duration_raw).rstrip("s"))
     except ValueError:
         return None, None
-    minutes = int(round(seconds / 60))
-
-    transfers = _count_transit_transfers(routes[0]) if travel_mode == "TRANSIT" else None
-    return minutes, transfers
-
-
-def _count_transit_transfers(route: dict) -> int | None:
-    """Count vehicle changes — number of transit-mode steps minus 1."""
-    transit_steps = 0
-    for leg in route.get("legs") or []:
-        for step in leg.get("steps") or []:
-            if step.get("travelMode") == "TRANSIT":
-                transit_steps += 1
-    if transit_steps == 0:
-        return None  # walking-only fallback; no meaningful transfer count
-    return transit_steps - 1
+    return int(round(seconds / 60)), None
 
 
 def _error_message(response) -> str:
@@ -229,15 +205,14 @@ def _error_message(response) -> str:
 
 
 def monthly_api_count(conn: sqlite3.Connection) -> int:
-    """Approximate # of API calls this calendar month — counts non-cache cache writes.
+    """Approximate # of API calls this calendar month.
 
-    Returns rows in commute_cache fetched this month, doubled (we make 2 API
-    calls per listing: walking + transit). Approximate; good enough for the
-    digest's quota line.
+    One WALK call per (location, destination) cache row written this month.
+    Approximate; good enough for the digest's quota line.
     """
     first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     row = conn.execute(
         "SELECT COUNT(*) FROM commute_cache WHERE fetched_at >= ?",
         (first_of_month.isoformat(" ", "seconds"),),
     ).fetchone()
-    return (row[0] or 0) * 2
+    return row[0] or 0

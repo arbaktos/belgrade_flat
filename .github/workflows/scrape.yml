@@ -49,6 +49,8 @@ jobs:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       OFFICE_LAT: ${{ secrets.OFFICE_LAT }}
       OFFICE_LNG: ${{ secrets.OFFICE_LNG }}
+      SADIK_LAT: ${{ secrets.SADIK_LAT }}
+      SADIK_LNG: ${{ secrets.SADIK_LNG }}
       GITHUB_EVENT_SCHEDULE: ${{ github.event.schedule }}
 
     steps:

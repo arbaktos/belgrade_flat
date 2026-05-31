@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import dedup, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_channel_pipeline, telegram_digest, winter_smog
+from src import dedup, destinations as dests_mod, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_channel_pipeline, telegram_digest, winter_smog
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -135,45 +135,48 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
     log.info("LLM filter: %d passed, %d near-miss, %d rejected",
              len(llm_filtered.passed), len(llm_filtered.near_misses), len(llm_filtered.rejected))
 
-    # Stage 4: commute filter. Compute walk+transit minutes for both passed and
-    # near-miss candidates (so even near-misses get the commute info surfaced),
-    # then hard-filter the matches by walk≤30m OR transit≤30m.
+    # Stage 4: commute filter. Compute walking minutes to each named destination
+    # for both passed and near-miss candidates (so even near-misses surface the
+    # info), then hard-filter the matches on the gating destination(s) — office
+    # must be within walk_min_max minutes on foot.
+    destinations = dests_mod.load(cfg)
+    gating_names = [d.name for d in dests_mod.gating(destinations)]
     candidates_for_commute = llm_filtered.passed + [l for l, _ in llm_filtered.near_misses]
     if candidates_for_commute:
         winter_smog.enrich_many(candidates_for_commute, conn)
 
     commute_rejected: list[tuple[Listing, str]] = []
     commute_config_error: str | None = None
-    if "GOOGLE_DIRECTIONS_API_KEY" in os.environ and candidates_for_commute:
-        office_lat = float(os.environ["OFFICE_LAT"])
-        office_lng = float(os.environ["OFFICE_LNG"])
-        log.info("computing commute for %d candidates", len(candidates_for_commute))
+    if "GOOGLE_DIRECTIONS_API_KEY" in os.environ and candidates_for_commute and destinations:
+        log.info("computing walking time for %d candidates × %d destinations",
+                 len(candidates_for_commute), len(destinations))
         for l in candidates_for_commute:
-            try:
-                r = route.compute_commute(
-                    l, office_lat=office_lat, office_lng=office_lng, conn=conn
-                )
-                l.walk_min = r.walk_min
-                l.transit_min = r.transit_min
-                l.transit_transfers = r.transit_transfers
-            except route.DirectionsConfigError as e:
-                # Config failure (REQUEST_DENIED / OVER_QUERY_LIMIT) won't get better
-                # by retrying — stop calling the API for the rest of this run.
-                log.error("commute aborted — Directions config error: %s", e)
-                commute_config_error = str(e)
+            for d in destinations:
+                try:
+                    r = route.compute_walk(l, d, conn=conn)
+                    l.commute[d.name] = r.walk_min
+                except route.DirectionsConfigError as e:
+                    # Config failure (REQUEST_DENIED / OVER_QUERY_LIMIT) won't get
+                    # better by retrying — stop calling the API for this run.
+                    log.error("commute aborted — Directions config error: %s", e)
+                    commute_config_error = str(e)
+                    break
+                except Exception as e:  # noqa: BLE001
+                    log.warning("commute failed for %s→%s: %s", l.fingerprint_key, d.name, e)
+            if commute_config_error:
                 break
-            except Exception as e:  # noqa: BLE001
-                log.warning("commute failed for %s: %s", l.fingerprint_key, e)
 
         if commute_config_error:
             log.warning("Skipping commute filter due to API config error; matches keep LLM-pass status")
             matched = llm_filtered.passed
-        else:
-            commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj)
+        elif gating_names:
+            commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj, gating_names=gating_names)
             commute_rejected = commute_passed.rejected
             matched = commute_passed.passed
+        else:
+            matched = llm_filtered.passed
     else:
-        log.warning("Skipping commute filter (no API key or no candidates)")
+        log.warning("Skipping commute filter (no API key, no candidates, or no destinations)")
         matched = llm_filtered.passed
 
     # Stage 5: dedup — cross-portal duplicates. Compute pHash for matches +
@@ -202,13 +205,13 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
 
     # Composite score ordering: highest score first (best commute / cheapest / biggest / freshest).
     matched = score.rank_descending(
-        matched, price_cap_eur=cfg_obj.price_eur_max, freshness_days=cfg_obj.freshness_days
+        matched, destinations=destinations, freshness_days=cfg_obj.freshness_days
     )
     # Near-misses also get sorted so the top 5 shown in Telegram are the best
     # of the bunch, not the first to be scraped.
     near_listings = [l for l, _ in llm_filtered.near_misses]
     near_listings = score.rank_descending(
-        near_listings, price_cap_eur=cfg_obj.price_eur_max, freshness_days=cfg_obj.freshness_days
+        near_listings, destinations=destinations, freshness_days=cfg_obj.freshness_days
     )
     reasons_by_key = {l.fingerprint_key: r for l, r in llm_filtered.near_misses}
     llm_filtered = filt.FilterResult(
@@ -238,8 +241,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
     log.info("digest written to %s", path)
 
     stats_after = state.stats(conn)
-    office_lat = float(os.environ.get("OFFICE_LAT", 0))
-    office_lng = float(os.environ.get("OFFICE_LNG", 0))
+    office = next((d for d in destinations if d.gates), None)
     try:
         if mode == "instant":
             # Surface source errors here — instant-push has no digest header,
@@ -257,16 +259,16 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             fresh = [l for l in matched if l.fingerprint_key not in previously_notified]
 
             # Near-misses also get instant-pushed, gated on the same commute
-            # requirement as matches (walk≤30m OR transit≤30m) so we don't
+            # requirement as matches (office ≤ walk_min_max on foot) so we don't
             # spam listings that fail the non-negotiable axis. If the Routes
-            # API errored out this run, we surface near-misses ungated —
-            # matching the digest's degradation behaviour above.
+            # API errored out this run (or there are no gating destinations), we
+            # surface near-misses ungated — matching the digest's degradation.
             near_with_reasons = llm_filtered.near_misses
-            if commute_config_error:
+            if commute_config_error or not gating_names:
                 commute_ok_keys = {l.fingerprint_key for l, _ in near_with_reasons}
             else:
                 near_commute = filt.apply_commute(
-                    [l for l, _ in near_with_reasons], cfg_obj,
+                    [l for l, _ in near_with_reasons], cfg_obj, gating_names=gating_names,
                 )
                 commute_ok_keys = {l.fingerprint_key for l in near_commute.passed}
             fresh_near = [
@@ -284,8 +286,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
                 fresh,
                 fresh_near_misses=fresh_near,
                 notify_reasons=notify_reasons,
-                office_lat=office_lat,
-                office_lng=office_lng,
+                destinations=destinations,
             )
 
             # Matches were stamped notified inside the dedup stage; near-misses
@@ -306,8 +307,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
                 state_size_bytes=stats_after["size_bytes"],
                 listings_tracked=stats_after["listings_tracked"],
                 digest_path=f"digests/{today.strftime('%Y-%m-%d')}.md",
-                office_lat=office_lat,
-                office_lng=office_lng,
+                destinations=destinations,
             )
     except Exception as e:  # noqa: BLE001 - delivery failure shouldn't lose state
         log.error("telegram delivery failed (mode=%s): %s", mode, e, exc_info=True)
@@ -327,8 +327,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
                 conn,
                 m2_min=float(ch_cfg.get("m2_min", telegram_channel_pipeline.DEFAULT_M2_MIN)),
                 require_hashtag=ch_cfg.get("require_hashtag"),
-                office_lat=office_lat or None,
-                office_lng=office_lng or None,
+                office=office,
             )
         except Exception as e:  # noqa: BLE001
             log.error("telegram-channel pipeline (%s) crashed: %s", ch_name, e, exc_info=True)

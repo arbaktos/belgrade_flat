@@ -4,15 +4,18 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 from src import telegram_digest
+from src.destinations import Destination
 from src.filter import FilterResult
 from src.models import Extraction, Listing, WinterSmog
 
 
-OFFICE_LAT = 44.806
-OFFICE_LNG = 20.460
+OFFICE = Destination(name="office", lat=44.806, lng=20.460, gates=True, score_weight=0.45)
+SADIK = Destination(name="Sadik Enter", lat=44.807, lng=20.464, gates=False, score_weight=0.25)
+DESTS = [OFFICE, SADIK]
 
 
 def _l(**over) -> Listing:
+    commute = over.pop("commute", {"office": 18, "Sadik Enter": 26})
     base = dict(
         id="x", source="4zida", url="https://www.4zida.rs/abc",
         price_eur=890, m2=62, rooms=2.0,
@@ -23,7 +26,7 @@ def _l(**over) -> Listing:
         image_url="https://example.com/p.jpg",
         is_agency=True,
         created_at=datetime.now(timezone.utc),
-        walk_min=18, transit_min=22, lat=44.80, lng=20.47,
+        commute=commute, lat=44.80, lng=20.47,
         extraction=Extraction(summary_en="Two-bedroom flat in Vračar.", pets_allowed="yes",
                               heating_type_confirmed="centralno"),
     )
@@ -60,13 +63,14 @@ def test_render_body_omits_smog_warning_line():
 def test_render_body_includes_listing_facts_and_summary():
     listing = _l()
     body = telegram_digest._render_body(
-        listing, near_miss_reasons=None, notify_reason=None,
+        listing, near_miss_reasons=None, notify_reason=None, destinations=DESTS,
     )
     assert "€890" in body
     assert "Vračar" in body
     assert "Krunska 35" in body
-    assert "18 min walk" in body
-    assert "22 min transit" in body
+    assert "18 min to office" in body
+    assert "26 min to Sadik Enter" in body
+    assert "transit" not in body          # transit removed entirely
     assert "centralno" in body
     assert "🐾 pets OK" in body
     assert "Two-bedroom flat" in body                       # LLM summary
@@ -91,7 +95,7 @@ def test_send_listing_text_fallback_has_keyboard_no_link_line():
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
             listing, near_miss_reasons=None, notify_reason=None,
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     photo_mock.assert_not_called()
     msg_mock.assert_called_once()
@@ -106,7 +110,7 @@ def test_send_listing_puts_keyboard_on_photo_not_followup():
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
             listing, near_miss_reasons=None, notify_reason=None,
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     photo_mock.assert_called_once()
     assert photo_mock.call_args.kwargs["reply_markup"] is not None
@@ -124,7 +128,7 @@ def test_send_listing_sends_translation_followup_after_photo():
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
             listing, near_miss_reasons=None, notify_reason=None,
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     photo_mock.assert_called_once()
     msg_mock.assert_called_once()
@@ -143,7 +147,7 @@ def test_send_listing_skips_translation_when_no_description_en():
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
             listing, near_miss_reasons=None, notify_reason=None,
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     photo_mock.assert_called_once()
     msg_mock.assert_not_called()
@@ -158,7 +162,7 @@ def test_send_listing_translation_after_text_fallback():
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
             listing, near_miss_reasons=None, notify_reason=None,
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     photo_mock.assert_not_called()
     # First call = card (text fallback), second call = translation follow-up.
@@ -181,7 +185,7 @@ def test_send_listing_clips_overlong_translation():
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
             listing, near_miss_reasons=None, notify_reason=None,
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     followup = msg_mock.call_args.args[0]
     # Telegram sendMessage hard limit is 4096; we leave headroom for the <i> wrapper.
@@ -189,19 +193,30 @@ def test_send_listing_clips_overlong_translation():
     assert followup.endswith("…</i>")
 
 
-def test_render_body_links_address_walk_transit_when_office_given():
+def test_render_body_links_address_and_walk_per_destination():
     body = telegram_digest._render_body(
         _l(), near_miss_reasons=None, notify_reason=None,
-        office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+        destinations=DESTS,
     )
     # Address text wrapped in <a href> to Maps
     assert "google.com/maps?q=44.8,20.47" in body
-    # Walk minutes are now a link to walking directions
+    # Each destination gets a walking-directions link to its own coords
     assert "travelmode=walking" in body
-    assert "18 min walk" in body
-    # Transit minutes link too
-    assert "travelmode=transit" in body
-    assert "22 min transit" in body
+    assert "18 min to office" in body
+    assert "26 min to Sadik Enter" in body
+    assert "destination=44.806,20.46" in body       # office coords
+    assert "destination=44.807,20.464" in body      # Sadik coords
+    # Transit is gone.
+    assert "travelmode=transit" not in body
+
+
+def test_render_body_walk_line_shows_none_destinations_gracefully():
+    # A gating destination with no route shows the fallback, not a crash.
+    body = telegram_digest._render_body(
+        _l(commute={"office": None, "Sadik Enter": None}),
+        near_miss_reasons=None, notify_reason=None, destinations=DESTS,
+    )
+    assert "no walking data" in body
 
 
 def test_render_body_near_miss_marks_unconfirmed():
@@ -259,7 +274,7 @@ def test_empty_day_sends_all_systems_green():
             commute_config_error=None,
             state_size_bytes=1024, listings_tracked=0,
             digest_path="digests/2026-05-16.md",
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     assert any("Nothing new today" in t for t in sent_texts)
     photo_mock.assert_not_called()
@@ -280,7 +295,7 @@ def test_overflow_line_when_too_many_matches():
             commute_config_error=None,
             state_size_bytes=1024, listings_tracked=12,
             digest_path="digests/2026-05-16.md",
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     assert len(sent_photos) == telegram_digest.MAX_PERFECT
     assert any("+2 more matches" in t for t in sent_texts)
@@ -293,7 +308,7 @@ def test_instant_push_is_silent_when_no_fresh_matches():
          patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
         telegram_digest.send_instant_push(
             [], notify_reasons={},
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     assert sent_texts == [] and sent_photos == []
 
@@ -306,7 +321,7 @@ def test_instant_push_sends_header_then_one_card_per_fresh_match():
          patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
         telegram_digest.send_instant_push(
             fresh, notify_reasons={},
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     # Exactly one header text, plus one photo card per listing.
     assert len(sent_texts) == 1
@@ -323,7 +338,7 @@ def test_instant_push_sends_near_misses_with_header_split():
          patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
         telegram_digest.send_instant_push(
             matches, fresh_near_misses=near, notify_reasons={},
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     assert len(sent_texts) == 1
     header = sent_texts[0]
@@ -341,7 +356,7 @@ def test_instant_push_sends_only_near_misses_when_no_matches():
          patch("src.telegram_digest.telegram.send_photo", side_effect=lambda url, **_: sent_photos.append(url)):
         telegram_digest.send_instant_push(
             [], fresh_near_misses=near, notify_reasons={},
-            office_lat=OFFICE_LAT, office_lng=OFFICE_LNG,
+            destinations=DESTS,
         )
     assert len(sent_texts) == 1
     header = sent_texts[0]

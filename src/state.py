@@ -12,7 +12,7 @@ from src.models import Extraction, Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 13
 
 
 def _rclone_env() -> dict[str, str]:
@@ -107,6 +107,14 @@ def ensure_schema() -> sqlite3.Connection:
         log.info("state: dropping commute_cache to recompute with FEWER_TRANSFERS preference")
         conn.execute("DROP TABLE IF EXISTS commute_cache")
 
+    # v13 drops transit entirely: commute is now walking-only, per named
+    # destination. bucket_key gains a "@<destination>" suffix so each
+    # (location, destination) pair caches separately. Drop the old table so the
+    # transit columns disappear and walk re-queries repopulate per destination.
+    if prev is not None and int(prev[0]) < 13:
+        log.info("state: dropping commute_cache for walking-only per-destination schema (v13)")
+        conn.execute("DROP TABLE IF EXISTS commute_cache")
+
     # v8 adds the skipped table (user-clicked 'hide this listing forever').
     # v9 adds geocode_cache for Nominatim results (winter smog enrichment).
     conn.execute(
@@ -123,11 +131,9 @@ def ensure_schema() -> sqlite3.Connection:
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS commute_cache (
-            bucket_key        TEXT PRIMARY KEY,    -- "lat,lng" 3-decimal bucket OR "addr:<hash>"
-            walk_min          INTEGER,              -- null = "Google said no route"
-            transit_min       INTEGER,
-            transit_transfers INTEGER,              -- null = direct (no transit) or unknown
-            fetched_at        TEXT NOT NULL DEFAULT (datetime('now'))
+            bucket_key  TEXT PRIMARY KEY,    -- "<lat,lng bucket OR addr:hash>@<destination>"
+            walk_min    INTEGER,             -- null = "Google said no walking route"
+            fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
         )
         """
     )

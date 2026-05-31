@@ -22,9 +22,9 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 5. structural pre-filter (cheap)  →  src/filter.apply()           (price / rooms / m² / floor / elevator / freshness)
 6. LLM extract on survivors       →  src/extract.py               (Claude Haiku 4.5, tool-use, cached system prompt)
 7. LLM-aware filter               →  src/filter.apply_with_extraction()  (pets / dishwasher / heating / max-lease)
-8. commute filter                 →  src/route.py + src/filter.apply_commute()  (Google Routes API + Haversine 10 km pre-filter + 90-day SQLite cache)
+8. walking-distance filter        →  src/route.py + src/filter.apply_commute()  (Google Routes WALK to each destination + Haversine 10 km pre-filter + 90-day SQLite cache; office gates ≤40 min, Sadik Enter info-only)
 9. dedup + cluster matches        →  src/dedup.py                 (image pHash workhorse + coord/m²/price + title trigram)
-10. composite-score order         →  src/score.py                 (walk 0.45 + transit 0.25 + m² 0.10 + freshness 0.10 + elevator 0.10; price not scored)
+10. composite-score order         →  src/score.py                 (office-walk 0.45 + Sadik-walk 0.25 + m² 0.10 + freshness 0.10 + elevator 0.10; price not scored)
 11. write markdown digest         →  src/digest.py + git commit to digests/YYYY-MM-DD.md
 12. send Telegram digest          →  src/telegram_digest.py       (header + photo+caption per listing + follow-up link line + 🙈 Hide button)
 13. push state to R2              →  src/state.push()
@@ -72,7 +72,8 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Dishwasher | hard requirement | soft preference (annotated in digest) | Serbian listings rarely mention `mašina za sudove` even when present; hard reject lost ~50/51 candidates |
 | Ground floor | reject (`not ground`) | allowed | User explicitly opted in; relaxes the candidate pool |
 | Elevator on floor 0 | required | waived | No lift needed when you're on the ground floor |
-| Score weights | 0.4 price / 0.3 commute / 0.2 m² / 0.1 freshness | 0.45 walk / 0.25 transit / 0.10 m² / 0.10 freshness / 0.10 elevator; price not scored (hard cap €1100) | User: "anything ≤ €1100 is OK, walk and transit are most important" |
+| Score weights | 0.4 price / 0.3 commute / 0.2 m² / 0.1 freshness | 0.45 office-walk / 0.25 Sadik-walk / 0.10 m² / 0.10 freshness / 0.10 elevator; price not scored (hard cap €1100) | User: "anything ≤ €1100 is OK, walking closeness to the places that matter is what ranks" |
+| Commute model | walk OR transit ≤ 30 min to office | **walking only**, multi-destination (2026-05-31). office gates ≤ **40** min on foot; Sadik Enter is info+score only, never filters. Transit dropped entirely. | User: "drop transport calculation, just walking distance. Office gates up to 40 min, Sadik is info only." Coords for both live in GitHub Secrets (OFFICE_LAT/LNG, SADIK_LAT/LNG); config lists names + env refs, never real locations. |
 | Elevator | hard requirement (waived on floor 0) | soft preference — 0.10 score bonus instead of reject | User: central pre-war buildings rarely have lifts; we'd rather see them and let the score rank lift-equipped ones higher |
 | Re-notify policy | suppress already-notified | always-surface mode (with 📌 seen-before badge) for now | Testing phase; flip `dedup.always_surface_matches: false` for production |
 | 🙈 Hide button | spec says interactive bot is non-goal | implemented as inline-keyboard callback | Better UX than implicit auto-suppression; user requested |
@@ -95,12 +96,12 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 |---|---|
 | `meta(key, value)` | Schema version, telegram_update_offset |
 | `listings(fingerprint_key, …, image_phash, notified_at, notified_price)` | Every listing we've seen, with timestamps and dedup hash |
-| `commute_cache(bucket_key, walk_min, transit_min, transit_transfers, fetched_at)` | 90-day TTL per spatial bucket (3-decimal lat/lng or addr hash) |
+| `commute_cache(bucket_key, walk_min, fetched_at)` | Walking minutes, 90-day TTL. `bucket_key` = "<3-decimal lat/lng or addr hash>@<destination>" so each (location, destination) pair caches separately. Transit columns dropped in v13. |
 | `skipped(fingerprint_key, skipped_at)` | User-clicked 🙈 Hide; suppresses listings before LLM/Routes |
 | `favorites(fingerprint_key, favorited_at)` | User-clicked ⭐ Favorite; card is also copied to `TELEGRAM_FAVORITES_CHAT_ID` when set |
 | `extraction_cache(fingerprint_key, payload, extracted_at)` | Cached LLM extraction (JSON) so each listing is sent to the LLM once across runs; a miss just re-extracts |
 
-Schema version is at **v12**. Migrations are forward-only and idempotent
+Schema version is at **v13**. Migrations are forward-only and idempotent
 (`ALTER TABLE` for adds, `DROP TABLE` for invalidations).
 
 ---
@@ -113,7 +114,8 @@ Schema version is at **v12**. Migrations are forward-only and idempotent
 - **Trigger**: `workflow_dispatch` only (manual). Cron entries (`30 4 * * *`, `0 */2 * * *`) currently emit heartbeat-only messages on schedule
 - **Secrets** (in GH Actions Secrets, never in repo):
   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `GOOGLE_DIRECTIONS_API_KEY`, `ANTHROPIC_API_KEY`,
-  `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`, `OFFICE_LAT`, `OFFICE_LNG`
+  `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`,
+  `OFFICE_LAT`, `OFFICE_LNG`, `SADIK_LAT`, `SADIK_LNG` (walking destinations)
   Optional: `TELEGRAM_FAVORITES_CHAT_ID` (destination for ⭐ Favorite forwards),
   `TELEGRAM_FAVORITES_THREAD_ID` (forum-topic id when the favorites destination is a topic),
   `LLM_PROVIDER` (`anthropic` = current; `gemini` swaps to gemini-2.5-flash via

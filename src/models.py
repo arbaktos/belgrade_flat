@@ -60,9 +60,10 @@ class Listing:
     dishwasher: bool | None = None       # only some sources expose this structurally; None = ask the LLM
     lat: float | None = None
     lng: float | None = None
-    walk_min: int | None = None          # populated by route.py after commute computation
-    transit_min: int | None = None
-    transit_transfers: int | None = None  # # of vehicle changes; 0 means direct
+    # Walking minutes to each named destination, keyed by destination name
+    # (e.g. {"office": 18, "Sadik Enter": 31}). Populated by route.py; a None
+    # value means "Google found no walking route / pre-filtered as too far".
+    commute: dict[str, int | None] = field(default_factory=dict)
     image_phash: str | None = None       # populated by dedup.compute_phashes (hex string)
     extraction: Extraction | None = None
     winter_smog: WinterSmog | None = None   # from data/belgrade_winter_smog.json + geocode
@@ -79,6 +80,6 @@ class Listing:
         d["fingerprint_key"] = self.fingerprint_key
         # extraction + commute live in their own columns / are computed at runtime;
         # strip them from the row we send to the listings table.
-        for k in ("extraction", "winter_smog", "walk_min", "transit_min", "transit_transfers"):
+        for k in ("extraction", "winter_smog", "commute"):
             d.pop(k, None)
         return d

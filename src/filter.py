@@ -20,8 +20,7 @@ class FilterConfig:
     pets_required: bool
     max_lease_months: int
     furnishing_allowed: tuple[str, ...] = ()
-    walk_min_max: int = 30
-    transit_min_max: int = 30
+    walk_min_max: int = 40
 
 
 @dataclass
@@ -47,32 +46,36 @@ def from_dict(cfg: dict) -> FilterConfig:
         dishwasher_required=bool(f.get("dishwasher_required", False)),
         pets_required=bool(f.get("pets_required", False)),
         max_lease_months=int(f.get("max_lease_months", 12)),
-        walk_min_max=int(commute.get("walk_min_max", 30)),
-        transit_min_max=int(commute.get("transit_min_max", 30)),
+        walk_min_max=int(commute.get("walk_min_max", 40)),
     )
 
 
-def apply_commute(listings: list[Listing], cfg: FilterConfig) -> FilterResult:
-    """Filter on walk_min/transit_min populated by src/route.py.
+def apply_commute(
+    listings: list[Listing], cfg: FilterConfig, *, gating_names: list[str],
+) -> FilterResult:
+    """Filter on walking minutes (l.commute) populated by src/route.py.
 
-    Per spec §4: pass if walk ≤ 30 min OR transit ≤ 30 min. Listings with both
-    fields None (Google had no route or haversine-skipped) get hard-rejected.
+    Pass if EVERY gating destination is within walk_min_max minutes on foot.
+    Info-only destinations (not in `gating_names`) never affect pass/fail.
+    A gating destination with no walking time (None — Google had no route or
+    the haversine pre-filter skipped it) hard-rejects the listing.
     """
     passed: list[Listing] = []
     rejected: list[tuple[Listing, str]] = []
     for l in listings:
-        walk_ok = l.walk_min is not None and l.walk_min <= cfg.walk_min_max
-        transit_ok = l.transit_min is not None and l.transit_min <= cfg.transit_min_max
-        if walk_ok or transit_ok:
+        failing: str | None = None
+        for name in gating_names:
+            walk = l.commute.get(name)
+            if walk is None:
+                failing = f"no walking route to {name}"
+                break
+            if walk > cfg.walk_min_max:
+                failing = f"{name} {walk}m > {cfg.walk_min_max}m walk"
+                break
+        if failing is None:
             passed.append(l)
         else:
-            best = []
-            if l.walk_min is not None:
-                best.append(f"walk {l.walk_min}m")
-            if l.transit_min is not None:
-                best.append(f"transit {l.transit_min}m")
-            reason = ("no route" if not best else " / ".join(best)) + f" > {cfg.walk_min_max}m"
-            rejected.append((l, reason))
+            rejected.append((l, failing))
     return FilterResult(passed=passed, rejected=rejected)
 
 

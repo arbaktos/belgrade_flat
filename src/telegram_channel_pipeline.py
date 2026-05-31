@@ -26,6 +26,7 @@ import imagehash
 from PIL import Image
 
 from src import dedup, extract, route, state, telegram
+from src.destinations import Destination
 from src.models import Listing
 from src.sources import telegram_channel
 
@@ -34,7 +35,7 @@ log = logging.getLogger(__name__)
 # A post needs to be at least this big to qualify (per user spec).
 DEFAULT_M2_MIN = 55
 # t.me/s preview pages don't list lots of metadata — placeholder values for the
-# Listing fields we don't have but route.compute_commute would inspect.
+# Listing fields we don't have but route.compute_walk would inspect.
 _PLACEHOLDER_CREATED = None     # set per-call from post.posted_at
 
 
@@ -44,8 +45,7 @@ def run(
     *,
     m2_min: float = DEFAULT_M2_MIN,
     require_hashtag: str | None = None,
-    office_lat: float | None = None,
-    office_lng: float | None = None,
+    office: Destination | None = None,
     llm_client: object | None = None,
     http_client: httpx.Client | None = None,
 ) -> dict:
@@ -133,12 +133,10 @@ def run(
         for post, facts in accepted:
             try:
                 commute = None
-                if office_lat is not None and office_lng is not None and facts.address:
+                if office is not None and facts.address:
                     shim = _commute_shim(post, facts)
                     try:
-                        commute = route.compute_commute(
-                            shim, office_lat=office_lat, office_lng=office_lng, conn=conn,
-                        )
+                        commute = route.compute_walk(shim, office, conn=conn)
                     except Exception as e:  # noqa: BLE001
                         log.warning("tg post %s commute failed: %s", post.message_id, e)
                 _send_card(post, facts, commute)
@@ -221,7 +219,7 @@ def _is_known_listing_by_phash(conn: sqlite3.Connection, phash: str) -> bool:
 
 
 def _commute_shim(post, facts) -> Listing:
-    """Build a throwaway Listing carrying just enough for route.compute_commute."""
+    """Build a throwaway Listing carrying just enough for route.compute_walk."""
     from datetime import datetime, timezone
     return Listing(
         id=str(post.message_id),
@@ -247,11 +245,8 @@ def _send_card(post, facts, commute) -> None:
         f"📣 <b>Telegram channel match</b> · {facts.m2:.0f} m²",
         f"🐾 pets OK",
     ]
-    if commute:
-        if commute.walk_min is not None:
-            bits.append(f"🚶 {commute.walk_min} min")
-        if commute.transit_min is not None:
-            bits.append(f"🚌 {commute.transit_min} min")
+    if commute and commute.walk_min is not None:
+        bits.append(f"🚶 {commute.walk_min} min")
     if facts.address:
         bits.append(f"📍 {html.escape(facts.address)}")
     bits.append(f'🔗 <a href="{html.escape(post.permalink, quote=True)}">Source post</a>')

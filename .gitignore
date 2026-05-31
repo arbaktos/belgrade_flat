@@ -8,3 +8,7 @@ __pycache__/
 .DS_Store
 .pytest_cache/
 *.egg-info/
+
+# SSH keys for the Hetzner VM (never commit to this public repo)
+ishosting_vm
+ishosting_vm.pub
