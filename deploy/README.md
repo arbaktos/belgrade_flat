@@ -10,7 +10,11 @@ fight over callbacks.
 
 ---
 
-## 0. Prereqs on the VM (Ubuntu, run as root once)
+## 0. Prereqs on the VM (Ubuntu, run **as root** once)
+
+`belgrade` is an unprivileged user (`--disabled-password`, not in the sudo
+group) — it can NEVER run `sudo`. So all system-level installs happen here, as
+root. Only the app steps in §1 run as belgrade.
 
 ```bash
 adduser --disabled-password --gecos "" belgrade
@@ -21,18 +25,24 @@ curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cl
   -o /usr/local/bin/cloudflared
 chmod +x /usr/local/bin/cloudflared
 cloudflared --version
+
+# rclone (R2 state sync) — system-wide, root only
+curl -fsSL https://rclone.org/install.sh | bash
 ```
 
-## 1. Clone + venv (as `belgrade`)
+## 1. Clone + venv (as `belgrade`, **no sudo**)
+
+From a root shell, drop into belgrade with `su - belgrade` (works without a
+password because you're root; `sudo -iu belgrade` would prompt for belgrade's
+non-existent password). Nothing in this section uses sudo.
 
 ```bash
-sudo -iu belgrade
+su - belgrade
 git clone https://github.com/arbaktos/belgrade_flat.git ~/belgrade_flat
 cd ~/belgrade_flat
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt -r vm/requirements.txt
-# rclone is needed for R2 state sync:
-curl -fsSL https://rclone.org/install.sh | sudo bash
+exit                                   # back to root for §2–§3
 ```
 
 ## 2. Secrets file (as root)
