@@ -127,6 +127,14 @@ def delete_message(chat_id: str | int, message_id: int) -> None:
     _call("deleteMessage", {"chat_id": chat_id, "message_id": message_id})
 
 
+def edit_message_reply_markup(chat_id: str | int, message_id: int, reply_markup: dict) -> None:
+    """Replace the inline keyboard on an existing message (e.g. flip the ⭐
+    Favorite button to a 'Favorited' state) without touching its content."""
+    _call("editMessageReplyMarkup", {
+        "chat_id": chat_id, "message_id": message_id, "reply_markup": reply_markup,
+    })
+
+
 def answer_callback_query(callback_id: str, text: str = "", show_alert: bool = False) -> None:
     _call("answerCallbackQuery", {
         "callback_query_id": callback_id,

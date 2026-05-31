@@ -170,6 +170,7 @@ def test_drain_records_favorite_and_copies_to_favorites_chat(conn, monkeypatch):
     }
     with patch("src.telegram_callbacks.telegram.get_updates", return_value=[update]), \
          patch("src.telegram_callbacks.telegram.copy_message") as copy_mock, \
+         patch("src.telegram_callbacks.telegram.edit_message_reply_markup") as edit_mock, \
          patch("src.telegram_callbacks.telegram.answer_callback_query") as ack_mock:
         counts = telegram_callbacks.drain(conn)
 
@@ -181,35 +182,65 @@ def test_drain_records_favorite_and_copies_to_favorites_chat(conn, monkeypatch):
     assert kw["caption"].startswith("⭐ <b>Favorited</b> · ")
     assert "Krunska 35" in kw["caption"]
     assert kw["parse_mode"] == "HTML"
-    # Keyboard: portal link kept, Favorite/Hide stripped, Unfavorite added.
+    # Channel keyboard: portal link kept, Favorite/Hide stripped, Unfavorite added.
     kb = kw["reply_markup"]["inline_keyboard"]
     assert kb[0] == [{"text": "🔗 View on 4zida", "url": "https://4zida.rs/123"}]
     assert kb[-1] == [{"text": "❌ Unfavorite", "callback_data": "unfav:4zida:xyz789"}]
-    # Toast text confirms the save.
-    args, kwargs = ack_mock.call_args
-    assert "Saved to favorites" in kwargs.get("text", args[1] if len(args) > 1 else "")
+    # The ORIGINAL digest card in the bot chat is marked favorited in place.
+    e_args = edit_mock.call_args.args
+    assert e_args[0] == -100200300 and e_args[1] == 1234       # same chat + message
+    new_kb = e_args[2]["inline_keyboard"]
+    fav_btn = [b for row in new_kb for b in row if b.get("callback_data") == "unfav:4zida:xyz789"]
+    assert fav_btn and fav_btn[0]["text"] == "⭐ Favorited ✓"
     # DB persisted the favorite.
     rows = list(conn.execute("SELECT fingerprint_key FROM favorites"))
     assert rows == [("4zida:xyz789",)]
 
 
-def test_unfavorite_removes_from_db_and_deletes_message(conn):
+def test_unfavorite_in_favorites_chat_deletes_message(conn, monkeypatch):
+    monkeypatch.setenv("TELEGRAM_FAVORITES_CHAT_ID", "-5057252591")
     conn.execute("INSERT INTO favorites (fingerprint_key) VALUES ('4zida:xyz789')")
     conn.commit()
     counts = {"skipped": 0, "favorited": 0, "unknown": 0}
-    cq = {
+    cq = {  # message lives in the favorites chat
         "id": "u1", "data": "unfav:4zida:xyz789",
-        "message": {"message_id": 42, "chat": {"id": -100200300}},
+        "message": {"message_id": 42, "chat": {"id": -5057252591}},
     }
-    with patch("src.telegram_callbacks.telegram.answer_callback_query") as ack_mock, \
-         patch("src.telegram_callbacks.telegram.delete_message") as del_mock:
+    with patch("src.telegram_callbacks.telegram.answer_callback_query"), \
+         patch("src.telegram_callbacks.telegram.delete_message") as del_mock, \
+         patch("src.telegram_callbacks.telegram.edit_message_reply_markup") as edit_mock:
         telegram_callbacks.handle_callback_query(conn, cq, counts)
-    # Removed from the favorites table and the card deleted from the fav chat.
     assert list(conn.execute("SELECT * FROM favorites")) == []
-    del_mock.assert_called_once_with(-100200300, 42)
+    del_mock.assert_called_once_with(-5057252591, 42)   # saved card removed
+    edit_mock.assert_not_called()
     assert counts["unfavorited"] == 1
-    args, kwargs = ack_mock.call_args
-    assert "Removed from favorites" in kwargs.get("text", "")
+
+
+def test_unfavorite_in_bot_chat_unmarks_without_deleting(conn, monkeypatch):
+    monkeypatch.setenv("TELEGRAM_FAVORITES_CHAT_ID", "-5057252591")
+    conn.execute("INSERT INTO favorites (fingerprint_key) VALUES ('4zida:xyz789')")
+    conn.commit()
+    counts = {"skipped": 0, "favorited": 0, "unknown": 0}
+    cq = {  # message lives in the bot chat (not the favorites chat)
+        "id": "u2", "data": "unfav:4zida:xyz789",
+        "message": {
+            "message_id": 77, "chat": {"id": 433731334},
+            "reply_markup": {"inline_keyboard": [
+                [{"text": "⭐ Favorited ✓", "callback_data": "unfav:4zida:xyz789"},
+                 {"text": "🙈 Hide", "callback_data": "skip:4zida:xyz789"}],
+            ]},
+        },
+    }
+    with patch("src.telegram_callbacks.telegram.answer_callback_query"), \
+         patch("src.telegram_callbacks.telegram.delete_message") as del_mock, \
+         patch("src.telegram_callbacks.telegram.edit_message_reply_markup") as edit_mock:
+        telegram_callbacks.handle_callback_query(conn, cq, counts)
+    assert list(conn.execute("SELECT * FROM favorites")) == []
+    del_mock.assert_not_called()                        # digest card stays
+    # Button reverted to '⭐ Favorite' (fav:…).
+    new_kb = edit_mock.call_args.args[2]["inline_keyboard"]
+    fav_btn = [b for row in new_kb for b in row if b.get("callback_data") == "fav:4zida:xyz789"]
+    assert fav_btn and fav_btn[0]["text"] == "⭐ Favorite"
 
 
 def test_drain_favorite_without_chat_env_still_persists(conn, monkeypatch):

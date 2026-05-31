@@ -96,13 +96,21 @@ def handle_callback_query(
         fp = data[len(UNFAV_PREFIX):]
         _mark_unfavorited(conn, fp)
         counts["unfavorited"] = counts.get("unfavorited", 0) + 1
-        _delete_owning_message(cq)
-        _ack(cq_id, "❌ Removed from favorites")
+        if _is_favorites_chat(cq):
+            # Tapped on the saved card in the favorites chat → drop it from the list.
+            _delete_owning_message(cq)
+            _ack(cq_id, "❌ Removed from favorites")
+        else:
+            # Tapped on the digest card in the bot chat → just un-mark it in place.
+            _set_chat_fav_state(cq, fp, favorited=False)
+            _ack(cq_id, "Removed from favorites")
     elif data.startswith(FAV_PREFIX):
         fp = data[len(FAV_PREFIX):]
         _mark_favorited(conn, fp)
         counts["favorited"] = counts.get("favorited", 0) + 1
         ack_text = _forward_to_favorites(cq, fp)
+        # Mark the original digest card in the bot chat as favorited.
+        _set_chat_fav_state(cq, fp, favorited=True)
         _ack(cq_id, ack_text)
     else:
         counts["unknown"] = counts.get("unknown", 0) + 1
@@ -145,6 +153,60 @@ def _delete_owning_message(cq: dict[str, Any]) -> None:
         telegram.delete_message(chat_id, int(message_id))
     except Exception as e:  # noqa: BLE001 — hide already persisted; deletion is best-effort
         log.info("hide: could not delete message %s/%s: %s", chat_id, message_id, e)
+
+
+def _is_favorites_chat(cq: dict[str, Any]) -> bool:
+    """Whether the callback's message lives in the favorites chat (vs the main
+    bot chat). Used so Unfavorite deletes the saved card there, but only
+    un-marks the digest card here."""
+    dest = os.environ.get("TELEGRAM_FAVORITES_CHAT_ID")
+    chat_id = ((cq.get("message") or {}).get("chat") or {}).get("id")
+    return bool(dest) and str(chat_id) == dest
+
+
+def _set_chat_fav_state(cq: dict[str, Any], fingerprint_key: str, *, favorited: bool) -> None:
+    """Toggle the ⭐ button on the digest card in place (no message deleted).
+
+    favorited=True  → '⭐ Favorite' (fav:…)  becomes '⭐ Favorited ✓' (unfav:…)
+    favorited=False → reverts it. Soft-fails: the favorite is already persisted,
+    so a failed edit just leaves the button label stale.
+    """
+    msg = cq.get("message") or {}
+    chat_id = (msg.get("chat") or {}).get("id")
+    message_id = msg.get("message_id")
+    if not chat_id or not message_id:
+        return
+    keyboard = _toggle_fav_button(msg.get("reply_markup"), fingerprint_key, favorited)
+    if keyboard is None:
+        return
+    try:
+        telegram.edit_message_reply_markup(chat_id, int(message_id), keyboard)
+    except Exception as e:  # noqa: BLE001 — favorite already persisted; mark is cosmetic
+        log.info("favorite: could not update card markup %s/%s: %s", chat_id, message_id, e)
+
+
+def _toggle_fav_button(
+    reply_markup: dict[str, Any] | None, fingerprint_key: str, favorited: bool,
+) -> dict[str, Any] | None:
+    """Return a copy of the card keyboard with the favorite button flipped to
+    the favorited / un-favorited state. None if there's no keyboard to edit."""
+    if not reply_markup:
+        return None
+    want_old = (f"{FAV_PREFIX}{fingerprint_key}" if favorited
+                else f"{UNFAV_PREFIX}{fingerprint_key}")
+    new_text = "⭐ Favorited ✓" if favorited else "⭐ Favorite"
+    new_cb = (f"{UNFAV_PREFIX}{fingerprint_key}" if favorited
+              else f"{FAV_PREFIX}{fingerprint_key}")
+    rows = []
+    for row in reply_markup.get("inline_keyboard", []):
+        new_row = []
+        for btn in row:
+            if btn.get("callback_data") == want_old:
+                new_row.append({"text": new_text, "callback_data": new_cb})
+            else:
+                new_row.append(btn)
+        rows.append(new_row)
+    return {"inline_keyboard": rows}
 
 
 def _mark_favorited(conn: sqlite3.Connection, fingerprint_key: str) -> None:
