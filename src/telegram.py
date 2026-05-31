@@ -69,6 +69,8 @@ def copy_message(
     to_chat_id: str | int,
     message_thread_id: int | None = None,
     reply_markup: dict | None = None,
+    caption: str | None = None,
+    parse_mode: str | None = None,
 ) -> None:
     """Copy a message's photo + caption to another chat.
 
@@ -76,8 +78,9 @@ def copy_message(
     favorites destination without re-rendering it from the DB.
 
     Note: Telegram's copyMessage does NOT carry over the source message's
-    inline keyboard — pass `reply_markup` explicitly to re-attach buttons
-    (we re-attach the portal-link button so favorites stay clickable).
+    inline keyboard — pass `reply_markup` explicitly to re-attach buttons.
+    Passing `caption` overrides the copied caption (e.g. to add a ⭐ Favorited
+    header); Telegram ignores it for text-only messages.
     """
     payload = {
         "chat_id": to_chat_id,
@@ -88,6 +91,10 @@ def copy_message(
         payload["message_thread_id"] = message_thread_id
     if reply_markup is not None:
         payload["reply_markup"] = reply_markup
+    if caption is not None:
+        payload["caption"] = caption
+    if parse_mode is not None:
+        payload["parse_mode"] = parse_mode
     _call("copyMessage", payload)
 
 

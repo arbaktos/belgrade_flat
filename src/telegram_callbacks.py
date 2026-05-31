@@ -11,9 +11,11 @@ callback_data formats (max 64 bytes per Telegram):
 """
 from __future__ import annotations
 
+import html
 import logging
 import os
 import sqlite3
+from datetime import datetime, timezone
 from typing import Any
 
 from src import telegram
@@ -23,6 +25,7 @@ log = logging.getLogger(__name__)
 OFFSET_META_KEY = "telegram_update_offset"
 SKIP_PREFIX = "skip:"
 FAV_PREFIX = "fav:"
+UNFAV_PREFIX = "unfav:"
 
 
 def drain(conn: sqlite3.Connection) -> dict[str, int]:
@@ -89,11 +92,17 @@ def handle_callback_query(
         counts["skipped"] = counts.get("skipped", 0) + 1
         _delete_owning_message(cq)
         _ack(cq_id, "🙈 Hidden")
+    elif data.startswith(UNFAV_PREFIX):
+        fp = data[len(UNFAV_PREFIX):]
+        _mark_unfavorited(conn, fp)
+        counts["unfavorited"] = counts.get("unfavorited", 0) + 1
+        _delete_owning_message(cq)
+        _ack(cq_id, "❌ Removed from favorites")
     elif data.startswith(FAV_PREFIX):
         fp = data[len(FAV_PREFIX):]
         _mark_favorited(conn, fp)
         counts["favorited"] = counts.get("favorited", 0) + 1
-        ack_text = _forward_to_favorites(cq)
+        ack_text = _forward_to_favorites(cq, fp)
         _ack(cq_id, ack_text)
     else:
         counts["unknown"] = counts.get("unknown", 0) + 1
@@ -146,13 +155,19 @@ def _mark_favorited(conn: sqlite3.Connection, fingerprint_key: str) -> None:
     conn.commit()
 
 
-def _forward_to_favorites(cq: dict[str, Any]) -> str:
-    """Copy the message that owns this callback to the favorites chat.
+def _mark_unfavorited(conn: sqlite3.Connection, fingerprint_key: str) -> None:
+    conn.execute("DELETE FROM favorites WHERE fingerprint_key=?", (fingerprint_key,))
+    conn.commit()
 
-    Returns the ack text to show in the Telegram toast. Soft-fails: if the
-    destination isn't configured or the API call errors out, the listing is
-    still persisted in `favorites` (the caller already did that) — we just
-    surface the reason to the user via the toast.
+
+def _forward_to_favorites(cq: dict[str, Any], fingerprint_key: str) -> str:
+    """Copy the message that owns this callback to the favorites chat, restyled
+    as a saved-favorite: a '⭐ Favorited · <date>' header above the original
+    details, the portal-link button kept, and an Unfavorite button added.
+
+    Returns the ack text for the Telegram toast. Soft-fails: if the destination
+    isn't configured or the API call errors out, the listing is still persisted
+    in `favorites` (the caller already did that).
     """
     dest = os.environ.get("TELEGRAM_FAVORITES_CHAT_ID")
     if not dest:
@@ -167,9 +182,26 @@ def _forward_to_favorites(cq: dict[str, Any]) -> str:
         return "⭐ Saved (couldn't locate source message)"
     thread_id_raw = os.environ.get("TELEGRAM_FAVORITES_THREAD_ID")
     thread_id = int(thread_id_raw) if thread_id_raw else None
-    # copyMessage drops the source keyboard, and the listing URL lives only on
-    # the 'View on portal' button — re-attach it so the favorite stays clickable.
-    keyboard = _url_buttons_only(msg.get("reply_markup"))
+
+    # Keyboard: portal-link button(s) + an Unfavorite button.
+    keyboard = _url_buttons_only(msg.get("reply_markup")) or {"inline_keyboard": []}
+    keyboard["inline_keyboard"].append(
+        [{"text": "❌ Unfavorite", "callback_data": f"{UNFAV_PREFIX}{fingerprint_key}"}]
+    )
+
+    # Caption: prepend a ⭐ Favorited header. copyMessage's caption override is
+    # plain-vs-HTML, and the original caption's text comes through cq verbatim
+    # (links in it become plain text — the portal button stays clickable). Only
+    # photo cards carry a caption; text-only cards copy without the header.
+    caption = parse_mode = None
+    original = msg.get("caption")
+    if original is not None:
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        header = f"⭐ <b>Favorited</b> · {today}\n\n"
+        body = html.escape(original)
+        caption = (header + body)[:1024]
+        parse_mode = "HTML"
+
     try:
         telegram.copy_message(
             from_chat_id=from_chat_id,
@@ -177,6 +209,8 @@ def _forward_to_favorites(cq: dict[str, Any]) -> str:
             to_chat_id=dest,
             message_thread_id=thread_id,
             reply_markup=keyboard,
+            caption=caption,
+            parse_mode=parse_mode,
         )
     except Exception as e:  # noqa: BLE001 - delivery failure stays soft
         log.warning("favorite: copyMessage failed: %s", e)
