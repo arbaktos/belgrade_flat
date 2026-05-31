@@ -118,7 +118,7 @@ def test_send_listing_puts_keyboard_on_photo_not_followup():
     msg_mock.assert_not_called()
 
 
-def test_send_listing_sends_translation_followup_after_photo():
+def test_translation_folded_into_photo_caption_no_followup():
     listing = _l(extraction=Extraction(
         summary_en="Two-bedroom flat in Vračar.", pets_allowed="yes",
         heating_type_confirmed="centralno",
@@ -130,19 +130,32 @@ def test_send_listing_sends_translation_followup_after_photo():
             listing, near_miss_reasons=None, notify_reason=None,
             destinations=DESTS,
         )
+    # Single message: the photo card. No separate translation follow-up.
     photo_mock.assert_called_once()
-    msg_mock.assert_called_once()
-    followup = msg_mock.call_args.args[0]
-    assert "Fully furnished two-bedroom flat" in followup
-    assert followup.startswith("<i>") and followup.endswith("</i>")
-    # Translation must not steal focus — already-delivered card has the alert.
-    assert msg_mock.call_args.kwargs.get("disable_notification") is True
-    # No inline keyboard on the follow-up; buttons belong on the card.
-    assert "reply_markup" not in msg_mock.call_args.kwargs
+    msg_mock.assert_not_called()
+    caption = photo_mock.call_args.kwargs["caption"]
+    assert "Fully furnished two-bedroom flat" in caption     # translation in caption
+    assert photo_mock.call_args.kwargs["reply_markup"] is not None
 
 
-def test_send_listing_skips_translation_when_no_description_en():
-    listing = _l()      # default fixture has description_en=None
+def test_caption_prefers_translation_over_summary():
+    # When both exist, the full translation wins; the short summary is dropped.
+    listing = _l(extraction=Extraction(
+        summary_en="Short summary.", pets_allowed="yes",
+        description_en="The full translated description of the flat.",
+    ))
+    body = telegram_digest._render_body(
+        listing, near_miss_reasons=None, notify_reason=None, destinations=DESTS,
+    )
+    assert "full translated description" in body
+    assert "Short summary" not in body
+
+
+def test_caption_falls_back_to_summary_when_no_translation():
+    listing = _l(extraction=Extraction(
+        summary_en="Two-bedroom flat in Vračar.", pets_allowed="yes",
+        description_en=None,
+    ))
     with patch("src.telegram_digest.telegram.send_photo") as photo_mock, \
          patch("src.telegram_digest.telegram.send_message") as msg_mock:
         telegram_digest._send_listing(
@@ -151,9 +164,10 @@ def test_send_listing_skips_translation_when_no_description_en():
         )
     photo_mock.assert_called_once()
     msg_mock.assert_not_called()
+    assert "Two-bedroom flat in Vračar" in photo_mock.call_args.kwargs["caption"]
 
 
-def test_send_listing_translation_after_text_fallback():
+def test_text_fallback_card_includes_translation_in_one_message():
     listing = _l(image_url=None, extraction=Extraction(
         summary_en="Compact studio.", pets_allowed="yes",
         description_en="Studio apartment, 30 m², close to Trg Slavija. Furnished.",
@@ -165,32 +179,24 @@ def test_send_listing_translation_after_text_fallback():
             destinations=DESTS,
         )
     photo_mock.assert_not_called()
-    # First call = card (text fallback), second call = translation follow-up.
-    assert msg_mock.call_count == 2
-    card_text = msg_mock.call_args_list[0].args[0]
-    followup_text = msg_mock.call_args_list[1].args[0]
-    assert "Studio apartment" in followup_text
-    assert "Studio apartment" not in card_text
-    # Card has keyboard; follow-up does not.
-    assert "reply_markup" in msg_mock.call_args_list[0].kwargs
-    assert "reply_markup" not in msg_mock.call_args_list[1].kwargs
+    # One message total — card + translation together, with the keyboard.
+    msg_mock.assert_called_once()
+    card_text = msg_mock.call_args.args[0]
+    assert "Studio apartment" in card_text
+    assert "reply_markup" in msg_mock.call_args.kwargs
 
 
-def test_send_listing_clips_overlong_translation():
+def test_overlong_translation_clipped_to_caption_budget():
     huge = "Detalj o stanu " * 1000     # ~16k chars
     listing = _l(extraction=Extraction(
         summary_en="x", pets_allowed="yes", description_en=huge,
     ))
-    with patch("src.telegram_digest.telegram.send_photo"), \
-         patch("src.telegram_digest.telegram.send_message") as msg_mock:
-        telegram_digest._send_listing(
-            listing, near_miss_reasons=None, notify_reason=None,
-            destinations=DESTS,
-        )
-    followup = msg_mock.call_args.args[0]
-    # Telegram sendMessage hard limit is 4096; we leave headroom for the <i> wrapper.
-    assert len(followup) < 4096
-    assert followup.endswith("…</i>")
+    body = telegram_digest._render_body(
+        listing, near_miss_reasons=None, notify_reason=None, destinations=DESTS,
+    )
+    # Caption must fit Telegram's 1024-char photo-caption limit.
+    assert len(body) <= 1024
+    assert "…" in body
 
 
 def test_render_body_links_address_and_walk_per_destination():

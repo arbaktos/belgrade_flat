@@ -212,37 +212,11 @@ def _send_listing(
             telegram.send_photo(
                 l.image_url, caption=body, parse_mode="HTML", reply_markup=keyboard,
             )
-            _send_translation_followup(l)
             return
         except Exception as e:  # noqa: BLE001
             log.warning("telegram sendPhoto failed for %s (%s); falling back to text",
                         l.fingerprint_key, e)
     telegram.send_message(body, parse_mode="HTML", reply_markup=keyboard)
-    _send_translation_followup(l)
-
-
-# Telegram sendMessage text limit; leave a safety margin for the wrapper tags.
-_TRANSLATION_MAX_CHARS = 3900
-
-
-def _send_translation_followup(l: Listing) -> None:
-    """Send a separate text message with the full English translation of the
-    listing description, when the LLM produced one. Skipped silently when no
-    translation is available — keeps the photo card the sole notification.
-    Failures here are logged but do not propagate; the card has already been
-    delivered, so a missing translation must not look like a delivery error.
-    """
-    translation = l.extraction.description_en if l.extraction else None
-    if not translation or not translation.strip():
-        return
-    if len(translation) > _TRANSLATION_MAX_CHARS:
-        translation = translation[:_TRANSLATION_MAX_CHARS].rstrip() + "…"
-    text = f"<i>{html.escape(translation)}</i>"
-    try:
-        telegram.send_message(text, parse_mode="HTML", disable_notification=True)
-    except Exception as e:  # noqa: BLE001 — card already delivered
-        log.warning("telegram translation follow-up failed for %s: %s",
-                    l.fingerprint_key, e)
 
 
 def _render_body(
@@ -291,7 +265,13 @@ def _render_body(
     agency = "🏢 agency" if l.is_agency else "👤 owner/unknown"
     posted_rel = _relative_time(l.created_at)
 
-    summary = l.extraction.summary_en if l.extraction and l.extraction.summary_en else ""
+    # Prose block: prefer the full English translation, fall back to the short
+    # summary. Folded into the caption (clipped to fit 1024) rather than sent as
+    # a separate follow-up message, so the card is self-contained and a 🙈 Hide
+    # delete removes everything in one go.
+    summary = ""
+    if l.extraction:
+        summary = (l.extraction.description_en or l.extraction.summary_en or "").strip()
     red_flags = "; ".join(l.extraction.red_flags) if l.extraction and l.extraction.red_flags else ""
     bills_line = ""
     if l.extraction and l.extraction.bills_estimate_eur and l.extraction.bills_estimate_eur > 200:
