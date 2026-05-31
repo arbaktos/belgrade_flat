@@ -5,6 +5,7 @@
 ## Where to find things
 
 - **[STATUS.md](STATUS.md)** — current state, what's working, what's pending, design decisions, run book. Single source of truth for "where are we?".
+- **[README.md](README.md) + [docs/](docs/)** — human-facing docs for a new developer: overview, architecture, filtering/ranking, Telegram, configuration, operations. Explains *how it works*; STATUS.md tracks *where we are*.
 - **[belgrade-rental-notifier-SPEC.md](belgrade-rental-notifier-SPEC.md)** — the original execution spec. STATUS.md tracks deviations.
 - **`src/`** — all production code. One module per concern:
   - `sources/` — per-portal scrapers (`four_zida`, `nekretnine`, `halooglasi`, `cityexpert`, `_flaresolverr`)
