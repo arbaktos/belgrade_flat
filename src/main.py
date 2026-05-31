@@ -190,6 +190,25 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
         dedup_stats["phashed"] = dedup.compute_phashes(candidates_for_phash)
         dedup.persist_phashes(candidates_for_phash, conn)
 
+        # Suppress re-lists of hidden flats. The top-of-pipeline skip filter only
+        # catches exact fingerprint_key; here — now that pHash is computed — we
+        # also drop listings that are the SAME flat (same photo, or title+price)
+        # as anything the user 🙈 hid, even under a new id or another portal.
+        skipped_records = state.skipped_listings(conn)
+        if skipped_records:
+            before_m, before_n = len(matched), len(llm_filtered.near_misses)
+            matched = [l for l in matched if not dedup.is_skipped_duplicate(l, skipped_records)]
+            near_kept = [(l, r) for l, r in llm_filtered.near_misses
+                         if not dedup.is_skipped_duplicate(l, skipped_records)]
+            suppressed = (before_m - len(matched)) + (before_n - len(near_kept))
+            if suppressed:
+                log.info("skipped-dup filter: suppressed %d re-listed hidden flat(s)", suppressed)
+                llm_filtered = filt.FilterResult(
+                    passed=llm_filtered.passed,
+                    near_misses=near_kept,
+                    rejected=llm_filtered.rejected,
+                )
+
         clusters = dedup.cluster_duplicates(matched)
         dedup_stats["clusters"] = len(clusters)
         surfaced: list[Listing] = []

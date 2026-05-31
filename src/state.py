@@ -4,6 +4,7 @@ import logging
 import os
 import sqlite3
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -305,6 +306,35 @@ def stats(conn: sqlite3.Connection) -> dict[str, int]:
     size_bytes = LOCAL_DB.stat().st_size if LOCAL_DB.exists() else 0
     n_listings = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
     return {"size_bytes": size_bytes, "listings_tracked": n_listings}
+
+
+def skipped_listings(conn: sqlite3.Connection) -> list[Listing]:
+    """Reconstruct the flats the user 🙈 hid, for duplicate detection.
+
+    The `skipped` table holds only fingerprint_keys; we join back to `listings`
+    to recover the data the dedup cascade needs (image_phash, title, price, m²)
+    so a RE-LISTED hidden flat — same flat, new id — can be suppressed even
+    though its fingerprint_key differs. Only carries the fields `_same_flat`
+    inspects; the rest get neutral placeholders. Skipped flats with no listings
+    row (never persisted) are simply absent.
+    """
+    rows = conn.execute(
+        "SELECT l.source, l.id, l.price_eur, l.m2, l.rooms, l.title, l.image_phash "
+        "FROM skipped s JOIN listings l ON l.fingerprint_key = s.fingerprint_key"
+    ).fetchall()
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    out: list[Listing] = []
+    for source, id_, price, m2, rooms, title, phash in rows:
+        l = Listing(
+            id=id_, source=source, url="", price_eur=price, m2=m2, rooms=rooms,
+            floor=None, total_floors=None, last_floor=False, elevator=None,
+            furnished=None, heating_type=None, pets_allowed=None, title=title or "",
+            description="", address=None, place_names=[], image_url=None,
+            is_agency=False, created_at=epoch,
+        )
+        l.image_phash = phash
+        out.append(l)
+    return out
 
 
 def seen_telegram_message_ids(conn: sqlite3.Connection) -> set[int]:

@@ -50,6 +50,35 @@ def test_phash_different_images_high_hamming():
     assert dedup.hamming(h1, h2) > dedup.PHASH_MAX_HAMMING
 
 
+def test_is_skipped_duplicate_matches_same_photo():
+    h = dedup._phash_from_bytes(_gradient_image_bytes(0))
+    hidden = _listing(id="old", source="4zida", title="whatever", price_eur=1)
+    hidden.image_phash = h
+    # Re-list: new id/portal/title/price, but same photo.
+    relist = _listing(id="new", source="halooglasi", title="totally different", price_eur=2)
+    relist.image_phash = h
+    assert dedup.is_skipped_duplicate(relist, [hidden]) is True
+
+
+def test_is_skipped_duplicate_matches_same_title_and_price():
+    # No usable pHash (coords not persisted for hidden flats either), but the
+    # title+price fallback still catches a same-agency re-list.
+    hidden = _listing(id="old", title="Dvosoban stan, Vračar, 60m²", price_eur=900)
+    relist = _listing(id="new", title="Dvosoban stan, Vračar, 60m²", price_eur=910)
+    assert dedup.is_skipped_duplicate(relist, [hidden]) is True
+
+
+def test_is_skipped_duplicate_no_false_positive():
+    hidden = _listing(id="old", title="Dvosoban stan, Vračar, 60m²", price_eur=900)
+    other = _listing(id="new", title="Garsonjera u Zemunu, Pinki", price_eur=500,
+                     lat=44.85, lng=20.40, m2=30)
+    assert dedup.is_skipped_duplicate(other, [hidden]) is False
+
+
+def test_is_skipped_duplicate_empty_set():
+    assert dedup.is_skipped_duplicate(_listing(), []) is False
+
+
 def test_cluster_groups_same_phash():
     """Same photo across portals + a third listing with a clearly different photo, title, AND price."""
     h_same = dedup._phash_from_bytes(_gradient_image_bytes(0))

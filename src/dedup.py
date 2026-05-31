@@ -104,6 +104,17 @@ def cluster_duplicates(listings: list[Listing]) -> list[list[Listing]]:
     return clusters
 
 
+def is_skipped_duplicate(listing: Listing, skipped: list[Listing]) -> bool:
+    """True if `listing` is the same flat as any the user has hidden.
+
+    Uses the full cascade, so a re-listed hidden flat (new id, same photos or
+    same title+price) is caught even though its fingerprint_key is new. Coords
+    aren't persisted for skipped flats, so layer 2 (coord bucket) never fires
+    here — pHash and title+price carry the match.
+    """
+    return any(_same_flat(listing, s) for s in skipped)
+
+
 def _same_flat(a: Listing, b: Listing) -> bool:
     """Return True if the four-layer cascade considers a and b the same flat."""
     # 1. pHash
