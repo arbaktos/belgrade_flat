@@ -34,14 +34,15 @@ jobs:
       TELEGRAM_FAVORITES_CHAT_ID: ${{ secrets.TELEGRAM_FAVORITES_CHAT_ID }}
       TELEGRAM_FAVORITES_THREAD_ID: ${{ secrets.TELEGRAM_FAVORITES_THREAD_ID }}
       GOOGLE_DIRECTIONS_API_KEY: ${{ secrets.GOOGLE_DIRECTIONS_API_KEY }}
-      # LLM extraction provider. Switched to Gemini (free tier) because the
-      # Anthropic account ran out of credits; flip back to "anthropic" once
-      # topped up. ANTHROPIC_API_KEY stays wired so the revert is one line.
-      LLM_PROVIDER: gemini
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      # Pace Gemini calls under the free-tier 5 req/min cap (~13s ⇒ ~4.6/min).
-      GEMINI_MIN_INTERVAL_S: "13"
+      # LLM extraction provider. Back on Anthropic Haiku 4.5 — original
+      # design, best Serbian quality. With extraction_cache (schema v12) and
+      # the system-prompt ephemeral cache, real spend at ~30-60 new
+      # listings/day is well under $5/mo. GEMINI_API_KEY stays wired as a
+      # fallback (flip LLM_PROVIDER: gemini to reactivate; the Gemini code
+      # path, daily-cap circuit breaker, and pacing all remain in place).
+      LLM_PROVIDER: anthropic
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}

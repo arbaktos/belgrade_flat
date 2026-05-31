@@ -84,7 +84,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Pet-friendly ranking | not in spec | listings with confirmed pets-allowed form a priority tier ABOVE non-pet-friendly, regardless of composite score | User: "if there IS info that the flat is pet friendly, push it on top always" |
 | Cron behaviour | spec only mentions a daily digest | 04:30 UTC = full digest; every-2h polls 02-16 UTC (08-22 KGT) = silent instant push of NEW perfect matches | M8; "new" = no `notified_at` yet; polls skip nighttime (KGT 23-08) per `config.yaml.quiet_hours_kgt`; poll runs commit nothing to git to avoid churning commits |
 | Source-error visibility in instant-push | M9 only spec'd "error routing" abstractly | every poll sends a brief `⚠️ Sources failed: <names>` if any portal returned an error | Instant-push has no digest header, so portal failures would otherwise be silent; alert fires every run a source is failing (no rate-limit yet) |
-| LLM provider | spec assumes Anthropic Haiku | `LLM_PROVIDER=gemini` → **gemini-2.5-flash** (free tier) | Anthropic credits ran out; Gemini free tier covers the load. NB: gemini-2.0-flash 429s with `limit: 0` (no free quota in our region) — must use 2.5-flash |
+| LLM provider | spec assumes Anthropic Haiku | back on **Anthropic Haiku 4.5** (post-2026-05-31 top-up); Gemini code path retained as fallback | Free-tier Gemini caps at 20 calls/day, which can't sustain even one warmup cycle; Haiku at ~30-60 cached new listings/day is ~$1.50-3/mo. Flip `LLM_PROVIDER: gemini` in the workflow if Anthropic ever runs dry again |
 | LLM call volume | spec: call per structural survivor each run | extraction cached by `fingerprint_key`; each listing hits the LLM once, ever | Gemini free tier is 5 req/min; re-extracting ~110 survivors/run blew the cap. Cache + a `GEMINI_MIN_INTERVAL_S` pacing (~13s) + 429/503 retry keep us under it. First run backfills (~24 min), then runs are small |
 
 ---
@@ -116,9 +116,9 @@ Schema version is at **v12**. Migrations are forward-only and idempotent
   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`, `OFFICE_LAT`, `OFFICE_LNG`
   Optional: `TELEGRAM_FAVORITES_CHAT_ID` (destination for ⭐ Favorite forwards),
   `TELEGRAM_FAVORITES_THREAD_ID` (forum-topic id when the favorites destination is a topic),
-  `LLM_PROVIDER` (`anthropic` default; set to `gemini` to swap in **gemini-2.5-flash**
-  via free tier — requires `GEMINI_API_KEY` in secrets, and `GEMINI_MIN_INTERVAL_S`
-  in the job env to pace under the 5 req/min cap). Currently set to `gemini`.
+  `LLM_PROVIDER` (`anthropic` = current; `gemini` swaps to gemini-2.5-flash via
+  free tier — requires `GEMINI_API_KEY` in secrets, and `GEMINI_MIN_INTERVAL_S`
+  in the job env to pace under the 5 req/min cap).
 
 ### Cost ceiling (actual)
 
