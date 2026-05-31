@@ -63,14 +63,39 @@ if [[ -z "$TUNNEL_URL" ]]; then
 fi
 echo "[bootstrap] tunnel up: ${TUNNEL_URL}"
 
+# Wait until the tunnel actually serves our app from the PUBLIC side. This is
+# the real readiness signal: it confirms the trycloudflare hostname is globally
+# resolvable AND proxying to uvicorn, both of which lag a few seconds behind
+# cloudflared printing the URL. Registering the webhook before this is ready is
+# what caused Telegram's "Failed to resolve host" 400.
+echo "[bootstrap] waiting for tunnel to serve /health publicly"
+for _ in $(seq 1 30); do
+  if curl -fsS "${TUNNEL_URL}/health" >/dev/null 2>&1; then
+    echo "[bootstrap] tunnel serving publicly"
+    break
+  fi
+  sleep 2
+done
+
 WEBHOOK_URL="${TUNNEL_URL}/tg/${WEBHOOK_PATH_SECRET}"
 echo "[bootstrap] registering webhook"
-curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
-  --data-urlencode "url=${WEBHOOK_URL}" \
-  --data-urlencode "secret_token=${WEBHOOK_SECRET_TOKEN}" \
-  --data-urlencode 'allowed_updates=["callback_query"]' \
-  --data-urlencode 'drop_pending_updates=false' \
-  | sed 's/.*\("ok":[^,]*\).*/[bootstrap] setWebhook \1/'
+registered=""
+for attempt in 1 2 3 4 5; do
+  RESP="$(curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+    --data-urlencode "url=${WEBHOOK_URL}" \
+    --data-urlencode "secret_token=${WEBHOOK_SECRET_TOKEN}" \
+    --data-urlencode 'allowed_updates=["callback_query"]' \
+    --data-urlencode 'drop_pending_updates=false' || true)"
+  echo "[bootstrap] setWebhook attempt ${attempt}: ${RESP}"
+  case "$RESP" in
+    *'"ok":true'*) registered="yes"; break ;;
+  esac
+  sleep 5
+done
+if [[ -z "$registered" ]]; then
+  echo "[bootstrap] ERROR: setWebhook never succeeded; restarting to retry" >&2
+  exit 1
+fi
 
 echo "[bootstrap] ready — supervising uvicorn(${UVICORN_PID}) + cloudflared(${CF_PID})"
 # Exit (and let systemd restart us) the moment either child dies.
