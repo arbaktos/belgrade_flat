@@ -173,6 +173,24 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj, gating_names=gating_names)
             commute_rejected = commute_passed.rejected
             matched = commute_passed.passed
+            # Near-misses must clear the SAME walking gate. A near-miss is only
+            # "almost perfect" on the LLM-confirmed fields — being too far on
+            # foot is a hard fail, so gate them too instead of surfacing a flat
+            # 100+ min away just because its heating is unconfirmed.
+            near_pairs = llm_filtered.near_misses
+            near_commute = filt.apply_commute(
+                [l for l, _ in near_pairs], cfg_obj, gating_names=gating_names)
+            ok_keys = {l.fingerprint_key for l in near_commute.passed}
+            kept = [(l, r) for l, r in near_pairs if l.fingerprint_key in ok_keys]
+            dropped = len(near_pairs) - len(kept)
+            if dropped:
+                log.info("commute filter: dropped %d/%d near-misses too far on foot",
+                         dropped, len(near_pairs))
+                commute_rejected = commute_rejected + near_commute.rejected
+                llm_filtered = filt.FilterResult(
+                    passed=llm_filtered.passed, near_misses=kept,
+                    rejected=llm_filtered.rejected,
+                )
         else:
             matched = llm_filtered.passed
     else:
