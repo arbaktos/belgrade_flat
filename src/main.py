@@ -166,17 +166,21 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             if commute_config_error:
                 break
 
-        if commute_config_error:
-            log.warning("Skipping commute filter due to API config error; matches keep LLM-pass status")
-            matched = llm_filtered.passed
-        elif gating_names:
+        if gating_names:
+            # Always gate on walking time — never surface ungated. If the Routes
+            # API errored mid-run, listings whose walk wasn't computed have no
+            # office time and fail the gate, so they're HELD BACK and retried
+            # next run once the API recovers (vs. surfacing them ungated). The
+            # commute_config_error still drives the digest-header alert.
+            if commute_config_error:
+                log.warning("Routes API errored this run; listings without a computed "
+                            "walking time are held back until it recovers")
             commute_passed = filt.apply_commute(llm_filtered.passed, cfg_obj, gating_names=gating_names)
             commute_rejected = commute_passed.rejected
             matched = commute_passed.passed
             # Near-misses must clear the SAME walking gate. A near-miss is only
             # "almost perfect" on the LLM-confirmed fields — being too far on
-            # foot is a hard fail, so gate them too instead of surfacing a flat
-            # 100+ min away just because its heating is unconfirmed.
+            # foot (or not yet computed) is a hard fail.
             near_pairs = llm_filtered.near_misses
             near_commute = filt.apply_commute(
                 [l for l, _ in near_pairs], cfg_obj, gating_names=gating_names)
@@ -184,7 +188,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             kept = [(l, r) for l, r in near_pairs if l.fingerprint_key in ok_keys]
             dropped = len(near_pairs) - len(kept)
             if dropped:
-                log.info("commute filter: dropped %d/%d near-misses too far on foot",
+                log.info("commute filter: dropped %d/%d near-misses too far on foot (or no route yet)",
                          dropped, len(near_pairs))
                 commute_rejected = commute_rejected + near_commute.rejected
                 llm_filtered = filt.FilterResult(
@@ -296,12 +300,12 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             fresh = [l for l in matched if l.fingerprint_key not in previously_notified]
 
             # Near-misses also get instant-pushed, gated on the same commute
-            # requirement as matches (office ≤ walk_min_max on foot) so we don't
-            # spam listings that fail the non-negotiable axis. If the Routes
-            # API errored out this run (or there are no gating destinations), we
-            # surface near-misses ungated — matching the digest's degradation.
+            # requirement as matches (office ≤ walk_min_max on foot). They were
+            # already gated in the commute stage; re-gating here is a harmless
+            # safety net. Only an unconfigured gate (no gating destinations)
+            # surfaces them ungated — a Routes API error holds them back.
             near_with_reasons = llm_filtered.near_misses
-            if commute_config_error or not gating_names:
+            if not gating_names:
                 commute_ok_keys = {l.fingerprint_key for l, _ in near_with_reasons}
             else:
                 near_commute = filt.apply_commute(
