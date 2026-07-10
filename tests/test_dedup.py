@@ -127,33 +127,67 @@ def conn():
         """CREATE TABLE listings (
             fingerprint_key TEXT PRIMARY KEY,
             notified_at TEXT,
-            notified_price REAL
+            notified_price REAL,
+            notified_stage TEXT
         )"""
     )
     return db
 
 
-def test_price_drop_none_for_new_listing(conn):
-    l = _listing()
-    assert dedup.price_drop_reason(l, conn) is None
+def _notified(conn, l, *, price, stage="match", at=None):
+    conn.execute(
+        "INSERT INTO listings (fingerprint_key, notified_at, notified_price, notified_stage) "
+        "VALUES (?, ?, ?, ?)",
+        (l.fingerprint_key, (at or datetime.now(timezone.utc)).isoformat(), price, stage),
+    )
 
 
-def test_price_drop_none_when_price_unchanged(conn):
+def test_notify_reason_new_for_unseen_listing(conn):
+    assert dedup.notify_reason(_listing(), conn) == "new"
+
+
+def test_notify_reason_none_when_nothing_changed(conn):
     l = _listing(price_eur=900)
-    conn.execute("INSERT INTO listings (fingerprint_key, notified_at, notified_price) VALUES (?, ?, ?)",
-                 (l.fingerprint_key, datetime.now(timezone.utc).isoformat(), 900.0))
-    assert dedup.price_drop_reason(l, conn) is None
+    _notified(conn, l, price=900.0)
+    assert dedup.notify_reason(l, conn) is None
 
 
-def test_price_drop_detects_significant_drop(conn):
+def test_notify_reason_price_drop_on_significant_drop(conn):
     l = _listing(price_eur=800)   # was 1000, 20% drop
-    conn.execute("INSERT INTO listings (fingerprint_key, notified_at, notified_price) VALUES (?, ?, ?)",
-                 (l.fingerprint_key, datetime.now(timezone.utc).isoformat(), 1000.0))
-    assert dedup.price_drop_reason(l, conn) == "price_drop"
+    _notified(conn, l, price=1000.0)
+    assert dedup.notify_reason(l, conn) == "price_drop"
 
 
-def test_price_drop_none_for_tiny_drop(conn):
-    l = _listing(price_eur=970)   # was 1000, only 3% — below 5% badge threshold
-    conn.execute("INSERT INTO listings (fingerprint_key, notified_at, notified_price) VALUES (?, ?, ?)",
-                 (l.fingerprint_key, datetime.now(timezone.utc).isoformat(), 1000.0))
-    assert dedup.price_drop_reason(l, conn) is None
+def test_notify_reason_price_change_on_small_move(conn):
+    # A 3% drop is below the 📉 badge threshold but still a change worth a card.
+    l = _listing(price_eur=970)
+    _notified(conn, l, price=1000.0)
+    assert dedup.notify_reason(l, conn) == "price_change"
+    # Price increases count as a change too.
+    conn.execute("UPDATE listings SET notified_price=950.0 WHERE fingerprint_key=?",
+                 (l.fingerprint_key,))
+    assert dedup.notify_reason(l, conn) == "price_change"
+
+
+def test_notify_reason_upgraded_from_near_miss(conn):
+    l = _listing(price_eur=900)
+    _notified(conn, l, price=900.0, stage="near_miss")
+    assert dedup.notify_reason(l, conn, stage="match") == "upgraded"
+    # …but staying a near-miss with the same price is not news.
+    assert dedup.notify_reason(l, conn, stage="near_miss") is None
+
+
+def test_notify_reason_relisted_after_two_weeks(conn):
+    l = _listing(price_eur=900)
+    _notified(conn, l, price=900.0,
+              at=datetime.now(timezone.utc) - timedelta(days=15))
+    assert dedup.notify_reason(l, conn) == "relisted"
+
+
+def test_mark_notified_records_stage_and_resets_clock(conn):
+    l = _listing(price_eur=900)
+    _notified(conn, l, price=800.0, stage="near_miss",
+              at=datetime.now(timezone.utc) - timedelta(days=30))
+    dedup.mark_notified(l, conn, stage="match")
+    # Freshly stamped at the current price and stage → nothing left to re-notify.
+    assert dedup.notify_reason(l, conn, stage="match") is None

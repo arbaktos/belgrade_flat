@@ -8,6 +8,15 @@ from src.models import Listing
 
 DIGESTS_DIR = Path("digests")
 
+# Why this card is being (re-)sent — reason strings set by the re-notify
+# policy (dedup.notify_reason); "new" gets no badge.
+_NOTIFY_BADGES = {
+    "price_drop": " · 📉 price drop",
+    "price_change": " · 💱 price changed",
+    "upgraded": " · ⬆️ upgraded from near-miss",
+    "relisted": " · 🔁 re-surfaced (14d+)",
+}
+
 
 def render(
     result: FilterResult,
@@ -61,7 +70,10 @@ def render(
         lines.append(f"## Near-misses ({len(result.near_misses)})\n")
         lines.append("Cleared structural filters but the LLM couldn't confirm one or more soft requirements. Vet these manually.\n")
         for l, reasons in result.near_misses:
-            lines.append(_listing_block(l, near_miss_reasons=reasons))
+            lines.append(_listing_block(
+                l, near_miss_reasons=reasons,
+                notify_reason=(notify_reasons or {}).get(l.fingerprint_key),
+            ))
         lines.append("\n---\n")
 
     if not result.passed:
@@ -111,12 +123,14 @@ def _listing_block(
     elif pets_state == "no":
         pets = "🚫🐾"
     else:
-        pets = ""
+        # Surface the ambiguity instead of hiding it — the user checks these
+        # listings manually before contacting.
+        pets = "🐾❓ pets unclear"
     agency = "🏢 agency" if l.is_agency else "👤 owner/unknown"
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
     head_emoji = "⚠️" if near_miss_reasons else "✅"
-    notify_badge = " · 📉 price drop" if notify_reason == "price_drop" else ""
+    notify_badge = _NOTIFY_BADGES.get(notify_reason or "", "")
     # Walking minutes to each destination, in the order they were computed.
     commute_bits = [
         f"🚶 {mins} min to {name}"
@@ -135,10 +149,6 @@ def _listing_block(
     block.append(f"- 🔗 [{l.title}]({l.url})")
     if near_miss_reasons:
         block.append("- ⚠️ Unconfirmed: " + "; ".join(near_miss_reasons))
-    if l.winter_smog:
-        from src.winter_smog import format_digest_line
-
-        block.append(f"- {format_digest_line(l.winter_smog)}")
     if l.extraction:
         e = l.extraction
         extras: list[str] = []

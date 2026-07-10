@@ -6,7 +6,7 @@ from unittest.mock import patch
 from src import telegram_digest
 from src.destinations import Destination
 from src.filter import FilterResult
-from src.models import Extraction, Listing, WinterSmog
+from src.models import Extraction, Listing
 
 
 OFFICE = Destination(name="office", lat=44.806, lng=20.460, gates=True, score_weight=0.45)
@@ -34,32 +34,6 @@ def _l(**over) -> Listing:
     return Listing(**base)
 
 
-def test_render_body_includes_winter_smog_line():
-    smog = WinterSmog(
-        band="moderate", pm25_winter_mean=40.0, pm25_best=20.0, pm25_worse=65.0,
-        smog_warning=False, motorway_m=None, score=0.5, cell_lat=44.8, cell_lng=20.5,
-    )
-    body = telegram_digest._render_body(_l(winter_smog=smog), near_miss_reasons=None, notify_reason=None)
-    assert "Winter smog" in body
-    assert "best ≈ 20" in body
-    assert "worse days ≈ 65" in body
-
-
-def test_render_body_omits_smog_warning_line():
-    # The "worst third" warning fired on ~87% of central listings, so it
-    # stopped being a signal. We still render the neutral smog data line.
-    smog = WinterSmog(
-        band="worse", pm25_winter_mean=55.0, pm25_best=30.0, pm25_worse=90.0,
-        smog_warning=True, motorway_m=None, score=0.9, cell_lat=44.8, cell_lng=20.5,
-    )
-    body = telegram_digest._render_body(_l(winter_smog=smog), near_miss_reasons=None, notify_reason=None)
-    assert "Winter smog warning" not in body
-    assert "worst third" not in body
-    # Sanity: the neutral data line is still present.
-    assert "Winter smog" in body
-    assert "worse days ≈ 90" in body
-
-
 def test_render_body_includes_listing_facts_and_summary():
     listing = _l()
     body = telegram_digest._render_body(
@@ -74,6 +48,27 @@ def test_render_body_includes_listing_facts_and_summary():
     assert "centralno" in body
     assert "🐾 pets OK" in body
     assert "Two-bedroom flat" in body                       # LLM summary
+
+
+def test_render_body_shows_pets_unclear_when_unknown():
+    # No structured pets data AND the LLM couldn't confirm → say so on the
+    # card instead of omitting the fact, so the user knows to check manually.
+    listing = _l(
+        pets_allowed=None,
+        extraction=Extraction(summary_en="s", pets_allowed="unknown"),
+    )
+    body = telegram_digest._render_body(listing, near_miss_reasons=None, notify_reason=None)
+    assert "🐾❓ pets unclear" in body
+
+
+def test_render_body_shows_pets_refused():
+    listing = _l(
+        pets_allowed=False,
+        extraction=Extraction(summary_en="s", pets_allowed="no"),
+    )
+    body = telegram_digest._render_body(listing, near_miss_reasons=None, notify_reason=None)
+    assert "🚫🐾" in body
+    assert "pets unclear" not in body
 
 
 def test_listing_keyboard_has_view_favorite_hide():

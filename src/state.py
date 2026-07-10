@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import dataclasses
+import hashlib
 import json
 import logging
 import os
@@ -13,7 +16,7 @@ from src.models import Extraction, Listing
 log = logging.getLogger(__name__)
 
 LOCAL_DB = Path("db.sqlite")
-SCHEMA_VERSION = 13
+SCHEMA_VERSION = 15
 
 
 def _rclone_env() -> dict[str, str]:
@@ -117,7 +120,9 @@ def ensure_schema() -> sqlite3.Connection:
         conn.execute("DROP TABLE IF EXISTS commute_cache")
 
     # v8 adds the skipped table (user-clicked 'hide this listing forever').
-    # v9 adds geocode_cache for Nominatim results (winter smog enrichment).
+    # v9 adds geocode_cache for Nominatim results (winter smog enrichment,
+    # retired 2026-07 — table kept so existing DBs and the idempotent
+    # migration stay valid).
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS geocode_cache (
@@ -167,10 +172,18 @@ def ensure_schema() -> sqlite3.Connection:
             last_seen_at    TEXT NOT NULL DEFAULT (datetime('now')),
             image_phash     TEXT,
             notified_at     TEXT,
-            notified_price  REAL
+            notified_price  REAL,
+            notified_stage  TEXT
         )
         """
     )
+    # v15 adds notified_stage ("match" | "near_miss") so the re-notify policy
+    # can detect a near-miss upgrading to a perfect match — that transition is
+    # worth a fresh card even when the price didn't move.
+    try:
+        conn.execute("ALTER TABLE listings ADD COLUMN notified_stage TEXT")
+    except sqlite3.OperationalError:
+        pass    # column already exists (fresh CREATE above, or re-run)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_source ON listings(source)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_listings_image_phash ON listings(image_phash) WHERE image_phash IS NOT NULL")
@@ -213,10 +226,20 @@ def ensure_schema() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS extraction_cache (
             fingerprint_key TEXT PRIMARY KEY,
             payload         TEXT NOT NULL,
-            extracted_at    TEXT NOT NULL DEFAULT (datetime('now'))
+            extracted_at    TEXT NOT NULL DEFAULT (datetime('now')),
+            desc_hash       TEXT
         )
         """
     )
+    # v14 adds desc_hash so a cache hit requires the description the LLM saw to
+    # match the current one — detail-page enrichment can grow a listing's text
+    # after it was first extracted (e.g. 4zida's 100-char preview → full desc),
+    # and a stale "pets unknown" from the preview must not stick. NULL (legacy
+    # rows) loads as a miss, so pre-v14 extractions refresh once.
+    try:
+        conn.execute("ALTER TABLE extraction_cache ADD COLUMN desc_hash TEXT")
+    except sqlite3.OperationalError:
+        pass    # column already exists (fresh CREATE above, or re-run)
     conn.execute(
         "INSERT INTO meta (key, value) VALUES ('schema_version', ?) "
         "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -226,13 +249,26 @@ def ensure_schema() -> sqlite3.Connection:
     return conn
 
 
+def desc_hash(description: str | None) -> str:
+    """Stable hash of the text the LLM extracts from. Cache rows are valid only
+    while this matches, so descriptions that grow (detail-page enrichment)
+    trigger a re-extraction instead of serving stale 'unknown' fields."""
+    return hashlib.sha1((description or "").strip().encode("utf-8")).hexdigest()
+
+
 def load_extractions(
-    conn: sqlite3.Connection, keys: Iterable[str]
+    conn: sqlite3.Connection,
+    keys: Iterable[str],
+    *,
+    desc_hashes: dict[str, str] | None = None,
 ) -> dict[str, Extraction]:
     """Return {fingerprint_key: Extraction} for any of `keys` already cached.
 
     Missing or corrupt rows are simply absent from the result, so the caller
     re-extracts them — the cache is an optimization, never a correctness gate.
+    When `desc_hashes` is given, a row whose stored desc_hash doesn't match
+    (including legacy NULL) is also a miss: the listing's text changed since
+    extraction, so the cached fields may describe a truncated version of it.
     """
     keys = list(keys)
     out: dict[str, Extraction] = {}
@@ -241,11 +277,13 @@ def load_extractions(
         batch = keys[i:i + chunk]
         placeholders = ",".join("?" * len(batch))
         rows = conn.execute(
-            f"SELECT fingerprint_key, payload FROM extraction_cache "
+            f"SELECT fingerprint_key, payload, desc_hash FROM extraction_cache "
             f"WHERE fingerprint_key IN ({placeholders})",
             batch,
         )
-        for fk, payload in rows:
+        for fk, payload, stored_hash in rows:
+            if desc_hashes is not None and stored_hash != desc_hashes.get(fk):
+                continue
             try:
                 out[fk] = _extraction_from_payload(payload)
             except Exception as e:  # noqa: BLE001 — corrupt row → treat as miss
@@ -256,16 +294,22 @@ def load_extractions(
 def save_extractions(conn: sqlite3.Connection, listings: list[Listing]) -> int:
     """Persist the extraction of each listing that has one. Idempotent upsert."""
     rows = [
-        (l.fingerprint_key, json.dumps(dataclasses.asdict(l.extraction)))
+        (
+            l.fingerprint_key,
+            json.dumps(dataclasses.asdict(l.extraction)),
+            desc_hash(l.description),
+        )
         for l in listings
         if l.extraction is not None
     ]
     if not rows:
         return 0
     conn.executemany(
-        "INSERT INTO extraction_cache (fingerprint_key, payload) VALUES (?, ?) "
+        "INSERT INTO extraction_cache (fingerprint_key, payload, desc_hash) "
+        "VALUES (?, ?, ?) "
         "ON CONFLICT(fingerprint_key) DO UPDATE SET "
-        "payload=excluded.payload, extracted_at=datetime('now')",
+        "payload=excluded.payload, desc_hash=excluded.desc_hash, "
+        "extracted_at=datetime('now')",
         rows,
     )
     conn.commit()

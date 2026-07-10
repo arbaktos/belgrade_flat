@@ -11,7 +11,7 @@ from typing import Callable
 import yaml
 from dotenv import load_dotenv
 
-from src import dedup, destinations as dests_mod, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_channel_pipeline, telegram_digest, winter_smog
+from src import dedup, destinations as dests_mod, digest, extract, filter as filt, route, score, state, telegram, telegram_callbacks, telegram_channel_pipeline, telegram_digest
 from src.models import Listing
 from src.sources import cityexpert, four_zida, halooglasi, nekretnine
 
@@ -34,9 +34,9 @@ SOURCES: list[tuple[str, Callable[..., list[Listing]]]] = [
 ]
 
 
-# Cron expressions in .github/workflows/scrape.yml. Anything else maps to digest.
-DIGEST_CRON = "30 4 * * *"
-POLL_CRON = "0 */2 * * *"
+# Cron expressions in .github/workflows/scrape.yml: two full digests a day,
+# 10:00 and 16:00 Europe/Belgrade (08:00/14:00 UTC during CEST).
+DIGEST_CRONS = ("0 8 * * *", "0 14 * * *")
 
 
 def main() -> int:
@@ -46,10 +46,11 @@ def main() -> int:
     run_id = os.environ.get("GITHUB_RUN_ID", "local")
     # Mode selection:
     #   workflow_dispatch (no schedule)     → full digest (manual run)
-    #   schedule == DIGEST_CRON             → full digest
-    #   schedule == POLL_CRON               → instant push of NEW perfect matches only
-    #   any other cron value                → instant push (safe default)
-    if not schedule or schedule == DIGEST_CRON:
+    #   schedule in DIGEST_CRONS            → full digest
+    #   any other cron value                → instant push of NEW perfect
+    #     matches only (safe default, and how an extra poll cron would behave
+    #     if one is ever added back)
+    if not schedule or schedule in DIGEST_CRONS:
         mode = "digest"
     else:
         mode = "instant"
@@ -102,13 +103,31 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
     structural = filt.apply(all_listings, cfg_obj)
     log.info("structural: %d passed, %d rejected", len(structural.passed), len(structural.rejected))
 
+    # Stage 2a: for survivors with NO structured pets data, make sure the LLM
+    # will see the complete listing text — pets is a hard filter, and 4zida's
+    # search API only ships a 100-char preview that hides "bez ljubimaca"
+    # clauses. cityexpert always answers pets structurally, so it never needs
+    # this; nekretnine/halooglasi already carry their fullest available text.
+    needs_full_desc = [
+        l for l in structural.passed
+        if l.source == four_zida.SOURCE_NAME and l.pets_allowed is None
+    ]
+    if needs_full_desc:
+        four_zida.fetch_full_descriptions(needs_full_desc)
+
     # Stage 2: LLM extraction on structural survivors. Skip if no API key (e.g. local dev).
     # Cached extractions are reused so each listing hits the LLM exactly once
-    # across runs — keeps us under the Gemini free-tier caps and cuts cost.
+    # across runs — a hit additionally requires the description hash to match,
+    # so text upgraded by stage 2a re-extracts instead of serving stale fields.
     extraction_failures = 0
     if extract.llm_api_key_present() and structural.passed:
         cached = state.load_extractions(
-            conn, [l.fingerprint_key for l in structural.passed]
+            conn,
+            [l.fingerprint_key for l in structural.passed],
+            desc_hashes={
+                l.fingerprint_key: state.desc_hash(l.description)
+                for l in structural.passed
+            },
         )
         to_extract = []
         for l in structural.passed:
@@ -142,8 +161,6 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
     destinations = dests_mod.load(cfg)
     gating_names = [d.name for d in dests_mod.gating(destinations)]
     candidates_for_commute = llm_filtered.passed + [l for l, _ in llm_filtered.near_misses]
-    if candidates_for_commute:
-        winter_smog.enrich_many(candidates_for_commute, conn)
 
     commute_rejected: list[tuple[Listing, str]] = []
     commute_config_error: str | None = None
@@ -236,13 +253,42 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
         surfaced: list[Listing] = []
         for cluster in clusters:
             canonical = dedup.pick_canonical(cluster)
-            surfaced.append(canonical)
-            reason = dedup.price_drop_reason(canonical, conn)
-            if reason:
+            reason = dedup.notify_reason(canonical, conn, stage="match")
+            # Re-notify policy (digest mode): a card goes out only when
+            # something changed since the last one — new, price moved,
+            # near-miss upgraded, or >14d old. Instant mode keeps its own
+            # "never notified" gate via the previously_notified snapshot.
+            if mode == "digest" and reason is None:
+                dedup_stats["suppressed"] += 1
+                continue
+            if reason is not None and reason != "new":
                 notify_reasons[canonical.fingerprint_key] = reason
-            dedup.mark_notified(canonical, conn)
-        log.info("dedup: %d→%d canonical", len(matched), len(surfaced))
+            surfaced.append(canonical)
+            dedup.mark_notified(canonical, conn, stage="match")
+        log.info("dedup: %d→%d canonical, %d suppressed by re-notify policy",
+                 len(matched), len(surfaced), dedup_stats["suppressed"])
         matched = surfaced
+
+        # Near-misses get the same re-notify gate in digest mode — the same
+        # unclear card twice a day is noise. They bypass cluster dedup (they're
+        # a manual-vet bucket), so gate them per-listing here. In instant mode
+        # they're stamped after the actual push instead.
+        if mode == "digest":
+            near_fresh: list[tuple[Listing, list[str]]] = []
+            for l, r in llm_filtered.near_misses:
+                reason = dedup.notify_reason(l, conn, stage="near_miss")
+                if reason is None:
+                    dedup_stats["suppressed"] += 1
+                    continue
+                if reason != "new":
+                    notify_reasons[l.fingerprint_key] = reason
+                near_fresh.append((l, r))
+                dedup.mark_notified(l, conn, stage="near_miss")
+            llm_filtered = filt.FilterResult(
+                passed=llm_filtered.passed,
+                near_misses=near_fresh,
+                rejected=llm_filtered.rejected,
+            )
 
     # Composite score ordering: highest score first (best commute / cheapest / biggest / freshest).
     matched = score.rank_descending(
@@ -334,7 +380,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             # were not (they bypass dedup). Stamp them here so the next poll
             # doesn't re-send the same near-miss listing every 2 hours.
             for l, _ in fresh_near:
-                dedup.mark_notified(l, conn)
+                dedup.mark_notified(l, conn, stage="near_miss")
         else:
             # Spec §8 Telegram delivery — header summary + per-listing messages.
             telegram_digest.send(

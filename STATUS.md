@@ -45,7 +45,7 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | M5 | Commute filter + caching | ✅ done (Routes API, not legacy Directions API) |
 | M6 | Dedup + fingerprint cascade | ✅ done (pHash + coord + trigram; phone skipped — no source exposes it) |
 | M7 | Digest format complete | ✅ done + 🙈 Hide button (off-spec but better UX) |
-| M8 | Polling + perfect-match instant push | ✅ done (daily 04:30 cron = full digest; every-2h cron = silent unless new perfect match) |
+| M8 | Polling + perfect-match instant push | ✅ done, then reduced 2026-07-10 to two full-digest crons (10:00/16:00 Belgrade); instant-push mode stays wired as the default for any other cron |
 | M9 | Error routing + cold-start silent seed | ⏳ pending |
 | M10 | One-week production observation | ⏳ pending |
 
@@ -75,15 +75,19 @@ Spec source of truth: [belgrade-rental-notifier-SPEC.md](belgrade-rental-notifie
 | Score weights | 0.4 price / 0.3 commute / 0.2 m² / 0.1 freshness | 0.45 office-walk / 0.25 Sadik-walk / 0.10 m² / 0.10 freshness / 0.10 elevator; price not scored (hard cap €1100) | User: "anything ≤ €1100 is OK, walking closeness to the places that matter is what ranks" |
 | Commute model | walk OR transit ≤ 30 min to office | **walking only**, multi-destination (2026-05-31). office gates ≤ **40** min on foot; Sadik Enter is info+score only, never filters. Transit dropped entirely. | User: "drop transport calculation, just walking distance. Office gates up to 40 min, Sadik is info only." Coords for both live in GitHub Secrets (OFFICE_LAT/LNG, SADIK_LAT/LNG); config lists names + env refs, never real locations. |
 | Elevator | hard requirement (waived on floor 0) | soft preference — 0.10 score bonus instead of reject | User: central pre-war buildings rarely have lifts; we'd rather see them and let the score rank lift-equipped ones higher |
-| Re-notify policy | suppress already-notified | always-surface mode (with 📌 seen-before badge) for now | Testing phase; flip `dedup.always_surface_matches: false` for production |
+| Re-notify policy | suppress already-notified | **restored 2026-07-10**: card sent only on a change — new, any price move (📉/💱 badge), near-miss→match upgrade (⬆️, via `notified_stage`, schema v15), or >14d since last card (🔁); applies to matches AND near-misses in digest mode; suppressed count shown in header | User: "I get a lot of the same listings every day — send a listing only if smth changes" (was always-surface during the May testing phase) |
 | 🙈 Hide button | spec says interactive bot is non-goal | implemented as inline-keyboard callback | Better UX than implicit auto-suppression; user requested |
 | ⭐ Favorite button | not in spec | inline-keyboard callback; copies the card to `TELEGRAM_FAVORITES_CHAT_ID` (or a forum topic via `TELEGRAM_FAVORITES_THREAD_ID`) and persists to `favorites` table | User wanted a way to bookmark good leads without polluting the main digest stream |
 | Halooglasi | scrape via plain httpx | via FlareSolverr sidecar | Their site is Cloudflare-Turnstile-protected, no other approach works without paid proxies |
 | Transit routing | spec doesn't specify | `FEWER_TRANSFERS` preference, transfer count surfaced | User: "minimum transport change" |
 | Directions API | spec says "Google Directions" | Routes API (new product) | Legacy Directions API isn't accepting new project enables; Google steered us to Routes |
-| Pets unclear | spec hard-requires pets | silent pass on "unknown"; only explicit "no" hard-rejects | Most Serbian listings don't mention pets at all — demoting "unknown" to near-miss left ~0 perfect matches |
+| Pets unclear | spec hard-requires pets | "unknown" passes as a perfect match (labeled 🐾❓ on the card); only explicit "no" hard-rejects | Most Serbian listings don't mention pets at all — demoting "unknown" to near-miss left ~0 perfect matches. User confirmed 2026-07-10: "perfect match can be only if pets ok or pets unclear" |
 | Pet-friendly ranking | not in spec | listings with confirmed pets-allowed form a priority tier ABOVE non-pet-friendly, regardless of composite score | User: "if there IS info that the flat is pet friendly, push it on top always" |
-| Cron behaviour | spec only mentions a daily digest | 04:30 UTC = full digest; every-2h polls 02-16 UTC (08-22 KGT) = silent instant push of NEW perfect matches | M8; "new" = no `notified_at` yet; polls skip nighttime (KGT 23-08) per `config.yaml.quiet_hours_kgt`; poll runs commit nothing to git to avoid churning commits |
+| Pets always on the card | spec shows 🐾 only when known | every card shows one of `🐾 pets OK` / `🚫🐾` / `🐾❓ pets unclear` — unknown is no longer rendered as blank | User: "if it's unclear — ok, write unclear"; the blank hid that the pets check hadn't actually confirmed anything |
+| Full-text pets check | spec §5 assumed full descriptions | survivors with no structured pets field get a 4zida detail-API fetch for the full text before LLM extraction; cache invalidates on description change (`desc_hash`, schema v14) | 4zida's search API ships a 100-char preview that hid "bez ljubimaca" clauses → refusals passed as pets-unknown matches |
+| Winter smog annotation | not in spec | **removed 2026-07** (module, grid data, geocode helper, digest lines all deleted; `geocode_cache` table kept for migration idempotency) | User: the PM2.5 value was more or less the same for every listing in the search area, so the line was noise |
+| cityexpert pets codes | spec hard-requires pets | `petsArray` codes are per-species (1=Dog, 2=Cat, 3=Aquarium, 4=Small cage, 5=Terrarium); pets OK **only if 2 (Cat) present**; anything else — including an EMPTY array — is a hard reject | User has a cat. Old rule (any non-empty array = True, empty = unspecified) surfaced refusals as perfect matches: [3,4,5]-only = cats/dogs refused yet shown "🐾 pets OK", and empty renders as "Allowed pets: No" on the site (cityexpert answers the field for every property — there is no "unspecified") — 2026-07-10 digest, listings 36501/42262 |
+| Cron behaviour | spec only mentions a daily digest | two full digests/day: 08:00 + 14:00 UTC = 10:00 + 16:00 Europe/Belgrade (CEST; an hour earlier local in winter — GH cron can't track DST); both commit their digest file; any other cron would default to silent instant-push of NEW matches | User 2026-07-10: "just 2 runs a day - 10am and 4pm Belgrade time"; replaced the Bishkek-era 04:30 digest + every-2h polls after relocating |
 | Source-error visibility in instant-push | M9 only spec'd "error routing" abstractly | every poll sends a brief `⚠️ Sources failed: <names>` if any portal returned an error | Instant-push has no digest header, so portal failures would otherwise be silent; alert fires every run a source is failing (no rate-limit yet) |
 | LLM provider | spec assumes Anthropic Haiku | back on **Anthropic Haiku 4.5** (post-2026-05-31 top-up); Gemini code path retained as fallback | Free-tier Gemini caps at 20 calls/day, which can't sustain even one warmup cycle; Haiku at ~30-60 cached new listings/day is ~$1.50-3/mo. Flip `LLM_PROVIDER: gemini` in the workflow if Anthropic ever runs dry again |
 | LLM call volume | spec: call per structural survivor each run | extraction cached by `fingerprint_key`; each listing hits the LLM once, ever | Gemini free tier is 5 req/min; re-extracting ~110 survivors/run blew the cap. Cache + a `GEMINI_MIN_INTERVAL_S` pacing (~13s) + 429/503 retry keep us under it. First run backfills (~24 min), then runs are small |
@@ -111,7 +115,7 @@ Schema version is at **v13**. Migrations are forward-only and idempotent
 - **CI runner**: GitHub Actions, public repo `arbaktos/belgrade_flat`, no minute limit
 - **Sidecar service**: FlareSolverr (`ghcr.io/flaresolverr/flaresolverr:latest`) inside the same job — solves Cloudflare Turnstile for halooglasi
 - **State**: `db.sqlite` in Cloudflare R2 bucket `belgrade-flats`, fetched at job start and pushed at end via `rclone`
-- **Trigger**: `workflow_dispatch` only (manual). Cron entries (`30 4 * * *`, `0 */2 * * *`) currently emit heartbeat-only messages on schedule
+- **Trigger**: two scheduled full-digest crons (`0 8 * * *`, `0 14 * * *` UTC = 10:00/16:00 Europe/Belgrade in CEST) plus `workflow_dispatch` for manual runs
 - **Secrets** (in GH Actions Secrets, never in repo):
   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `GOOGLE_DIRECTIONS_API_KEY`, `ANTHROPIC_API_KEY`,
   `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID`,
@@ -137,11 +141,11 @@ Schema version is at **v13**. Migrations are forward-only and idempotent
 
 ## 5. Known limitations / open issues
 
-1. **Truncated 4zida descriptions** — the API returns a 100-char preview, not the full description. The LLM frequently returns "unknown" for pets/dishwasher/heating because the snippet doesn't mention them. Fix would be to fetch the detail page for survivors (adds ~50 requests per run).
-2. **Halooglasi card-only data** — pHash works, but elevator/heating/furnishing aren't on the card. Detail-page enrichment via FlareSolverr would be expensive (CF challenge per page).
+1. ~~**Truncated 4zida descriptions**~~ — **fixed 2026-07**: structural survivors without structured pets data now get the full `desc` from `api.4zida.rs/v6/eds/{id}` before extraction (`four_zida.fetch_full_descriptions`, stage 2a in main.py); the extraction cache re-extracts when the description hash changes (schema v14 `desc_hash`). Nekretnine's detail-page description cap raised 400 → 2000 chars for the same reason.
+2. **Halooglasi card-only data** — pHash works, but elevator/heating/furnishing aren't on the card, and the description is a card snippet, so pets often stays "unclear" (now surfaced as 🐾❓ on the card). Detail-page enrichment via FlareSolverr would be expensive (CF challenge per page).
 3. **No phone-normalization fingerprint** — none of the four sources expose phone numbers reliably in listing summaries; spec §6's phone-cascade key is dead-on-arrival for our sources.
 4. **No photo carousel** — Telegram supports media groups (up to 10 photos), but sources only expose 1 image_url on the card; we'd need detail-page fetches for the rest.
-5. **`already_notified` listings re-spend the 🚌 Routes API call** — should_notify check runs in dedup *after* commute; with `always_surface_matches: true` we still call Routes for repeats. Cache hits make this near-free but not zero.
+5. **`already_notified` listings re-spend the 🚌 Routes API call** — the re-notify check runs in dedup *after* commute, so suppressed repeats still consult Routes. The 90-day commute cache makes this near-free but not zero.
 6. **Cron crons fire on the old workflow if a push lands mid-run** — GH Actions checks out at trigger time, not push time. Mostly cosmetic given test-mode behavior.
 7. **No empty-state Telegram message during cron** — cron heartbeat is a separate path that bypasses `telegram_digest`. Spec §8's "Nothing new today. All systems green." is only sent on dispatch runs.
 
@@ -177,7 +181,7 @@ Schema version is at **v13**. Migrations are forward-only and idempotent
 
 ### M10 — Production observation week (spec §15)
 
-- Flip `always_surface_matches` to `false`
+- ~~Flip `always_surface_matches` to `false`~~ (done differently: re-notify policy restored 2026-07-10)
 - Disable workflow_dispatch (cron only)
 - Run for 7 days
 - Tune thresholds based on real signal (probably: m² floor at 50 instead of
@@ -245,7 +249,7 @@ Console → Routes API → Metrics.
 
 ```sql
 DELETE FROM skipped;
-UPDATE listings SET notified_at=NULL, notified_price=NULL;
+UPDATE listings SET notified_at=NULL, notified_price=NULL, notified_stage=NULL;
 ```
 
 Run via `rclone copy r2:belgrade-flats/state/db.sqlite . && sqlite3 db.sqlite '...' && rclone copy db.sqlite r2:belgrade-flats/state/`.

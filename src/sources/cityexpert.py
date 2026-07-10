@@ -237,15 +237,29 @@ def _heating_label(heating_array: Any) -> str | None:
     return next(iter(mapped))
 
 
+# petsArray codes, verified against the PropertyView API and the rendered
+# "Allowed pets" tags: 1 = Dog, 2 = Cat, 3 = Aquarium pets, 4 = Small cage
+# pets, 5 = Terrarium pets.
+_PET_CODE_CAT = 2
+
+
 def _pets_allowed(pets_array: Any) -> bool | None:
-    """cityexpert's petsArray holds integer codes for each allowed pet type
-    (1 = cats, 2/3 = dogs by size, 4/5 = small/other pets, per the site's filter
-    sidebar). A non-empty array means at least one pet category is allowed;
-    an empty/missing array is "not specified", not "no pets".
+    """The user's pet is a cat, so only code 2 counts as "pets OK".
+
+    Unlike the portals, cityexpert inventories every property itself, so the
+    pets field is always answered: an EMPTY array renders as "Allowed pets:
+    No" on the listing page (verified on 42262/33078/61054) — a definitive
+    refusal, not "unspecified". There is no separate code for "Ne". A
+    non-empty array without the cat code (e.g. [3, 4, 5] = aquarium/cage/
+    terrarium only) is likewise a refusal for a cat.
     """
-    if not pets_array:
+    if pets_array is None:
         return None
-    return True
+    try:
+        codes = {int(c) for c in pets_array}
+    except (TypeError, ValueError):
+        return None
+    return _PET_CODE_CAT in codes
 
 
 def _image_url(prop: dict[str, Any]) -> str | None:

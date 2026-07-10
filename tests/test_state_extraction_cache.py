@@ -17,7 +17,8 @@ def conn():
         CREATE TABLE extraction_cache (
             fingerprint_key TEXT PRIMARY KEY,
             payload         TEXT NOT NULL,
-            extracted_at    TEXT NOT NULL DEFAULT (datetime('now'))
+            extracted_at    TEXT NOT NULL DEFAULT (datetime('now')),
+            desc_hash       TEXT
         )
         """
     )
@@ -93,6 +94,42 @@ def test_load_tolerates_unknown_payload_fields(conn):
     conn.commit()
     loaded = state.load_extractions(conn, ["4zida:fut"])
     assert loaded["4zida:fut"].pets_allowed == "yes"
+
+
+def test_load_with_matching_desc_hash_is_a_hit(conn):
+    l = _listing("4zida", "a1", Extraction(pets_allowed="no"))
+    state.save_extractions(conn, [l])
+    loaded = state.load_extractions(
+        conn, ["4zida:a1"],
+        desc_hashes={"4zida:a1": state.desc_hash(l.description)},
+    )
+    assert loaded["4zida:a1"].pets_allowed == "no"
+
+
+def test_load_with_changed_description_is_a_miss(conn):
+    # The listing was extracted from a truncated preview; once the full text
+    # arrives (detail-page enrichment) the cached fields must not be served.
+    l = _listing("4zida", "a1", Extraction(pets_allowed="unknown"))
+    state.save_extractions(conn, [l])
+    full_text_hash = state.desc_hash(l.description + " Kućni ljubimci nisu dozvoljeni.")
+    assert state.load_extractions(
+        conn, ["4zida:a1"], desc_hashes={"4zida:a1": full_text_hash},
+    ) == {}
+
+
+def test_load_treats_legacy_null_hash_as_miss(conn):
+    # Pre-v14 rows have no desc_hash — we can't know what text they were
+    # extracted from, so they refresh once.
+    conn.execute(
+        "INSERT INTO extraction_cache (fingerprint_key, payload) VALUES (?, ?)",
+        ("4zida:old", '{"pets_allowed": "unknown"}'),
+    )
+    conn.commit()
+    assert state.load_extractions(
+        conn, ["4zida:old"], desc_hashes={"4zida:old": state.desc_hash("d")},
+    ) == {}
+    # Without desc_hashes (legacy call shape) the row still loads.
+    assert state.load_extractions(conn, ["4zida:old"])["4zida:old"].pets_allowed == "unknown"
 
 
 def test_load_chunks_beyond_sqlite_variable_limit(conn):

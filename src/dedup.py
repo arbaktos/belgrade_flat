@@ -10,10 +10,10 @@ Cascade fingerprint, in priority order:
 Phone-normalization (spec's 4th key) is omitted in M6 because none of the
 four sources expose phone numbers reliably in listing summaries.
 
-Re-notify rules:
-- Send again if price drops ≥ 5%.
-- Send again if listing reappears after > 14 days of silence.
-- Otherwise stay quiet on duplicates.
+Re-notify rules (see notify_reason): a card is sent only when something
+changed — first sighting, any price change (📉 badge on ≥5% drops), a
+near-miss upgrading to a perfect match, or >14 days since the last card.
+Otherwise the listing is suppressed and counted in the digest header.
 """
 from __future__ import annotations
 
@@ -141,30 +141,58 @@ def pick_canonical(cluster: list[Listing]) -> Listing:
 
 
 # ---------------------------------------------------------------------------
-# Annotations (informational; suppression has moved to the user's 🙈 button)
+# Re-notify policy (restored 2026-07-10: only send a card when something changed)
 # ---------------------------------------------------------------------------
 
-def price_drop_reason(listing: Listing, conn: sqlite3.Connection) -> str | None:
-    """Return 'price_drop' if this listing is ≥ PRICE_DROP_BADGE_PCT cheaper
-    than the last time we surfaced it. None otherwise (including first sighting).
+RENOTIFY_AFTER_DAYS = 14    # a card older than this may be sent again
+
+
+def notify_reason(
+    listing: Listing,
+    conn: sqlite3.Connection,
+    *,
+    stage: str = "match",
+    renotify_after_days: int = RENOTIFY_AFTER_DAYS,
+) -> str | None:
+    """Why this listing deserves a Telegram card this run — or None to suppress.
+
+    Reasons, in priority order:
+      "new"           never notified before
+      "price_drop"    ≥ PRICE_DROP_BADGE_PCT cheaper than the last card (📉)
+      "price_change"  any other price change since the last card
+      "upgraded"      last card was a near-miss, now a confirmed perfect match
+      "relisted"      last card is > renotify_after_days old (re-listed, or a
+                      still-available reminder for a long-running listing)
     """
     row = conn.execute(
-        "SELECT notified_price FROM listings WHERE fingerprint_key=?",
+        "SELECT notified_at, notified_price, notified_stage "
+        "FROM listings WHERE fingerprint_key=?",
         (listing.fingerprint_key,),
     ).fetchone()
     if row is None or row[0] is None:
-        return None
-    last_price = float(row[0])
-    if listing.price_eur < last_price * (1 - PRICE_DROP_BADGE_PCT):
-        return "price_drop"
+        return "new"
+    notified_at, last_price, last_stage = row
+    if last_price is not None:
+        last_price = float(last_price)
+        if listing.price_eur < last_price * (1 - PRICE_DROP_BADGE_PCT):
+            return "price_drop"
+        if listing.price_eur != last_price:
+            return "price_change"
+    if stage == "match" and last_stage == "near_miss":
+        return "upgraded"
+    # sqlite datetime('now') writes naive UTC ("YYYY-MM-DD HH:MM:SS").
+    then = datetime.fromisoformat(notified_at).replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) - then > timedelta(days=renotify_after_days):
+        return "relisted"
     return None
 
 
-def mark_notified(listing: Listing, conn: sqlite3.Connection) -> None:
-    """Stamp the canonical listing as notified at the current price."""
+def mark_notified(listing: Listing, conn: sqlite3.Connection, *, stage: str = "match") -> None:
+    """Stamp the canonical listing as notified at the current price and stage."""
     conn.execute(
-        "UPDATE listings SET notified_at=datetime('now'), notified_price=? WHERE fingerprint_key=?",
-        (listing.price_eur, listing.fingerprint_key),
+        "UPDATE listings SET notified_at=datetime('now'), notified_price=?, "
+        "notified_stage=? WHERE fingerprint_key=?",
+        (listing.price_eur, stage, listing.fingerprint_key),
     )
     conn.commit()
 

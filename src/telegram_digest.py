@@ -23,7 +23,6 @@ from typing import Iterable
 from urllib.parse import quote
 
 from src import telegram
-from src.winter_smog import format_digest_line
 from src.destinations import Destination
 from src.filter import FilterResult
 from src.models import Listing
@@ -32,6 +31,15 @@ log = logging.getLogger(__name__)
 
 MAX_PERFECT = 10
 MAX_NEAR_MISS = 5
+
+# Why this card is being (re-)sent — reason strings set by the re-notify
+# policy (dedup.notify_reason); "new" gets no badge.
+_NOTIFY_BADGES = {
+    "price_drop": " · 📉 price drop",
+    "price_change": " · 💱 price changed",
+    "upgraded": " · ⬆️ upgraded from near-miss",
+    "relisted": " · 🔁 re-surfaced (14d+)",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +92,8 @@ def send(
                               disable_notification=True)
 
     for l, reasons in near:
-        _send_listing(l, near_miss_reasons=reasons, notify_reason=None,
+        _send_listing(l, near_miss_reasons=reasons,
+                      notify_reason=(notify_reasons or {}).get(l.fingerprint_key),
                       destinations=destinations)
 
     if near_overflow:
@@ -233,7 +242,7 @@ def _render_body(
     """
     destinations = destinations or []
     head_emoji = "⚠️" if near_miss_reasons else "✅"
-    notify_badge = " · 📉 price drop" if notify_reason == "price_drop" else ""
+    notify_badge = _NOTIFY_BADGES.get(notify_reason or "", "")
 
     place = " · ".join(l.place_names[:2]) if l.place_names else ""
 
@@ -256,7 +265,9 @@ def _render_body(
     elif pets_state == "no":
         pets = "🚫🐾"
     else:
-        pets = ""
+        # Surface the ambiguity instead of hiding it — the user checks these
+        # listings manually before contacting.
+        pets = "🐾❓ pets unclear"
 
     dish = ""
     if l.dishwasher is True or (l.extraction and l.extraction.dishwasher is True):
@@ -316,8 +327,6 @@ def _render_body(
         lines.append(f"🚩 {red_flags_esc}")
     if bills_line:
         lines.append(bills_line)
-    if l.winter_smog:
-        lines.append(html.escape(format_digest_line(l.winter_smog)))
     body = "\n".join(lines)
 
     # Append the summary last, clipped to fit the remaining caption budget so

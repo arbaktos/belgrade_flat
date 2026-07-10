@@ -30,9 +30,9 @@ After it finishes, check three things: the Telegram chat for the digest, the
 auto-committed `digests/YYYY-MM-DD.md` (or `-test.md` for a manual run), and the
 run logs for any `⚠️` source-failure lines.
 
-The two crons run on their own — a daily digest at `30 4 * * *` and an
-every-2-hour poll at `0 2-16/2 * * *` — and pick `digest` or `instant` mode
-automatically ([architecture.md](architecture.md#run-modes)).
+The two crons run on their own — full digests at `0 8 * * *` and
+`0 14 * * *` UTC (10:00 and 16:00 Europe/Belgrade during CEST) — and pick
+their mode automatically ([architecture.md](architecture.md#run-modes)).
 
 ## Run locally
 
@@ -72,7 +72,7 @@ notify stamps:
 
 ```sql
 DELETE FROM skipped;
-UPDATE listings SET notified_at=NULL, notified_price=NULL;
+UPDATE listings SET notified_at=NULL, notified_price=NULL, notified_stage=NULL;
 ```
 
 Apply it through the pull → edit → push cycle above.

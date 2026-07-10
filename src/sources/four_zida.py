@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 SOURCE_NAME = "4zida"
 API_URL = "https://api.4zida.rs/v6/search/apartments"
+DETAIL_URL_TMPL = "https://api.4zida.rs/v6/eds/{id}"
 LISTING_URL_BASE = "https://www.4zida.rs"
 BELGRADE_PLACE_ID = 2
 USER_AGENT = (
@@ -59,6 +60,45 @@ def fetch(*, freshness_days: int = 7, client: httpx.Client | None = None) -> lis
                 break
         log.info("4zida: collected %d listings within %dd window", len(results), freshness_days)
         return results
+    finally:
+        if own_client:
+            client.close()
+
+
+def fetch_full_descriptions(
+    listings: Iterable[Listing], *, client: httpx.Client | None = None
+) -> int:
+    """Upgrade the search API's 100-char `description100` preview to the detail
+    endpoint's full `desc` text.
+
+    The preview routinely hides a "bez ljubimaca" refusal buried later in the
+    description, so the LLM extraction saw nothing and returned pets "unknown"
+    — which passes the filter. Call this on structural survivors that lack
+    structured pets data so the LLM checks the complete text. Failures are
+    per-listing: a delisted ad (404) just keeps its preview. Returns how many
+    descriptions were upgraded.
+    """
+    listings = list(listings)
+    own_client = client is None
+    client = client or httpx.Client(
+        headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        timeout=20.0,
+    )
+    try:
+        upgraded = 0
+        for l in listings:
+            try:
+                r = client.get(DETAIL_URL_TMPL.format(id=l.id))
+                r.raise_for_status()
+                desc = str(r.json().get("desc") or "").strip()
+            except Exception as e:  # noqa: BLE001 — one dead ad must not kill the run
+                log.warning("4zida: detail fetch failed for %s: %s", l.id, e)
+                continue
+            if len(desc) > len(l.description or ""):
+                l.description = desc
+                upgraded += 1
+        log.info("4zida: upgraded %d/%d descriptions via detail API", upgraded, len(listings))
+        return upgraded
     finally:
         if own_client:
             client.close()

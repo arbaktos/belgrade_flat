@@ -152,7 +152,9 @@ def _parse_detail(html: str) -> dict[str, Any]:
         "elevator": elevator,
         "heating": heating,
         "furnishing": furnishing,
-        "description": description[:400],
+        # Keep enough text for the LLM to find a pets/lease clause buried late
+        # in the body; the old 400-char cap routinely cut them off.
+        "description": description[:2000],
         "image_url": image_url,
         "address": address or None,
     }

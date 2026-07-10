@@ -67,15 +67,22 @@ def test_heating_empty_or_unknown_returns_none():
     assert cityexpert._heating_label(["bogus"]) is None
 
 
-def test_pets_allowed_from_petsarray():
-    # Real API returns integer codes (1=cats, etc.) — any code means pets are allowed.
-    # Regression: the old check was `"petAllowed" in petsArray`, which always
-    # evaluated False and mislabeled cat-friendly listings as no-pets.
+def test_pets_allowed_requires_cat_code():
+    # petsArray codes: 1=Dog, 2=Cat, 3=Aquarium, 4=Small cage, 5=Terrarium
+    # (verified against PropertyView tolPets + the rendered "Allowed pets" tags).
+    # Regressions: any non-empty array used to count as True, so [3, 4, 5]
+    # (aquarium/cage/terrarium only — cats refused) surfaced as "🐾 pets OK"
+    # perfect matches; and [] used to count as "unspecified" when the site
+    # renders it as "Allowed pets: No" — cityexpert always answers the field,
+    # so empty is a definitive refusal.
     assert cityexpert._pets_allowed([1, 2]) is True
-    assert cityexpert._pets_allowed([1]) is True
+    assert cityexpert._pets_allowed([2]) is True
     assert cityexpert._pets_allowed([1, 2, 3, 4, 5]) is True
-    assert cityexpert._pets_allowed([]) is None
+    assert cityexpert._pets_allowed([1]) is False        # dogs only — no cats
+    assert cityexpert._pets_allowed([3, 4, 5]) is False  # caged/tank pets only
+    assert cityexpert._pets_allowed([]) is False         # "Allowed pets: No"
     assert cityexpert._pets_allowed(None) is None
+    assert cityexpert._pets_allowed(["bogus"]) is None
 
 
 def test_no_elevator_but_low_implies_no_elevator():

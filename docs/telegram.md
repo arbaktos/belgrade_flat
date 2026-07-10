@@ -14,8 +14,9 @@ A daily digest is a sequence of messages, not one block:
    Google API count, the dedup tally, and R2 state size.
 2. **One message per match**, best-ranked first — a photo with a caption: price,
    size, rooms, floor, walking minutes to each destination, an English summary,
-   the expandable Serbian original, and any annotations (bills, winter smog,
-   📉 price drop). A `View on portal` link button and the two action buttons sit
+   the expandable Serbian original, and any annotations (bills, and a
+   re-notify badge: 📉 price drop, 💱 price changed, ⬆️ upgraded from
+   near-miss, 🔁 re-surfaced). A `View on portal` link button and the two action buttons sit
    below.
 3. **A near-miss section** — the same cards for listings that were close but had
    an unclear field (see [filtering-and-ranking.md](filtering-and-ranking.md#3-llm-aware-filter--filterapply_with_extraction)).
@@ -78,7 +79,7 @@ The same per-listing card is reused in two delivery modes
   a near-miss can both push, both gated on the same office walking threshold so a
   push never includes a listing that fails the non-negotiable axis.
 
-Instant pushes are suppressed during quiet hours (23:00–08:00 Asia/Bishkek);
-anything found overnight surfaces in the morning digest. Because instant push
+No poll cron is currently scheduled (the two daily runs are both full
+digests), but the mode stays wired for any future cron. Because instant push
 has no header, a portal failure during a poll would be invisible, so a poll that
 hits a failing source sends a short `⚠️ Sources failed: <names>` line.

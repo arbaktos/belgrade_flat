@@ -43,9 +43,12 @@ only ever touches listings that already passed everything before it.
 3. **Drop hidden listings** before any paid stage runs.
 4. **Structural filter** — price, rooms, size, floor, freshness, and the like.
    Cheap, and it rejects the bulk of listings.
-5. **LLM extraction** — send each survivor to Claude Haiku once, ever, to read
-   the Serbian description for facts the card doesn't expose (pets, heating,
-   dishwasher, lease length). Results are cached so a listing is never sent twice.
+5. **LLM extraction** — send each survivor to Claude Haiku to read the Serbian
+   description for facts the card doesn't expose (pets, heating, dishwasher,
+   lease length). Survivors without structured pets data first get their full
+   description fetched from the portal's detail API (4zida ships only a
+   100-char preview on the search card). Results are cached per description
+   text, so a listing is re-sent only if its text changes.
 6. **LLM-aware filter** — apply the rules that need those extracted facts, and
    split borderline listings into a *near-miss* bucket instead of dropping them.
 7. **Walking-distance filter** — compute minutes on foot to each named
@@ -59,18 +62,16 @@ Stages 4–9 are detailed in [filtering-and-ranking.md](filtering-and-ranking.md
 
 ## The daily rhythm
 
-Two schedules drive the same pipeline in two modes:
+Two full digests a day, at 10:00 and 16:00 Europe/Belgrade (08:00/14:00 UTC;
+GitHub cron can't follow DST, so during winter CET the runs land an hour
+earlier local). Each digest carries the header, the ranked matches, and the
+near-miss section. A manual run also produces a full digest.
 
-- **Daily digest** at 04:30 UTC (10:30 in Asia/Bishkek). The full digest — a
-  header, the ranked matches, and a near-miss section.
-- **Instant push** every two hours through the day. Silent unless a *new*
-  perfect match turned up since the last run; then it pushes just that card,
-  with no digest framing.
-
-Quiet hours (23:00–08:00 Bishkek time) suppress the instant pushes; anything
-found overnight waits for the morning digest. A manual run always produces a
-full digest. The mode is chosen from the cron expression that triggered the run
-— see [architecture.md](architecture.md#run-modes).
+An *instant push* mode still exists in the code — silent unless a new perfect
+match appeared, pushing just that card — and is what any additionally
+configured cron would get by default. No poll cron is currently scheduled. The
+mode is chosen from the cron expression that triggered the run — see
+[architecture.md](architecture.md#run-modes).
 
 ## What it costs
 

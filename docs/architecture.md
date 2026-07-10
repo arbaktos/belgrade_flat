@@ -27,9 +27,8 @@ dispatch. The job:
 2. Installs `rclone` and the Python dependencies.
 3. Runs `python -m src.main`, which pulls `db.sqlite` from R2, walks the
    pipeline, and pushes the file back.
-4. On a daily or manual run, commits the generated digest under `digests/` and
-   pushes it. The two-hourly poll skips this commit so the repo isn't churned
-   with twelve commits a day.
+4. On scheduled and manual runs, commits the generated digest under
+   `digests/` and pushes it (at most two scheduled commits a day).
 5. On any failure, sends a `🚨 scrape workflow failed` message to Telegram.
 
 The runner is `ubuntu-latest` with a 25-minute timeout. The repo is public, so
@@ -45,9 +44,9 @@ cron expression:
 | Trigger | Mode | Delivery |
 | --- | --- | --- |
 | Manual dispatch (no schedule) | `digest` | Full digest. |
-| `30 4 * * *` (daily) | `digest` | Full digest. |
-| `0 2-16/2 * * *` (every 2 h) | `instant` | Silent unless a *new* perfect match exists; pushes just that card. |
-| Any other cron | `instant` | Safe default. |
+| `0 8 * * *` (10:00 Belgrade) | `digest` | Full digest. |
+| `0 14 * * *` (16:00 Belgrade) | `digest` | Full digest. |
+| Any other cron | `instant` | Silent unless a *new* perfect match exists; pushes just that card. Safe default. |
 
 Instant mode compares the current matches against a snapshot of
 already-notified listings taken *before* the pipeline mutates anything, so it
@@ -68,8 +67,8 @@ The tables:
 | `meta` | Schema version and the Telegram update offset. |
 | `listings` | Every listing seen, with its dedup hash and notify timestamps. |
 | `commute_cache` | Walking minutes per (location, destination), 90-day TTL. |
-| `extraction_cache` | Cached LLM output, so each listing is read once ever. |
-| `geocode_cache` | Nominatim lookups for the winter-smog annotation. |
+| `extraction_cache` | Cached LLM output keyed by fingerprint + description hash; a listing re-extracts only when its text changes. |
+| `geocode_cache` | Retired (was Nominatim lookups for the winter-smog annotation); kept in the schema for existing DBs. |
 | `skipped` | Listings the user hid with 🙈. |
 | `favorites` | Listings the user starred with ⭐. |
 | `seen_telegram_posts` | Channel posts already processed, keyed by message id. |

@@ -49,10 +49,12 @@ record:
 
 Two cost disciplines keep this cheap:
 
-- **Extract once, ever.** Results are cached in `extraction_cache` keyed by the
-  listing's fingerprint. A listing already in the cache never hits the API
-  again; only its first sighting does. A cache miss just re-extracts — the cache
-  is an optimization, never a correctness gate.
+- **Extract once per text.** Results are cached in `extraction_cache` keyed by
+  the listing's fingerprint plus a hash of the description the LLM saw. A
+  listing already in the cache never hits the API again — unless its text
+  changes (e.g. detail-page enrichment replaced a truncated preview), in which
+  case it re-extracts once. A cache miss just re-extracts — the cache is an
+  optimization, never a correctness gate.
 - **Cached system prompt.** The system prompt is sent with `cache_control:
   ephemeral` so Anthropic bills it once per cache window, not once per listing.
 
@@ -141,9 +143,13 @@ nekretnine, halooglasi — and the most recent post within a source. Phone-numbe
 matching, the spec's fourth cascade key, is dead on arrival because no source
 exposes phone numbers reliably.
 
-Suppression of already-seen listings now lives in the user's 🙈 button, not in
-dedup. Dedup still stamps a listing as notified and adds a 📉 badge when the
-price dropped at least 5% since it was last surfaced.
+After picking canonicals, dedup applies the **re-notify policy**
+(`notify_reason`): a card is sent only when something changed since the last
+one — first sighting, any price change (📉 badge on drops ≥5%, 💱 otherwise),
+a near-miss upgrading to a confirmed match (⬆️), or more than 14 days since
+the listing's last card (🔁). Unchanged listings are suppressed and counted in
+the digest header. The same gate applies to near-misses in digest mode. The
+🙈 button remains the way to suppress a flat forever.
 
 ## 6. Scoring — `score.py`
 
@@ -170,13 +176,10 @@ the composite score breaks ties.
 
 Some signals decorate the card without affecting pass/fail or order:
 
-- **Winter smog** — `winter_smog.py` looks each flat's location up in an offline
-  PM2.5 grid built from CAMS reanalysis and motorway proximity (see
-  `scripts/build_winter_smog_grid.py`). The card gets a one-line band — better /
-  moderate / worse for Belgrade — and a warning when the area is in the city's
-  worst third for bad-air days. Locations without coordinates are geocoded via
-  Nominatim and cached in `geocode_cache`.
 - **Bills, agency-or-owner, red flags** — surfaced from the LLM extraction.
+
+(A winter-smog PM2.5 annotation existed until 2026-07; it was dropped because
+the value was nearly identical across every listing in the search area.)
 
 ## Telegram-channel side pipeline
 

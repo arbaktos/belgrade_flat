@@ -1,11 +1,12 @@
 name: scrape
 
 on:
+  # Two full digests a day at 10:00 and 16:00 Europe/Belgrade. GH cron is UTC
+  # and can't follow DST: exact during CEST (summer, UTC+2); during CET
+  # (winter, UTC+1) the runs land at 09:00/15:00 Belgrade instead.
   schedule:
-    - cron: '30 4 * * *'        # 04:30 UTC = 10:30 Asia/Bishkek — daily digest
-    # Every 2h, daytime only. KGT quiet hours are 23:00-08:00 (per config.yaml),
-    # i.e. 17:00-01:59 UTC. The window below = 02:00-16:00 UTC (08:00-22:00 KGT).
-    - cron: '0 2-16/2 * * *'    # 02,04,06,08,10,12,14,16 UTC = 8 polls/day
+    - cron: '0 8 * * *'         # 08:00 UTC = 10:00 Belgrade (CEST)
+    - cron: '0 14 * * *'        # 14:00 UTC = 16:00 Belgrade (CEST)
   workflow_dispatch: {}
 
 concurrency:
@@ -88,9 +89,9 @@ jobs:
           FLARESOLVERR_URL: http://localhost:8191/v1
 
       - name: Commit digest + debug artifacts if generated
-        # Commit on manual dispatch and on the daily digest cron only.
-        # The 2h poll cron skips commits to avoid 12 churning commits/day.
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 4 * * *'
+        # Both scheduled runs are full digests now, so both commit their
+        # digest file (2 commits/day max); manual dispatch commits too.
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         run: |
           if [ -z "$(git status --porcelain digests/ debug/)" ]; then
             echo "No digest or debug changes to commit."

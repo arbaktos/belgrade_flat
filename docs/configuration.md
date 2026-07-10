@@ -62,9 +62,9 @@ A destination whose env vars are unset is skipped with a warning, so a missing
 | Section | Key knobs |
 | --- | --- |
 | `routing` | `cache_grid_decimals` (cache bucket precision), `cache_ttl_days` (90), `daily_call_cap`. |
-| `dedup` | `price_drop_badge_pct` (📉 threshold), and the fingerprint `coord_decimals` / `price_bucket_eur` / `title_trigram_threshold`. |
+| `dedup` | `price_drop_badge_pct` (📉 threshold), and the fingerprint `coord_decimals` / `price_bucket_eur` / `title_trigram_threshold`. The re-notify window (14 days) is `dedup.RENOTIFY_AFTER_DAYS` in code. |
 | `digest` | `max_perfect` (10), `max_near_miss` (5). |
-| `schedule` | The two cron expressions and `quiet_hours_kgt`. |
+| `schedule` | Documentation-only mirror of the two digest crons (the real schedule is in `scrape.yml` + `main.py DIGEST_CRONS`). |
 | `llm` | `model` — the Claude Haiku model id. |
 | `state` | `r2_key` — the SQLite object key in R2. |
 | `telegram_channels` | The channel side pipeline: per-channel `m2_min` and optional `require_hashtag`. |

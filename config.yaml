@@ -43,9 +43,12 @@ routing:
   daily_call_cap: 500
 
 dedup:
-  # Re-notify policy removed (2026-05-17): listings are surfaced in every
-  # digest unless the user explicitly taps 🙈 Hide. The 5% price-drop
-  # threshold is still used for the 📉 badge, just not for suppression.
+  # Re-notify policy restored (2026-07-10): a card is sent only when
+  # something changed — first sighting, any price change (📉 badge on drops
+  # ≥ price_drop_badge_pct), a near-miss upgrading to a match, or >14 days
+  # since the last card (dedup.RENOTIFY_AFTER_DAYS). Unchanged listings are
+  # suppressed and counted in the digest header. 🙈 Hide still suppresses
+  # forever.
   price_drop_badge_pct: 5
   fingerprint:
     coord_decimals: 4
@@ -61,12 +64,12 @@ digest:
     surface: 0.2
     freshness: 0.1
 
+# Documentation only — the real schedule lives in .github/workflows/scrape.yml
+# and the mode mapping in src/main.py DIGEST_CRONS. Two full digests a day at
+# 10:00 and 16:00 Europe/Belgrade (08:00/14:00 UTC during CEST; GH cron can't
+# follow DST, so an hour earlier local during CET).
 schedule:
-  digest_cron_utc: "30 4 * * *"
-  poll_cron_utc: "0 */2 * * *"
-  quiet_hours_kgt:
-    start: "23:00"
-    end: "08:00"
+  digest_crons_utc: ["0 8 * * *", "0 14 * * *"]
 
 llm:
   model: "claude-haiku-4-5-20251001"
