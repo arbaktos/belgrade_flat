@@ -245,6 +245,15 @@ The digest header line `🔢 Google API: N/40 000 this month` is the
 SQLite-cached approximation. For the authoritative number, check Cloud
 Console → Routes API → Metrics.
 
+### Re-send everything once (test run, no state wipe)
+
+```bash
+gh workflow run scrape.yml --repo arbaktos/belgrade_flat --ref main -f force_resurface=true
+```
+
+`FORCE_RESURFACE` bypasses re-notify suppression for that run only — every
+current match/near-miss is sent and re-stamped; the policy resumes next run.
+
 ### Reset all dedup state (force re-notify of everything)
 
 ```sql

@@ -248,6 +248,13 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
                     rejected=llm_filtered.rejected,
                 )
 
+        # Debug/test knob: FORCE_RESURFACE=1 (workflow_dispatch input) sends
+        # every current match/near-miss regardless of the re-notify policy, so
+        # a full digest can be inspected end-to-end without wiping stamps.
+        force_resurface = os.environ.get("FORCE_RESURFACE") in {"1", "true"}
+        if force_resurface:
+            log.info("FORCE_RESURFACE on: re-notify suppression bypassed this run")
+
         clusters = dedup.cluster_duplicates(matched)
         dedup_stats["clusters"] = len(clusters)
         surfaced: list[Listing] = []
@@ -258,7 +265,7 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             # something changed since the last one — new, price moved,
             # near-miss upgraded, or >14d old. Instant mode keeps its own
             # "never notified" gate via the previously_notified snapshot.
-            if mode == "digest" and reason is None:
+            if mode == "digest" and reason is None and not force_resurface:
                 dedup_stats["suppressed"] += 1
                 continue
             if reason is not None and reason != "new":
@@ -277,10 +284,10 @@ def _run_pipeline(cfg: dict, conn, *, mode: str = "digest") -> dict:
             near_fresh: list[tuple[Listing, list[str]]] = []
             for l, r in llm_filtered.near_misses:
                 reason = dedup.notify_reason(l, conn, stage="near_miss")
-                if reason is None:
+                if reason is None and not force_resurface:
                     dedup_stats["suppressed"] += 1
                     continue
-                if reason != "new":
+                if reason is not None and reason != "new":
                     notify_reasons[l.fingerprint_key] = reason
                 near_fresh.append((l, r))
                 dedup.mark_notified(l, conn, stage="near_miss")

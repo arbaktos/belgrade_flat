@@ -7,7 +7,12 @@ on:
   schedule:
     - cron: '0 8 * * *'         # 08:00 UTC = 10:00 Belgrade (CEST)
     - cron: '0 14 * * *'        # 14:00 UTC = 16:00 Belgrade (CEST)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_resurface:
+        description: "Bypass re-notify suppression: send every current match/near-miss (test run)"
+        type: boolean
+        default: false
 
 concurrency:
   group: scrape
@@ -53,6 +58,7 @@ jobs:
       SADIK_LAT: ${{ secrets.SADIK_LAT }}
       SADIK_LNG: ${{ secrets.SADIK_LNG }}
       GITHUB_EVENT_SCHEDULE: ${{ github.event.schedule }}
+      FORCE_RESURFACE: ${{ inputs.force_resurface && '1' || '' }}
 
     steps:
       - uses: actions/checkout@v4

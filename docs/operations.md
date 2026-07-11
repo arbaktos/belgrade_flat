@@ -65,6 +65,13 @@ rclone copy db.sqlite r2:belgrade-flats/state/
 `rclone` needs the same `R2_*` credentials the run uses, exported in the
 environment (see `src/state.py` for the variable mapping).
 
+## Re-send everything once (test run)
+
+`gh workflow run scrape.yml -f force_resurface=true` bypasses the re-notify
+suppression for that single run — every current match and near-miss is sent
+and re-stamped, and the policy resumes on the next run. Use this to inspect
+the full digest without wiping any state.
+
 ## Reset dedup state
 
 To force every tracked listing to surface again — clearing hides and
