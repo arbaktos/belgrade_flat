@@ -1,5 +1,12 @@
 # Belgrade Rental Notifier — Project State
 
+> **⏸️ PAUSED 2026-07-12 — flat found!** The `scrape` workflow is disabled
+> (`gh workflow disable scrape.yml`); no scheduled or manual runs fire. State
+> in R2 is intact. To resume: `gh workflow enable scrape.yml --repo
+> arbaktos/belgrade_flat`. The Telegram-callback webhook VM (Hetzner, see
+> deploy/README.md) can be deleted — with no new cards there is nothing to
+> click; re-deploy via deploy/README.md if the search ever restarts.
+
 _Last updated: 2026-05-29 (LLM provider → Gemini 2.5 Flash + extraction cache)_
 
 A personal Belgrade-rentals scraper that delivers filtered Telegram messages
